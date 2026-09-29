@@ -25,7 +25,7 @@ require('./env').loadEnv();
 const { db, getAccountBySlug, getAccountById, getCustomThemes } = require('./db/schema');
 const { seed, createAccount, ensureOwner } = require('./db/seed');
 const { hashPassword, verifyPassword, rateLimit, securityHeaders } = require('./security');
-const { uploadMusic, UPLOAD_DIR } = require('./upload');
+const { uploadMusic, uploadImage, UPLOAD_DIR } = require('./upload');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -110,6 +110,15 @@ function publicSettings(account) {
     theme: themeSlug,
     theme_tokens: active ? active.tokens : null,
     theme_base: active ? active.base : null,
+    // Latar kustom (desktop + mobile). Kosong = pakai bawaan tema.
+    background_image: s.background_image || '',
+    background_image_mobile: s.background_image_mobile || '',
+    background_overlay: s.background_overlay || '',
+    background_overlay_opacity: s.background_overlay_opacity || '',
+    background_position: s.background_position || '',
+    background_size: s.background_size || '',
+    background_repeat: s.background_repeat || '',
+    background_attachment: s.background_attachment || '',
   };
 }
 
@@ -455,10 +464,18 @@ app.put('/api/admin/couple', requireAccountActive, wrap((req, res) => {
 // Update setelan account (quote, musik, tema, password)
 app.put('/api/admin/settings', requireAccountActive, wrap((req, res) => {
   const accId = req.account.id;
-  const allowed = ['music_url', 'quote', 'admin_password', 'theme'];
+  const allowed = ['music_url', 'quote', 'admin_password', 'theme',
+    'background_image', 'background_image_mobile', 'background_overlay',
+    'background_overlay_opacity', 'background_position', 'background_size',
+    'background_repeat', 'background_attachment'];
   const upsert = db.prepare(
     'INSERT INTO settings (account_id, key, value) VALUES (?, ?, ?) ON CONFLICT(account_id, key) DO UPDATE SET value = excluded.value'
   );
+  // Nilai yang dibatasi panjangnya (URL / warna / nilai CSS aman).
+  const cssSafe = (v) => {
+    const val = String(v == null ? '' : v).trim().slice(0, 200);
+    return /[{}"<>]/.test(val) && !/^url\(/.test(val) ? '' : val;
+  };
   Object.entries(req.body || {}).forEach(([k, v]) => {
     if (!allowed.includes(k)) return;
     if (k === 'theme') {
@@ -472,9 +489,31 @@ app.put('/api/admin/settings', requireAccountActive, wrap((req, res) => {
       db.prepare('UPDATE accounts SET password_hash = ? WHERE id = ?').run(hashPassword(raw), accId);
       return;
     }
-    if (v == null || v === '') return;
     if (k === 'music_url') return upsert.run(accId, 'music_url', clampStr(v, LIMITS.url));
     if (k === 'quote') return upsert.run(accId, 'quote', clampStr(v, LIMITS.quote));
+    if (k === 'background_image' || k === 'background_image_mobile') return upsert.run(accId, k, cssSafe(v));
+    if (k === 'background_overlay') return upsert.run(accId, k, cssSafe(v));
+    if (k === 'background_overlay_opacity') {
+      const n = Number(v);
+      const val = Number.isFinite(n) ? String(Math.max(0, Math.min(1, n))) : '';
+      return upsert.run(accId, k, val);
+    }
+    if (k === 'background_position') {
+      const okv = ['', 'center center', 'center top', 'center bottom', 'left center', 'right center'];
+      return upsert.run(accId, k, okv.includes(String(v)) ? String(v) : 'center center');
+    }
+    if (k === 'background_size') {
+      const okv = ['', 'cover', 'contain', 'auto'];
+      return upsert.run(accId, k, okv.includes(String(v)) ? String(v) : 'cover');
+    }
+    if (k === 'background_repeat') {
+      const okv = ['', 'no-repeat', 'repeat'];
+      return upsert.run(accId, k, okv.includes(String(v)) ? String(v) : 'no-repeat');
+    }
+    if (k === 'background_attachment') {
+      const okv = ['', 'scroll', 'fixed'];
+      return upsert.run(accId, k, okv.includes(String(v)) ? String(v) : 'scroll');
+    }
   });
   res.json({ ok: true });
 }));
@@ -500,6 +539,21 @@ app.post(
       size: req.file.size,
       original: req.file.originalname,
     });
+  })
+);
+
+// =====================================================================
+//  UPLOAD GAMBAR LATAR (client admin)
+// =====================================================================
+
+app.post(
+  '/api/admin/upload/image',
+  requireAccountActive,
+  uploadImage.single('file'),
+  wrap((req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Tidak ada file yang diunggah.' });
+    const url = `/uploads/${req.file.filename}`;
+    res.status(201).json({ ok: true, url, size: req.file.size, original: req.file.originalname });
   })
 );
 
@@ -635,10 +689,14 @@ app.get('/api/admin/export/wishes.csv', requireAccountAdmin, wrap((req, res) => 
 // =====================================================================
 
 app.post('/api/owner/login', loginLimiter, wrap((req, res) => {
-  const { password } = req.body || {};
+  const { username, password } = req.body || {};
   const owners = db.prepare('SELECT * FROM owners').all();
-  const match = owners.find((o) => verifyPassword(password, o.password_hash).ok);
-  if (!match) return res.status(401).json({ error: 'Password owner salah.' });
+  // Bila username diisi, cocokkan dulu (case-insensitive). Bila kosong,
+  // cari owner mana pun yang passwordnya cocok (kompatibel versi lama).
+  const uname = String(username || '').trim().toLowerCase();
+  const candidates = uname ? owners.filter((o) => String(o.username || '').toLowerCase() === uname) : owners;
+  const match = candidates.find((o) => verifyPassword(password, o.password_hash).ok);
+  if (!match) return res.status(401).json({ error: 'Username atau password salah.' });
   res.json({ ok: true, username: match.username });
 }));
 
@@ -844,10 +902,13 @@ app.get('/u/:slug/', renderInvitation);
 app.get(['/u/:slug/admin', '/u/:slug/admin/'], (req, res) => {
   const account = getAccountBySlug(req.params.slug);
   if (!account) return res.status(404).send('Undangan tidak ditemukan.');
+  // HTML panel: jangan di-cache (agar klien selalu dapat versi terbaru).
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(ADMIN_HTML_PATH);
 });
 
 app.get(['/owner', '/owner/'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(OWNER_HTML_PATH);
 });
 
@@ -880,9 +941,11 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   // Error dari multer (upload) — beri pesan yang ramah.
   if (err && err.code === 'LIMIT_FILE_SIZE') {
     const mb = Math.round((Number(process.env.UPLOAD_MAX_MB) || 10));
-    return res.status(413).json({ error: `Ukuran file terlalu besar. Maksimal ${mb} MB.` });
+    const imgMb = Math.round((Number(process.env.IMAGE_MAX_MB) || 6));
+    const max = /image/i.test(req.path || '') ? imgMb : mb;
+    return res.status(413).json({ error: `Ukuran file terlalu besar. Maksimal ${max} MB.` });
   }
-  if (err && err.message && /Format file tidak didukung/.test(err.message)) {
+  if (err && err.message && /Format (file|gambar) tidak didukung/.test(err.message)) {
     return res.status(400).json({ error: err.message });
   }
   res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
@@ -902,6 +965,10 @@ app.listen(PORT, () => {
   console.log(`🛡️  Panel pemilik (super admin): http://localhost:${PORT}/owner`);
   console.log(`📇 Contoh undangan: http://localhost:${PORT}/u/demo`);
   console.log(`🔑 Admin contoh   : http://localhost:${PORT}/u/demo/admin`);
-  if (owner) console.log(`   Login owner default -> username: ${owner.username} · password: owner123 (GANTI!)`);
+  if (owner) {
+    const usingEnv = !!(process.env.OWNER_PASSWORD && String(process.env.OWNER_PASSWORD).trim());
+    console.log(`   Login owner -> username: ${owner.username}` +
+      (usingEnv ? ' · password: (sesuai OWNER_PASSWORD di .env)' : ' · password: owner123 (default, GANTI!)'));
+  }
   console.log('');
 });

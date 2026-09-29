@@ -85,6 +85,42 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
     simpan ke `settings.music_url` sebagai `/uploads/<nama>`.
   - File disajikan statis di `/uploads` (di `index.js`), `X-Content-Type-Options: nosniff`.
   - Error multer (413 terlalu besar / 400 format salah) ditangani di error handler.
+- **UPLOAD GAMBAR LATAR (BARU):** admin bisa unggah gambar background (desktop & mobile).
+  - `uploadImage` di `server/upload.js` → `data/uploads/img-<uniq>.<ext>`.
+    Whitelist MIME+ext gambar (**JPG/PNG/WEBP/AVIF/GIF — TANPA SVG**, cegah XSS),
+    batas `IMAGE_MAX_MB` (default 6 MB).
+  - Endpoint `POST /api/admin/upload/image` mengembalikan `{url}`; admin menyimpan
+    URL-nya bersama setelan lain (endpoint ini **tidak** menulis settings sendiri,
+    berbeda dari musik).
+- **LATAR BELAKANG KUSTOM (BARU):** pengaturan gambar latar per-account,
+  terpisah dari tema. Disimpan di tabel `settings` (key-value):
+  `background_image` (desktop), `background_image_mobile`, `background_overlay`
+  (hex), `background_overlay_opacity` (0–1), `background_position`, `background_size`,
+  `background_repeat`, `background_attachment`. Divalidasi/di-whitelist di
+  `PUT /api/admin/settings` (nilai enum; overlay opacity di-clamp 0–1).
+  - Dikirim ke halaman tamu lewat `publicSettings()` (`server/index.js`).
+  - `public/js/app.js`: `applyBackground(settings)` mengeset CSS var di `<body>`:
+    `--bg-hero`/`--bg-cover` (desktop), `--bg-hero-mobile`/`--bg-cover-mobile`
+    (mobile; fallback ke desktop), `--bg-overlay`, `--bg-position`, `--bg-size`,
+    `--bg-repeat`, `--bg-attachment`. Nilai kosong = pakai gambar bawaan tema.
+  - `public/css/style.css`: `:root` mendefinisikan default `--bg-hero: var(--hero-img)`
+    dst. `.cover` & `.hero` memakai var `--bg-*` (mobile), dan pada `@media (min-width:900px)`
+    memakai var desktop. **Jangan hardcode `var(--hero-img)` lagi di `.hero`/`.cover`.**
+  - Struktur field mengikuti pola Elementor (desktop vs mobile terpisah, overlay,
+    position/size/repeat/attachment) — lihat catatan referensi di bawah.
+- **ADMIN PANEL (REDESIGN, BARU):** `public/admin/index.html` dirombak (editorial-wedding,
+  mobile-first). Font **Fraunces** (display) + **Plus Jakarta Sans** (UI). Semua
+  CSS+JS tetap **inline/self-contained**. Tab bar jadi underline (bukan pil),
+  sticky save bar, kartu bertumpuk berirama. **Semua `id` yang dipakai JS
+dipertahankan** (tambah: `czContrast`/`czContrastSw`/`czContrastText`,
+  `bgDesktop`/`bgMobile`/`bgDesktopFile`/`bgMobileFile`/`bgDesktopThumb`/`bgMobileThumb`,
+  `bgDesktopLabel`/`bgMobileLabel`, `bgOverlay`/`bgOverlayOpacity`/`bgPosition`/
+  `bgSize`/`bgRepeat`/`bgAttachment`). Class `.music-row` dioleh jadi `.media-row`.
+- **KONTRAS TEMA KUSTOM (BARU):** `updateContrast(ink, bg)` menghitung rasio WCAG
+  (perkiraan) dan menampilkan peringatan ok/warn/bad di `#czContrast`. `fillCustomizerFromBase()`
+  mengisi token dari `CZ_DEFAULT[base]` — **default sudah benar** (base gelap → `--ink`
+  terang, base terang → `--ink` gelap). **Jangan ubah `CZ_DEFAULT` tanpa menjaga
+  sinkron dengan palet `style.css`.**
 - Navigasi section: bottom bar mobile, **5 tombol** (Beranda/Mempelai/Acara/
   Galeri/Ucapan), **indikator pil geser** (`.nav-ind`), scroll-spy dengan
   `getBoundingClientRect` + `pendingUntil` lock + resync (load/fonts/scrollend).
@@ -142,6 +178,17 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
   `openBtn`, `musicBtn`, `bgMusic`, `countdown`, `sectionNav`, dl.
 - `admin/index.html` & `owner/index.html` **self-contained** (CSS/JS inline).
   Jangan asumsikan `style.css`/`app.js` termuat di sana.
+- **Panel dashboard pakai pola `<template>` (WAJIB dipertahankan).** Struktur
+  dashboard (di `admin`: `#dashView`; di `owner`: `#dashView`) **tidak boleh ada
+  di DOM sebelum login**. Markup-nya disimpan di `<template id="dashTemplate">`
+  (inert) dan baru di-`cloneNode` ke `<div id="app"></div>` oleh
+  `enterDashboard()`/`showDash()` **setelah** autentikasi sukses. Semua
+  `addEventListener` khusus dashboard **harus** berada di
+  `bindDashboard()`/`bindOwnerDashboard()` (dipanggil sekali setelah injeksi),
+  BUKAN di top-level — kalau di top-level akan throw `null` saat elemen belum ada.
+  Jangan kembali ke `display:none`/`.hidden` + `classList` (bocor lewat Inspect
+  Element). Binding login (`#loginBtn`, `#pw`, `#pwToggle`, `#username`) tetap
+  top-level karena form login selalu ada.
 - Env dibaca kode: `PORT`, `DB_CLIENT`, `DATABASE_URL`, `PGSSL`, `TRUST_PROXY`,
   `DATABASE_PATH`, `OWNER_USERNAME`, `OWNER_PASSWORD`, `UPLOAD_MAX_MB`, `UPLOAD_DIR`.
 - Sandbox dev: `npm run start/seed` bisa gagal spawn node; jalankan manual
@@ -154,6 +201,15 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
   Jangan pakai backtick di komentar yang berada di dalam template literal SQL.
 - **Upload musik**: `data/uploads/` & `data/*.backup*` di-`.gitignore`. Pastikan
   volume persisten saat deploy. Uji format/ukuran via error handler multer.
+- **Latar kustom & tema kustom itu BEDA**: tema kustom = warna/font (tabel `themes`,
+  token CSS); latar kustom = gambar background (tabel `settings`, key `background_*`).
+  Tidak saling menimpa. `.cover`/`.hero` **wajib** memakai var `--bg-*` (bukan
+  `--hero-img`/`--cover-img` langsung) agar latar kustom ikut terpakai.
+- **Referensi struktur latar** (ide dari export Elementor LANDINGSTAR WEDDING,
+  hanya STRUKTUR bukan gaya): field `background_image` + `background_image_mobile`
+  terpisah; kontrol `background_overlay_color`+`opacity`, `background_position`,
+  `background_size`, `background_repeat`, `background_attachment`. Palet contoh
+  (`#FFFFFF`,`#F7CAC9`,`#2C2C2C`) **tidak** dipakai — kita pakai palet tema sendiri.
 - **Belum diimplementasi (diminta jelaskan dulu):** template modular
   (`layout_config` JSON — urutan section, BUKAN warna). **Jangan implementasi
   tanpa konfirmasi user.**

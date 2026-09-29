@@ -4,162 +4,293 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — Undangan Pernikahan</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
+/* =====================================================================
+   ADMIN PANEL — editorial-wedding, mobile-first
+   Tipografi: Fraunces (display, judul) + Plus Jakarta Sans (UI/body).
+   Palet hangat netral di-tint ke arah sage; kontras dijaga di seluruh UI.
+   ===================================================================== */
 :root{
-  --bg:#f5f3ee; --card:#fff; --ink:#2f2d29; --soft:#6f6a61; --line:#e7e1d6;
-  --sage:#6b7a5e; --sage-l:#8a9a7b; --gold:#c9a86a; --red:#c0614a;
-  --shadow:0 6px 24px rgba(60,50,30,.08);
+  --bg:#f2efe7;
+  --bg-2:#e9e4d8;
+  --card:#fdfcf8;
+  --card-2:#f7f4ec;
+  --ink:#2b2a24;
+  --ink-soft:#5f5b50;
+  --line:#e2dccd;
+  --line-strong:#cfc7b3;
+  --sage:#5f7250;
+  --sage-l:#84986f;
+  --sage-ink:#3f4d35;
+  --gold:#b08d47;
+  --red:#b0503a;
+  --amber:#9a7326;
+  --shadow-sm:0 1px 2px rgba(48,42,28,.06);
+  --shadow:0 10px 30px -18px rgba(48,42,28,.5);
+  --radius:16px;
+  --radius-sm:11px;
+  --serif:'Fraunces',Georgia,'Times New Roman',serif;
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
-button{font-family:inherit;cursor:pointer}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.55;font-size:15px;overflow-x:hidden}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button{cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent}
+input,textarea,select{color:var(--ink)}
+:focus-visible{outline:2.5px solid var(--sage-l);outline-offset:2px}
+.hidden{display:none!important}
 
-/* login */
-.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}
-.login-box{background:var(--card);padding:38px 32px;border-radius:18px;box-shadow:var(--shadow);width:100%;max-width:370px;text-align:center}
-.login-box h1{font-size:1.3rem;margin-bottom:6px}
-.login-box p{color:var(--soft);font-size:.86rem;margin-bottom:22px}
-.login-box input{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:11px;font-size:.95rem;font-family:inherit;margin-bottom:14px}
-.login-box input:focus{outline:none;border-color:var(--sage)}
-.btn{width:100%;padding:13px;border:none;border-radius:11px;background:var(--sage);color:#fff;font-weight:600;font-size:.94rem;transition:background .2s}
-.btn:hover{background:#556349}
+/* ---------- AUTH (login) ---------- */
+.login-wrap{min-height:100dvh;display:grid;place-items:center;padding:22px;
+  background:radial-gradient(120% 80% at 50% 0%,var(--card-2),var(--bg) 70%)}
+.login-box{background:var(--card);padding:clamp(28px,6vw,40px) clamp(22px,6vw,34px);border-radius:var(--radius);
+  box-shadow:var(--shadow);border:1px solid var(--line);width:100%;max-width:392px}
+.login-mark{font-family:var(--serif);font-size:1.75rem;font-weight:500;letter-spacing:-.01em;line-height:1.1;margin-bottom:4px}
+.login-box p.lead{color:var(--ink-soft);font-size:.87rem;margin-bottom:24px}
+.field-label{display:block;font-size:.76rem;font-weight:600;letter-spacing:.02em;color:var(--ink-soft);margin-bottom:7px}
+.pw-wrap{position:relative;margin-bottom:0}
+.pw-wrap input{width:100%;padding:13px 46px 13px 15px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:.95rem;background:var(--card-2);transition:border-color .18s,background .18s}
+.pw-wrap input:focus{outline:none;border-color:var(--sage);background:var(--card)}
+.pw-toggle{position:absolute;top:0;right:0;height:100%;width:46px;display:grid;place-items:center;border:none;
+  background:transparent;color:var(--ink-soft);cursor:pointer;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.pw-toggle:hover{color:var(--sage)}
+.pw-toggle svg{width:20px;height:20px}
+.login-box input{width:100%;padding:13px 15px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:.95rem;background:var(--card-2);transition:border-color .18s,background .18s}
+.login-box input:focus{outline:none;border-color:var(--sage);background:var(--card)}
+.btn{width:100%;min-height:48px;padding:13px;border:none;border-radius:var(--radius-sm);background:var(--sage);color:#fbfaf5;
+  font-weight:600;font-size:.95rem;letter-spacing:.01em;transition:background .2s,transform .12s;margin-top:16px}
+.btn:hover{background:var(--sage-ink)}
+.btn:active{transform:scale(.99)}
 .err{color:var(--red);font-size:.84rem;margin-top:12px;min-height:1.1em}
 
-/* dashboard */
-.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:15px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-.topbar h1{font-size:1.05rem;font-weight:700}
-.topbar .sub{font-size:.76rem;color:var(--soft);font-weight:400}
-.btn-ghost{padding:8px 16px;border:1.5px solid var(--line);background:transparent;border-radius:999px;font-size:.82rem;font-weight:600;color:var(--soft)}
-.btn-ghost:hover{border-color:var(--sage);color:var(--sage)}
+/* ---------- TOPBAR ---------- */
+.topbar{background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:13px clamp(14px,4vw,26px);display:flex;justify-content:space-between;
+  align-items:center;gap:12px;position:sticky;top:0;z-index:30}
+.topbar .brand{min-width:0}
+.topbar h1{font-family:var(--serif);font-size:1.12rem;font-weight:500;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .sub{font-size:.76rem;color:var(--ink-soft);font-weight:400;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;align-items:center;flex:none}
+.btn-ghost{min-height:40px;padding:9px 15px;border:1.5px solid var(--line-strong);background:var(--card);border-radius:999px;
+  font-size:.8rem;font-weight:600;color:var(--ink-soft);white-space:nowrap;transition:border-color .18s,color .18s,background .18s}
+.btn-ghost:hover{border-color:var(--sage);color:var(--sage);background:var(--card-2)}
 
-.wrap{max-width:1000px;margin:0 auto;padding:26px 20px 60px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:26px}
-.stat{background:var(--card);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
-.stat .n{font-size:1.9rem;font-weight:700;color:var(--sage)}
-.stat .l{font-size:.78rem;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.wrap{max-width:980px;margin:0 auto;padding:clamp(18px,4vw,28px) clamp(14px,4vw,22px) 72px}
 
-.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
-.tab{padding:9px 18px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-size:.85rem;font-weight:600;color:var(--soft)}
-.tab.active{background:var(--sage);color:#fff;border-color:var(--sage)}
+/* ---------- LIVE / STATS ---------- */
+.stats-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;color:var(--ink-soft);font-weight:600;
+  text-transform:uppercase;letter-spacing:.08em}
+.live .dot{width:8px;height:8px;border-radius:50%;background:var(--sage-l);animation:pulse 1.6s ease-in-out infinite}
+.live.off .dot{background:var(--line-strong);animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;color:var(--ink-soft);font-weight:500;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--sage);width:16px;height:16px}
 
-.panel{display:none}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:.55}
+.stat .n{font-family:var(--serif);font-size:clamp(1.7rem,7vw,2.15rem);font-weight:500;color:var(--sage-ink);line-height:1;letter-spacing:-.02em}
+.stat .l{font-size:.72rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.07em;margin-top:7px;font-weight:600}
+
+/* ---------- TABS ---------- */
+.tabs{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;
+  border-bottom:1px solid var(--line)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;padding:11px 15px;border:none;background:transparent;font-size:.86rem;font-weight:600;
+  color:var(--ink-soft);white-space:nowrap;border-radius:9px 9px 0 0;transition:color .18s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--sage-ink)}
+.tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;background:var(--sage);border-radius:3px}
+
+.panel{display:none;animation:panelIn .32s var(--ease) both}
 .panel.active{display:block}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-.card{background:var(--card);border-radius:14px;padding:22px;box-shadow:var(--shadow);margin-bottom:16px}
-.card h2{font-size:1rem;margin-bottom:14px}
-
-table{width:100%;border-collapse:collapse;font-size:.87rem}
-th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line)}
-th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);font-weight:600}
-tr:last-child td{border-bottom:none}
-td.wrap-cell{max-width:280px;color:var(--soft)}
-
-.badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:600}
-.badge.hadir{background:rgba(107,122,94,.16);color:var(--sage)}
-.badge.tidak_hadir{background:rgba(192,97,74,.15);color:var(--red)}
-.badge.ragu{background:rgba(201,168,106,.2);color:#9a7a34}
-.badge.none{background:#f0ece4;color:var(--soft)}
-
-.row-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.row-form input,.row-form select{padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem;flex:1;min-width:130px}
-.row-form input:focus,.row-form select:focus{outline:none;border-color:var(--sage)}
-.btn-sm{padding:11px 20px;border:none;border-radius:10px;background:var(--sage);color:#fff;font-weight:600;font-size:.86rem}
-.btn-sm:hover{background:#556349}
-.btn-del{padding:6px 12px;border:1.5px solid var(--line);background:transparent;border-radius:8px;font-size:.76rem;color:var(--red);font-weight:600}
-.btn-del:hover{background:rgba(192,97,74,.08);border-color:var(--red)}
-.btn-copy-sm{padding:6px 12px;border:1.5px solid var(--line);background:transparent;border-radius:8px;font-size:.76rem;color:var(--sage);font-weight:600;margin-left:6px}
-.btn-copy-sm:hover{background:rgba(107,122,94,.08)}
-.link-out{color:var(--sage);text-decoration:none;font-weight:600;font-size:.78rem}
-
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.field label{display:block;font-size:.78rem;font-weight:600;margin-bottom:6px;color:var(--soft)}
-.field input,.field textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--sage)}
-.field.full{grid-column:1/-1}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:.86rem;opacity:0;transition:all .3s;z-index:100}
-.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.empty{text-align:center;color:var(--soft);padding:30px;font-size:.88rem}
-
-/* export & live */
-.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+/* ---------- CARD ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(18px,4.5vw,26px);
+  box-shadow:var(--shadow-sm);margin-bottom:16px}
+.card h2{font-family:var(--serif);font-size:clamp(1.05rem,4.4vw,1.28rem);font-weight:500;letter-spacing:-.01em;margin-bottom:4px}
+.card>.hint:first-of-type{margin-top:0}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .card-head h2{margin-bottom:0}
 .card-actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn-export{padding:8px 14px;border:1.5px solid var(--sage);background:transparent;color:var(--sage);border-radius:8px;font-size:.78rem;font-weight:600}
-.btn-export:hover{background:var(--sage);color:#fff}
-.live{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;color:var(--soft);font-weight:600}
-.live .dot{width:8px;height:8px;border-radius:50%;background:var(--sage-l);animation:pulse 1.6s ease-in-out infinite}
-.live.off .dot{background:#c8c2b6;animation:none}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
-.hint{font-size:.74rem;color:var(--soft);margin-top:6px}
+.hint{font-size:.78rem;color:var(--ink-soft);margin-top:6px;line-height:1.5}
 
-/* theme picker */
-.theme-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.theme-opt{position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .18s,background .18s,transform .15s}
+/* ---------- BUTTONS ---------- */
+.btn-sm{min-height:44px;padding:11px 22px;border:none;border-radius:var(--radius-sm);background:var(--sage);color:#fbfaf5;
+  font-weight:600;font-size:.88rem;transition:background .18s,transform .12s}
+.btn-sm:hover{background:var(--sage-ink)}
+.btn-sm:active{transform:scale(.99)}
+.btn-sm.ghost{background:transparent;color:var(--sage-ink);border:1.5px solid var(--line-strong)}
+.btn-sm.ghost:hover{background:var(--card-2);border-color:var(--sage)}
+.btn-export{min-height:40px;padding:9px 15px;border:1.5px solid var(--line-strong);background:var(--card-2);color:var(--ink-soft);
+  border-radius:999px;font-size:.78rem;font-weight:600;transition:all .18s}
+.btn-export:hover{border-color:var(--sage);color:var(--sage);background:var(--card)}
+.btn-del{min-height:38px;padding:8px 13px;border:1.5px solid color-mix(in srgb,var(--red) 40%,var(--line));background:transparent;
+  border-radius:9px;font-size:.76rem;color:var(--red);font-weight:600;transition:background .18s,border-color .18s}
+.btn-del:hover{background:color-mix(in srgb,var(--red) 9%,transparent);border-color:var(--red)}
+.btn-copy-sm{min-height:38px;padding:8px 13px;border:1.5px solid var(--line-strong);background:var(--card-2);border-radius:9px;
+  font-size:.76rem;color:var(--sage-ink);font-weight:600;transition:background .18s}
+.btn-copy-sm:hover{background:color-mix(in srgb,var(--sage) 10%,var(--card-2))}
+.link-out{color:var(--sage-ink);text-decoration:none;font-weight:600;font-size:.8rem;border-bottom:1px solid color-mix(in srgb,var(--sage) 45%,transparent);padding-bottom:1px}
+.link-out:hover{border-bottom-color:var(--sage)}
+
+/* ---------- TABLES ---------- */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);font-weight:700;
+  border-bottom:1.5px solid var(--line-strong)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:color-mix(in srgb,var(--sage) 4%,transparent)}
+td.wrap-cell{max-width:280px;color:var(--ink-soft)}
+.cell-phone{font-size:.76rem;color:var(--ink-soft)}
+.cell-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+.badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.01em}
+.badge.hadir{background:color-mix(in srgb,var(--sage) 15%,transparent);color:var(--sage-ink)}
+.badge.tidak_hadir{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.badge.ragu{background:color-mix(in srgb,var(--gold) 22%,transparent);color:var(--amber)}
+.badge.none{background:var(--bg-2);color:var(--ink-soft)}
+
+/* ---------- FORMS ---------- */
+.row-form{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:18px}
+.row-form input,.row-form select{padding:12px 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:.9rem;background:var(--card-2);transition:border-color .18s,background .18s;min-height:46px}
+.row-form input:focus,.row-form select:focus{outline:none;border-color:var(--sage);background:var(--card)}
+.row-form .btn-sm{width:100%}
+
+.form-grid{display:grid;grid-template-columns:1fr;gap:15px}
+.field.full{grid-column:1/-1}
+.field input,.field textarea,.field select{width:100%;padding:12px 14px;border:1.5px solid var(--line-strong);
+  border-radius:var(--radius-sm);font-size:.9rem;background:var(--card-2);transition:border-color .18s,background .18s;min-height:46px}
+.field textarea{min-height:80px;resize:vertical;line-height:1.5}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--sage);background:var(--card)}
+.field label{display:block;font-size:.78rem;font-weight:600;margin-bottom:7px;color:var(--ink-soft);letter-spacing:.01em}
+
+/* ---------- THEME PICKER ---------- */
+.theme-picker{display:grid;grid-template-columns:1fr;gap:10px}
+.theme-opt{position:relative;display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid var(--line);
+  border-radius:var(--radius);cursor:pointer;background:var(--card-2);transition:border-color .18s,background .18s,transform .12s}
 .theme-opt input{position:absolute;opacity:0;width:1px;height:1px}
 .theme-opt:hover{border-color:var(--sage-l)}
-.theme-opt:has(input:checked){border-color:var(--sage);background:rgba(107,122,94,.08);box-shadow:0 6px 18px -10px rgba(107,122,94,.7)}
-.theme-opt:active{transform:scale(.99)}
-.theme-swatch{flex:none;width:42px;height:42px;border-radius:10px;border:1px solid rgba(0,0,0,.08);box-shadow:inset 0 0 0 3px rgba(255,255,255,.5)}
+.theme-opt:has(input:checked){border-color:var(--sage);background:color-mix(in srgb,var(--sage) 8%,var(--card));box-shadow:0 8px 22px -16px var(--sage-ink)}
+.theme-opt:active{transform:scale(.995)}
+.theme-opt:has(input:checked)::after{content:'✓';position:absolute;top:10px;right:12px;width:20px;height:20px;
+  display:grid;place-items:center;border-radius:50%;background:var(--sage);color:#fff;font-size:.7rem;font-weight:800}
+.theme-swatch{flex:none;width:46px;height:46px;border-radius:11px;border:1px solid rgba(0,0,0,.09);box-shadow:inset 0 0 0 3px rgba(255,255,255,.55)}
 .swatch-botanical{background:linear-gradient(135deg,#7d8f6d 0 50%,#b08d47 50% 100%)}
 .swatch-midnight{background:linear-gradient(135deg,#14131a 0 50%,#d8b978 50% 100%)}
 .swatch-blush{background:linear-gradient(135deg,#fffafa 0 50%,#c98a86 50% 100%)}
 .swatch-javanese{background:linear-gradient(135deg,#8a6d3b 0 50%,#b07d2b 50% 100%)}
 .swatch-minimal{background:linear-gradient(135deg,#3f3f46 0 50%,#e4e4e7 50% 100%)}
 .swatch-baroque{background:linear-gradient(135deg,#6d4b6b 0 50%,#a9852f 50% 100%)}
-.theme-meta{display:flex;flex-direction:column;line-height:1.25}
-.theme-meta strong{font-size:.9rem}
-.theme-meta small{font-size:.74rem;color:var(--soft)}
+.theme-meta{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.theme-meta strong{font-size:.92rem;font-weight:600}
+.theme-meta small{font-size:.75rem;color:var(--ink-soft)}
 
-/* customizer tema */
-.customizer{margin-top:18px;border-top:1px dashed var(--line);padding-top:18px}
-.customizer-head h3{font-size:.98rem;margin:0}
-.cz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
-.cz-grid .field label{font-size:.76rem}
-.cz-grid input[type=color]{width:100%;height:40px;padding:3px;border:1.5px solid var(--line);border-radius:9px;background:#fff;cursor:pointer}
-.cz-grid select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.84rem;background:#fff}
-.cz-preview{margin-top:16px;border:1.5px solid var(--line);border-radius:12px;padding:20px;text-align:center;transition:background .2s,color .2s}
-.cz-pv-script{display:block;font-family:'Great Vibes',cursive;font-size:2.1rem;line-height:1.1;transition:font-family .2s}
-.cz-pv-serif{display:block;font-size:.82rem;letter-spacing:.22em;text-transform:uppercase;opacity:.7;margin-top:6px;transition:font-family .2s}
-.cz-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-.cz-actions input{flex:1;min-width:170px;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem}
-.cz-actions input:focus{outline:none;border-color:var(--sage)}
+/* ---------- SECTION DIVIDER ---------- */
+.subhead{display:flex;align-items:center;gap:12px;margin:28px 0 16px}
+.subhead h3{font-family:var(--serif);font-size:1.08rem;font-weight:500;white-space:nowrap}
+.subhead::after{content:'';flex:1;height:1px;background:var(--line)}
 
-/* daftar tema kustom */
-.custom-themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
-.ct-item{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
-.ct-item.active{border-color:var(--sage);background:rgba(107,122,94,.08)}
-.ct-swatch{flex:none;width:38px;height:38px;border-radius:9px;border:1px solid rgba(0,0,0,.08)}
-.ct-meta{display:flex;flex-direction:column;line-height:1.25;min-width:0;flex:1}
-.ct-meta strong{font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ct-meta small{font-size:.72rem;color:var(--soft)}
-.ct-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
-.ct-btn{padding:4px 10px;border:1.5px solid var(--line);background:transparent;border-radius:7px;font-size:.72rem;font-weight:600;color:var(--soft);cursor:pointer}
-.ct-btn.use{color:var(--sage);border-color:var(--sage)}
-.ct-btn.use:hover{background:rgba(107,122,94,.1)}
-.ct-btn.del{color:var(--red);border-color:rgba(192,97,74,.4)}
-.ct-btn.del:hover{background:rgba(192,97,74,.08)}
+/* ---------- CUSTOMIZER ---------- */
+.customizer{margin-top:6px}
+.cz-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+.cz-grid .field label{font-size:.74rem}
+.cz-grid .field.full{grid-column:1/-1}
+.cz-grid input[type=color]{width:100%;height:46px;padding:4px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  background:var(--card-2);cursor:pointer}
+.cz-grid select{width:100%;padding:11px 12px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:.86rem;background:var(--card-2);min-height:46px}
+.cz-swatch-row{display:flex;align-items:center;gap:10px}
+.cz-swatch-row input[type=color]{flex:1}
+.cz-contrast{grid-column:1/-1;display:flex;align-items:center;gap:9px;font-size:.78rem;font-weight:600;
+  padding:10px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--line)}
+.cz-contrast.ok{background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage-ink);border-color:color-mix(in srgb,var(--sage) 35%,transparent)}
+.cz-contrast.warn{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent)}
+.cz-contrast.bad{background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+.cz-contrast .sw{width:16px;height:16px;border-radius:5px;border:1px solid rgba(0,0,0,.15);flex:none}
+.cz-preview{margin-top:16px;border:1.5px solid var(--line);border-radius:var(--radius);padding:26px 20px;text-align:center;
+  background:var(--card-2);transition:background .2s,color .2s}
+.cz-pv-script{display:block;font-family:'Great Vibes',cursive;font-size:clamp(1.9rem,8vw,2.5rem);line-height:1.1;transition:font-family .2s}
+.cz-pv-serif{display:block;font-size:.8rem;letter-spacing:.22em;text-transform:uppercase;opacity:.7;margin-top:8px;transition:font-family .2s}
+.cz-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:18px}
+.cz-actions input{flex:1;padding:12px 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:.9rem;background:var(--card-2);min-height:46px}
+.cz-actions input:focus{outline:none;border-color:var(--sage);background:var(--card)}
+.cz-actions .btn-sm{width:100%}
 
-/* upload musik */
-.music-row{display:flex;gap:8px;align-items:stretch}
-.music-row input{flex:1;min-width:0;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem}
-.music-row input:focus{outline:none;border-color:var(--sage)}
-.btn-upload{flex:none;display:inline-flex;align-items:center;padding:0 16px;border-radius:10px;background:var(--sage);color:#fff;font-weight:600;font-size:.84rem;cursor:pointer;white-space:nowrap;transition:background .18s}
-.btn-upload:hover{background:#556349}
-.btn-upload.busy{opacity:.6;pointer-events:none}
+/* ---------- CUSTOM THEME LIST ---------- */
+.custom-themes{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
+.ct-item{position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line);
+  border-radius:var(--radius);background:var(--card-2)}
+.ct-item.active{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 8%,var(--card))}
+.ct-item.active::before{content:'Dipakai';position:absolute;top:-9px;left:14px;background:var(--sage);color:#fbfaf5;
+  font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 9px;border-radius:999px}
+.ct-swatch{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid rgba(0,0,0,.09)}
+.ct-meta{display:flex;flex-direction:column;line-height:1.3;min-width:0;flex:1}
+.ct-meta strong{font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-meta small{font-size:.72rem;color:var(--ink-soft)}
+.ct-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.ct-btn{min-height:34px;padding:5px 12px;border:1.5px solid var(--line-strong);background:var(--card);border-radius:8px;
+  font-size:.72rem;font-weight:600;color:var(--ink-soft);transition:all .16s}
+.ct-btn.use{color:var(--sage-ink);border-color:color-mix(in srgb,var(--sage) 50%,var(--line));}
+.ct-btn.use:hover{background:color-mix(in srgb,var(--sage) 12%,var(--card))}
+.ct-btn.del{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.ct-btn.del:hover{background:color-mix(in srgb,var(--red) 8%,transparent)}
 
-/* tabel responsif di mobile */
-.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-@media (max-width:640px){
-  .wrap{padding:18px 14px 60px}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .stat .n{font-size:1.5rem}
-  .card{padding:16px}
-  .tab{padding:8px 14px;font-size:.8rem}
-  th,td{padding:9px 8px;white-space:nowrap}
-  td.wrap-cell{white-space:normal;min-width:160px;max-width:220px}
-  .topbar{padding:12px 14px}
-  .row-form input,.row-form select{min-width:100%}
+/* ---------- UPLOAD / MEDIA ---------- */
+.media-row{display:flex;gap:8px;align-items:stretch}
+.media-row input{flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:.9rem;background:var(--card-2);min-height:46px}
+.media-row input:focus{outline:none;border-color:var(--sage);background:var(--card)}
+.btn-upload{flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;
+  border-radius:var(--radius-sm);background:var(--sage);color:#fbfaf5;font-weight:600;font-size:.84rem;cursor:pointer;
+  white-space:nowrap;transition:background .18s}
+.btn-upload:hover{background:var(--sage-ink)}
+.btn-upload.busy{opacity:.55;pointer-events:none}
+.bg-thumb{margin-top:10px;width:100%;max-width:280px;aspect-ratio:16/10;border-radius:var(--radius-sm);border:1.5px solid var(--line);
+  background:var(--card-2) center/cover no-repeat;display:none}
+.bg-thumb.show{display:block}
+
+/* ---------- TOAST & EMPTY ---------- */
+.empty{text-align:center;color:var(--ink-soft);padding:34px 20px;font-size:.88rem;
+  border:1.5px dashed var(--line-strong);border-radius:var(--radius);background:var(--card-2)}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(90px);
+  background:var(--sage-ink);color:#fbfaf5;padding:13px 24px;border-radius:999px;font-size:.86rem;font-weight:500;
+  opacity:0;transition:all .35s var(--ease);z-index:200;box-shadow:0 18px 40px -18px rgba(0,0,0,.6);max-width:calc(100vw - 32px);text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+.sticky-save{position:sticky;bottom:12px;margin-top:8px;z-index:5}
+.sticky-save .btn-sm{width:100%;box-shadow:0 12px 30px -14px var(--sage-ink)}
+
+/* ---------- RESPONSIVE ---------- */
+@media (min-width:560px){
+  .row-form{grid-template-columns:1fr 1fr auto;align-items:center}
+  .row-form .btn-sm{width:auto}
+  .theme-picker{grid-template-columns:repeat(2,1fr)}
+  .cz-actions{grid-template-columns:1fr auto}
+  .cz-actions .btn-sm{width:auto}
+  .custom-themes{grid-template-columns:repeat(2,1fr)}
+}
+@media (min-width:760px){
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .form-grid{grid-template-columns:repeat(2,1fr);gap:16px}
+  .theme-picker{grid-template-columns:repeat(2,1fr)}
+  .cz-grid{grid-template-columns:repeat(3,1fr)}
+  .row-form{grid-template-columns:1.6fr 1fr .9fr .6fr auto}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
 </style>
 </head>
@@ -168,31 +299,42 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
 <!-- LOGIN -->
 <div id="loginView" class="login-wrap">
   <div class="login-box">
-    <h1>💍 Admin Undangan</h1>
-    <p>Masukkan password untuk mengelola undangan</p>
-    <input type="password" id="pw" placeholder="Password" autocomplete="current-password" />
-    <button class="btn" id="loginBtn">Masuk</button>
+    <div class="login-mark">Undangan Pernikahan</div>
+    <p class="lead">Masuk untuk mengelola RSVP, tamu, dan tampilan undangan Anda.</p>
+    <label class="field-label" for="pw">Password admin</label>
+    <div class="pw-wrap">
+      <input type="password" id="pw" placeholder="••••••••" autocomplete="current-password" />
+      <button type="button" class="pw-toggle" id="pwToggle" aria-label="Tampilkan password" title="Tampilkan password">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button class="btn" id="loginBtn">Masuk ke Dashboard</button>
     <p class="err" id="loginErr"></p>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashView" class="hidden" style="display:none">
+<!-- DASHBOARD: disuntikkan ke DOM hanya setelah login berhasil (lihat enterDashboard).
+     Markup ini ada di dalam <template> yang INERT — isinya tidak menjadi bagian DOM
+     sampai di-clone, sehingga tidak terlihat di Inspect Element sebelum autentikasi. -->
+<div id="app"></div>
+
+<template id="dashTemplate">
+  <div id="dashView">
   <div class="topbar">
-    <div>
-      <h1>Dashboard Undangan</h1>
+    <div class="brand">
+      <h1>Dashboard</h1>
       <span class="sub" id="coupleSub"></span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <a class="btn-ghost" id="viewInvite" href="#" target="_blank" style="text-decoration:none;display:inline-block">Lihat Undangan</a>
+    <div class="actions">
+      <a class="btn-ghost" id="viewInvite" href="#" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center">Lihat Undangan</a>
       <button class="btn-ghost" id="logoutBtn">Keluar</button>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="stats-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+    <div class="stats-head">
       <span class="live" id="liveIndicator"><span class="dot"></span> Live</span>
-      <label class="live" style="cursor:pointer"><input type="checkbox" id="liveToggle" checked /> Perbarui otomatis</label>
+      <label class="toggle"><input type="checkbox" id="liveToggle" checked /> Perbarui otomatis</label>
     </div>
     <div class="stats" id="stats"></div>
 
@@ -228,7 +370,7 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
           <select id="gCat">
             <option>Keluarga</option><option>Kawan</option><option>Kantor</option><option>Tamu</option>
           </select>
-          <input id="gQuota" type="number" min="1" value="2" placeholder="Kuota" style="max-width:100px" />
+          <input id="gQuota" type="number" min="1" value="2" placeholder="Kuota" />
           <button class="btn-sm" id="addGuest">Tambah</button>
         </div>
         <div id="guestsTable" class="table-scroll"></div>
@@ -266,8 +408,12 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
       </div>
 
       <div class="card">
-        <h2>Pilih Desain Undangan</h2>
-        <p class="hint" style="margin-top:-6px;margin-bottom:14px">Tema mengubah warna, latar, dan nuansa halaman undangan (bukan admin).</p>
+        <div class="card-head">
+          <div>
+            <h2>Desain Undangan</h2>
+            <p class="hint" style="margin-top:2px">Tema mengubah warna, latar, dan nuansa halaman tamu. Pilih satu, lalu simpan.</p>
+          </div>
+        </div>
         <div class="theme-picker" id="themePicker">
           <label class="theme-opt" data-theme="botanical">
             <input type="radio" name="theme" value="botanical" />
@@ -302,14 +448,16 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
           <!-- tema kustom milik client akan disuntik ke sini lewat JS -->
         </div>
 
+        <div class="custom-themes" id="customThemes"></div>
+
         <div class="customizer">
-          <div class="customizer-head">
-            <h3>✨ Buat Tema Sendiri</h3>
-            <p class="hint" style="margin:4px 0 0">Sesuaikan warna &amp; font di atas tema dasar, lalu simpan sebagai tema Anda sendiri.</p>
+          <div class="subhead">
+            <h3>Buat Tema Sendiri</h3>
           </div>
+          <p class="hint">Mulai dari salah satu tema di atas, ubah warna &amp; fontnya, lalu simpan sebagai tema Anda sendiri. Nilai awal otomatis mengikuti tema dasar agar teks tetap terbaca.</p>
 
           <div class="cz-grid">
-            <div class="field"><label>Berdasarkan tema</label>
+            <div class="field full"><label>Berdasarkan tema</label>
               <select id="czBase">
                 <option value="botanical">Botanical</option>
                 <option value="midnight">Midnight Luxe</option>
@@ -319,6 +467,15 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
                 <option value="baroque">Baroque Gold</option>
               </select>
             </div>
+            <div class="field"><label>Latar halaman</label>
+              <input type="color" id="czCream" data-token="--cream" />
+            </div>
+            <div class="field"><label>Warna teks</label>
+              <input type="color" id="czInk" data-token="--ink" />
+            </div>
+            <div class="field"><label>Permukaan kartu</label>
+              <input type="color" id="czSurface" data-token="--surface" />
+            </div>
             <div class="field"><label>Aksen (tombol &amp; highlight)</label>
               <input type="color" id="czSage" data-token="--sage" />
             </div>
@@ -327,15 +484,6 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
             </div>
             <div class="field"><label>Emas / aksen sekunder</label>
               <input type="color" id="czGold" data-token="--gold" />
-            </div>
-            <div class="field"><label>Latar (background)</label>
-              <input type="color" id="czCream" data-token="--cream" />
-            </div>
-            <div class="field"><label>Permukaan kartu</label>
-              <input type="color" id="czSurface" data-token="--surface" />
-            </div>
-            <div class="field"><label>Warna teks</label>
-              <input type="color" id="czInk" data-token="--ink" />
             </div>
             <div class="field"><label>Font judul</label>
               <select id="czSerif" data-token="--serif">
@@ -357,6 +505,11 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
             </div>
           </div>
 
+          <div class="cz-contrast ok" id="czContrast">
+            <span class="sw" id="czContrastSw"></span>
+            <span id="czContrastText">Kontras teks terbaca baik.</span>
+          </div>
+
           <div class="cz-preview" id="czPreview">
             <span class="cz-pv-script" id="czPvScript">Rizky &amp; Amelia</span>
             <span class="cz-pv-serif" id="czPvSerif">Undangan Pernikahan</span>
@@ -367,37 +520,116 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
             <button class="btn-sm" id="czSaveNew">Simpan sebagai Tema Baru</button>
           </div>
         </div>
-
-        <div class="custom-themes" id="customThemes"></div>
       </div>
 
       <div class="card">
-        <h2>Setelan</h2>
+        <div class="card-head">
+          <div>
+            <h2>Latar Belakang</h2>
+            <p class="hint" style="margin-top:2px">Unggah gambar latar sendiri, terpisah untuk tampilan desktop &amp; ponsel. Kosongkan bila ingin tetap memakai gambar bawaan tema.</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field full">
+            <label>Gambar latar — Desktop</label>
+            <div class="media-row">
+              <input id="bgDesktop" placeholder="https://... atau unggah" />
+              <label class="btn-upload">
+                <input type="file" id="bgDesktopFile" accept="image/*" hidden />
+                <span id="bgDesktopLabel">Unggah</span>
+              </label>
+            </div>
+            <div class="bg-thumb" id="bgDesktopThumb"></div>
+          </div>
+          <div class="field full">
+            <label>Gambar latar — Ponsel <span style="font-weight:400">(opsional, untuk layar sempit)</span></label>
+            <div class="media-row">
+              <input id="bgMobile" placeholder="Bila kosong, ponsel memakai gambar desktop" />
+              <label class="btn-upload">
+                <input type="file" id="bgMobileFile" accept="image/*" hidden />
+                <span id="bgMobileLabel">Unggah</span>
+              </label>
+            </div>
+            <div class="bg-thumb" id="bgMobileThumb"></div>
+            <p class="hint">JPG, PNG, WEBP, AVIF, atau GIF — maks 6 MB. Untuk ponsel, gambar potret (tegak) lebih pas.</p>
+          </div>
+          <div class="field"><label>Warna lapisan (overlay)</label><input type="color" id="bgOverlay" value="#1c2016" /></div>
+          <div class="field"><label>Kekuatan overlay</label>
+            <select id="bgOverlayOpacity">
+              <option value="0">Tanpa overlay</option>
+              <option value="0.2">Ringan (20%)</option>
+              <option value="0.35">Sedang (35%)</option>
+              <option value="0.5">Kuat (50%)</option>
+              <option value="0.65">Sangat kuat (65%)</option>
+            </select>
+          </div>
+          <div class="field"><label>Posisi</label>
+            <select id="bgPosition">
+              <option value="center center">Tengah</option>
+              <option value="center top">Atas</option>
+              <option value="center bottom">Bawah</option>
+              <option value="left center">Kiri</option>
+              <option value="right center">Kanan</option>
+            </select>
+          </div>
+          <div class="field"><label>Penyesuaian ukuran</label>
+            <select id="bgSize">
+              <option value="cover">Isi penuh (cover)</option>
+              <option value="contain">Muat seluruhnya (contain)</option>
+              <option value="auto">Ukuran asli</option>
+            </select>
+          </div>
+          <div class="field"><label>Ulang gambar</label>
+            <select id="bgRepeat">
+              <option value="no-repeat">Tanpa ulang</option>
+              <option value="repeat">Ulang (pola)</option>
+            </select>
+          </div>
+          <div class="field"><label>Efek saat menggulir</label>
+            <select id="bgAttachment">
+              <option value="scroll">Normal</option>
+              <option value="fixed">Tetap (parallax)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Setelan Lain</h2>
         <div class="form-grid">
           <div class="field full"><label>Kalimat Kutipan (quote)</label><textarea id="sQuote" rows="2"></textarea></div>
           <div class="field full">
             <label>Musik Latar</label>
-            <div class="music-row">
+            <div class="media-row">
               <input id="sMusic" placeholder="https://... atau unggah file di samping" />
               <label class="btn-upload">
                 <input type="file" id="musicFile" accept="audio/*" hidden />
-                <span id="musicUploadLabel">⬆ Unggah</span>
+                <span id="musicUploadLabel">Unggah</span>
               </label>
             </div>
-            <p class="hint">Unggah file audio (MP3/M4A/OGG/WAV, maks 10 MB) <em>atau</em> tempel URL langsung. Setelah unggah, nama file otomatis terisi.</p>
-            <audio id="musicPreview" controls hidden style="width:100%;margin-top:8px"></audio>
+            <p class="hint">Unggah audio (MP3/M4A/OGG/WAV, maks 10 MB) <em>atau</em> tempel URL langsung.</p>
+            <audio id="musicPreview" controls hidden style="width:100%;margin-top:10px"></audio>
           </div>
           <div class="field"><label>Password Admin</label><input id="sPass" type="password" placeholder="Kosongkan bila tidak diganti" /></div>
         </div>
         <p class="hint">Password disimpan terenkripsi (hash scrypt). Minimal 6 karakter. Kosongkan jika tidak ingin mengganti.</p>
       </div>
 
-      <button class="btn-sm" id="saveAll" style="min-width:200px">Simpan Semua Perubahan</button>
+      <div class="sticky-save">
+        <button class="btn-sm" id="saveAll">Simpan Semua Perubahan</button>
+      </div>
     </div>
   </div>
-</div>
+  </div><!-- /#dashView -->
+</template>
 
 <div class="toast" id="toast"></div>
+
+<div id="fatalError" style="display:none;position:fixed;inset:auto 12px 12px 12px;z-index:300;background:#fff;border:1.5px solid var(--red);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+  <strong style="font-family:var(--serif);font-size:1.05rem">Terjadi kesalahan pada halaman ini</strong>
+  <p class="hint" id="fatalErrorMsg" style="margin-top:4px"></p>
+  <button class="btn-sm" onclick="location.reload()" style="margin-top:10px">Muat ulang halaman</button>
+</div>
 
 <script>
 const $ = (s) => document.querySelector(s);
@@ -427,6 +659,16 @@ async function api(url, opts = {}) {
 const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
 
+/* Jaring pengaman: bila ada error JS tak terduga, jangan biarkan halaman
+   tampak kosong. Tampilkan pesan yang bisa dibaca & tombol muat ulang. */
+window.addEventListener('error', (e) => {
+  const box = document.getElementById('fatalError');
+  if (!box) return;
+  box.style.display = 'block';
+  const d = document.getElementById('fatalErrorMsg');
+  if (d) d.textContent = (e && e.message) ? e.message : 'Terjadi kesalahan tak terduga.';
+});
+
 /* ---------- LOGIN ---------- */
 async function tryLogin(pw) {
   const res = await fetch('/api/admin/login', {
@@ -439,6 +681,12 @@ async function tryLogin(pw) {
 
 $('#loginBtn').addEventListener('click', doLogin);
 $('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+$('#pwToggle').addEventListener('click', () => {
+  const i = $('#pw');
+  const show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  $('#pwToggle').setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+});
 
 async function doLogin() {
   const pw = $('#pw').value;
@@ -453,17 +701,26 @@ async function doLogin() {
   }
 }
 
-$('#logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('wedding_admin_pw');
-  location.reload();
-});
-
 /* ---------- DASHBOARD ---------- */
 let liveTimer = null;
+let dashBound = false;
 
+/**
+ * Suntikkan markup dashboard ke DOM (dari <template> yang inert) lalu pasang
+ * event-nya. Dipanggil HANYA setelah login berhasil, sehingga sebelum
+ * autentikasi tidak ada struktur dashboard sama sekali di DOM (aman dari
+ * Inspect Element / sumber tampilan).
+ */
 function enterDashboard() {
-  $('#loginView').style.display = 'none';
-  $('#dashView').style.display = '';
+  const login = $('#loginView');
+  if (login) login.remove();
+  if (!dashBound) {
+    const app = $('#app');
+    const tpl = $('#dashTemplate');
+    if (app && tpl && !$('#dashView')) app.appendChild(tpl.content.cloneNode(true));
+    bindDashboard();
+    dashBound = true;
+  }
   loadAll();
   startLive();
 }
@@ -495,9 +752,44 @@ async function refreshLive() {
   }
 }
 
+/* Pasang semua event dashboard. Dipanggil sekali, SETELAH markup dashboard
+   disuntikkan ke DOM oleh enterDashboard(). */
+function bindDashboard() {
 $('#liveToggle').addEventListener('change', (e) => {
   if (e.target.checked) startLive(); else stopLive();
 });
+$('#logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('wedding_admin_pw');
+  location.reload();
+});
+$('#czBase').addEventListener('change', () => fillCustomizerFromBase($('#czBase').value));
+document.querySelectorAll('.cz-grid [data-token]').forEach((el) => {
+  el.addEventListener('input', updateCzPreview);
+  el.addEventListener('change', updateCzPreview);
+});
+$('#bgDesktop').addEventListener('input', (e) => updateBgThumb('#bgDesktopThumb', e.target.value.trim()));
+$('#bgMobile').addEventListener('input', (e) => updateBgThumb('#bgMobileThumb', e.target.value.trim()));
+$('#bgDesktopFile').addEventListener('change', (e) => { uploadBgImage(e.target.files[0], '#bgDesktop', '#bgDesktopThumb', '#bgDesktopLabel'); e.target.value = ''; });
+$('#bgMobileFile').addEventListener('change', (e) => { uploadBgImage(e.target.files[0], '#bgMobile', '#bgMobileThumb', '#bgMobileLabel'); e.target.value = ''; });
+$('#musicFile').addEventListener('change', onMusicFileChange);
+$('#addGuest').addEventListener('click', onAddGuest);
+$('#saveAll').addEventListener('click', onSaveAll);
+$('#czSaveNew').addEventListener('click', onSaveNewTheme);
+document.querySelectorAll('.tab').forEach((t) => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));
+    t.classList.add('active');
+    $('#panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+document.querySelectorAll('#themePicker input[name="theme"]').forEach((r) => {
+  r.addEventListener('change', () => renderCustomThemes());
+});
+$('#exportRsvp').addEventListener('click', () => downloadCSV('/api/admin/export/rsvp.csv', 'rsvp.csv'));
+$('#exportGuests').addEventListener('click', () => downloadCSV('/api/admin/export/guests.csv', 'tamu.csv'));
+$('#exportWishes').addEventListener('click', () => downloadCSV('/api/admin/export/wishes.csv', 'ucapan.csv'));
+}
 
 async function loadAll() {
   try {
@@ -581,6 +873,17 @@ async function loadCouple() {
   $('#cStory').value = c.love_story || '';
   $('#sQuote').value = d.settings.quote || '';
   $('#sMusic').value = d.settings.music_url || '';
+  // Latar kustom (desktop + mobile + kontrol pendukung)
+  $('#bgDesktop').value = d.settings.background_image || '';
+  $('#bgMobile').value = d.settings.background_image_mobile || '';
+  if (d.settings.background_overlay) $('#bgOverlay').value = d.settings.background_overlay;
+  if (d.settings.background_overlay_opacity !== '') $('#bgOverlayOpacity').value = d.settings.background_overlay_opacity;
+  if (d.settings.background_position) $('#bgPosition').value = d.settings.background_position;
+  if (d.settings.background_size) $('#bgSize').value = d.settings.background_size;
+  if (d.settings.background_repeat) $('#bgRepeat').value = d.settings.background_repeat;
+  if (d.settings.background_attachment) $('#bgAttachment').value = d.settings.background_attachment;
+  updateBgThumb('#bgDesktopThumb', d.settings.background_image);
+  updateBgThumb('#bgMobileThumb', d.settings.background_image_mobile);
   const theme = d.settings.theme || 'botanical';
   document.querySelectorAll('#themePicker input[name="theme"]').forEach((r) => { r.checked = r.value === theme; });
   renderCustomThemes();
@@ -644,21 +947,57 @@ function updateCzPreview() {
   const ps = $('#czPvScript'), pf = $('#czPvSerif');
   if (ps) { ps.style.fontFamily = val('--script'); ps.style.color = val('--sage-dark'); }
   if (pf) pf.style.fontFamily = val('--serif');
+  updateContrast(val('--ink'), val('--cream'));
+}
+
+/* Hitung rasio kontras WCAG (perkiraan cepat) & beri peringatan bila teks
+   berpotensi sukar dibaca. Ini menjaga user tidak membuat teks tak terbaca
+   tanpa sadar — mis. latar hitam + teks hitam. */
+function contrastRatio(hex1, hex2) {
+  const toRgb = (h) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(h || ''));
+    if (!m) return null;
+    return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
+  };
+  const lum = (rgb) => {
+    const [r, g, b] = rgb.map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const a = toRgb(hex1), b = toRgb(hex2);
+  if (!a || !b) return null;
+  const l1 = lum(a), l2 = lum(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function updateContrast(inkHex, bgHex) {
+  const box = $('#czContrast');
+  if (!box) return;
+  const ratio = contrastRatio(inkHex, bgHex);
+  const sw = $('#czContrastSw'), txt = $('#czContrastText');
+  if (sw) { sw.style.background = bgHex; sw.style.boxShadow = `inset 0 0 0 2px ${inkHex}`; }
+  box.classList.remove('ok', 'warn', 'bad');
+  if (ratio == null) { box.classList.add('ok'); if (txt) txt.textContent = 'Kontras teks tidak dapat dihitung.'; return; }
+  const r = ratio.toFixed(1);
+  if (ratio >= 4.5) { box.classList.add('ok'); if (txt) txt.textContent = `Kontras teks aman (rasio ${r}:1).`; }
+  else if (ratio >= 3) { box.classList.add('warn'); if (txt) txt.textContent = `Kontras agak rendah (rasio ${r}:1). Teks kecil mungkin sukar dibaca — pertimbangkan pertegas warna teks/latar.`; }
+  else { box.classList.add('bad'); if (txt) txt.textContent = `Kontras terlalu rendah (rasio ${r}:1). Teks akan sukar dibaca — ubah warna teks atau latar.`; }
 }
 
 /** Render daftar tema kustom milik client. */
 function renderCustomThemes() {
   const box = $('#customThemes');
+  if (!box) return;
   if (!CUSTOM_THEMES.length) { box.innerHTML = ''; return; }
+  const activeTheme = (document.querySelector('#themePicker input[name="theme"]:checked') || {}).value || '';
   box.innerHTML = CUSTOM_THEMES.map((t) => {
     const tk = t.tokens || {};
     const a = tk['--sage'] || '#7d8f6d';
     const b = tk['--gold'] || '#b08d47';
-    return `<div class="ct-item" data-ct="${t.id}">
+    return `<div class="ct-item${t.slug === activeTheme ? ' active' : ''}" data-ct="${t.id}">
       <span class="ct-swatch" style="background:linear-gradient(135deg,${esc(a)} 0 50%,${esc(b)} 50% 100%)"></span>
       <span class="ct-meta">
         <strong>${esc(t.name)}</strong>
-        <small>dari ${esc(t.base)}</small>
+        <small>dari tema ${esc(t.base)}</small>
         <span class="ct-actions">
           <button class="ct-btn use" data-use="${t.id}">Pakai</button>
           <button class="ct-btn" data-edit="${t.id}">Edit</button>
@@ -676,14 +1015,10 @@ async function loadCustomThemes() {
   } catch (e) { /* diamkan */ }
 }
 
-/* interaksi customizer */
-$('#czBase').addEventListener('change', () => fillCustomizerFromBase($('#czBase').value));
-document.querySelectorAll('.cz-grid [data-token]').forEach((el) => {
-  el.addEventListener('input', updateCzPreview);
-  el.addEventListener('change', updateCzPreview);
-});
+/* interaksi customizer (binding dipasang di bindDashboard) */
 
-$('#czSaveNew').addEventListener('click', async () => {
+/* Simpan tema baru — dipanggil dari bindDashboard */
+async function onSaveNewTheme() {
   const name = $('#czName').value.trim();
   if (!name) return toast('Beri nama tema Anda dulu.');
   try {
@@ -697,7 +1032,7 @@ $('#czSaveNew').addEventListener('click', async () => {
     toast('Tema baru diterapkan ke undangan ✓');
     loadCouple();
   } catch (e) { toast(e.message); }
-});
+}
 
 /* aksi pada daftar tema kustom */
 document.addEventListener('click', async (e) => {
@@ -729,8 +1064,42 @@ document.addEventListener('click', async (e) => {
   }
 });
 
+/* ---------- UPLOAD GAMBAR LATAR ---------- */
+// Perbarui pratinjau gambar latar (thumbnail kecil di bawah input).
+function updateBgThumb(sel, url) {
+  const el = $(sel);
+  if (!el) return;
+  if (url) { el.style.backgroundImage = `url("${String(url).replace(/["()]/g, '')}")`; el.classList.add('show'); }
+  else { el.style.backgroundImage = ''; el.classList.remove('show'); }
+}
+
+/* Pratinjau gambar latar diperbarui otomatis lewat bindDashboard(). */
+
+async function uploadBgImage(file, inputSel, thumbSel, labelSel) {
+  if (!file) return;
+  const label = $(labelSel);
+  const fd = new FormData();
+  fd.append('file', file);
+  const prev = label.textContent;
+  label.textContent = 'Mengunggah…';
+  label.parentElement.classList.add('busy');
+  try {
+    const res = await fetch('/api/admin/upload/image', {
+      method: 'POST', headers: { 'x-admin-password': PW, 'x-account': SLUG }, body: fd,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal mengunggah');
+    $(inputSel).value = data.url;
+    updateBgThumb(thumbSel, data.url);
+    toast('Gambar diunggah ✓ Jangan lupa Simpan Perubahan.');
+  } catch (err) { toast(err.message); }
+  finally { label.textContent = prev; label.parentElement.classList.remove('busy'); }
+}
+
+/* (binding input file gambar dipasang di bindDashboard) */
+
 /* ---------- UPLOAD MUSIK ---------- */
-$('#musicFile').addEventListener('change', async (e) => {
+async function onMusicFileChange(e) {
   const file = e.target.files[0];
   if (!file) return;
   const label = $('#musicUploadLabel');
@@ -753,14 +1122,14 @@ $('#musicFile').addEventListener('change', async (e) => {
   } catch (err) {
     toast(err.message);
   } finally {
-    label.textContent = '⬆ Unggah';
+    label.textContent = 'Unggah';
     label.parentElement.classList.remove('busy');
     e.target.value = '';
   }
-});
+}
 
 /* ---------- ACTIONS ---------- */
-$('#addGuest').addEventListener('click', async () => {
+async function onAddGuest() {
   const name = $('#gName').value.trim();
   if (!name) return toast('Nama tamu wajib diisi.');
   try {
@@ -771,7 +1140,7 @@ $('#addGuest').addEventListener('click', async () => {
     toast('Tamu ditambahkan ✓');
     loadGuests(); loadSummary();
   } catch (e) { toast(e.message); }
-});
+}
 
 document.addEventListener('click', async (e) => {
   const del = e.target.closest('[data-del]');
@@ -794,7 +1163,7 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-$('#saveAll').addEventListener('click', async () => {
+async function onSaveAll() {
   try {
     await api('/api/admin/couple', { method: 'PUT', body: JSON.stringify({
       groom_name: $('#cGroomName').value, groom_full: $('#cGroomFull').value,
@@ -808,22 +1177,22 @@ $('#saveAll').addEventListener('click', async () => {
     await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({
       quote: $('#sQuote').value, music_url: $('#sMusic').value, admin_password: $('#sPass').value || undefined,
       theme: (document.querySelector('#themePicker input[name="theme"]:checked') || {}).value,
+      background_image: $('#bgDesktop').value,
+      background_image_mobile: $('#bgMobile').value,
+      background_overlay: $('#bgOverlay').value,
+      background_overlay_opacity: $('#bgOverlayOpacity').value,
+      background_position: $('#bgPosition').value,
+      background_size: $('#bgSize').value,
+      background_repeat: $('#bgRepeat').value,
+      background_attachment: $('#bgAttachment').value,
     })});
     toast('Perubahan disimpan ✓');
     if ($('#sPass').value) { PW = $('#sPass').value; sessionStorage.setItem('wedding_admin_pw', PW); }
     loadCouple();
   } catch (e) { toast(e.message); }
-});
+}
 
-/* tabs */
-document.querySelectorAll('.tab').forEach((t) => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));
-    t.classList.add('active');
-    $('#panel-' + t.dataset.tab).classList.add('active');
-  });
-});
+/* (handler tab & theme picker dipasang di bindDashboard) */
 
 /* ---------- EXPORT CSV ---------- */
 async function downloadCSV(url, filename) {
@@ -842,9 +1211,7 @@ async function downloadCSV(url, filename) {
   } catch (e) { toast(e.message); }
 }
 
-$('#exportRsvp').addEventListener('click', () => downloadCSV('/api/admin/export/rsvp.csv', 'rsvp.csv'));
-$('#exportGuests').addEventListener('click', () => downloadCSV('/api/admin/export/guests.csv', 'tamu.csv'));
-$('#exportWishes').addEventListener('click', () => downloadCSV('/api/admin/export/wishes.csv', 'ucapan.csv'));
+/* (handler export dipasang di bindDashboard) */
 
 /* auto login kalau password tersimpan */
 if (PW) tryLogin(PW).then((ok) => { if (ok) enterDashboard(); else sessionStorage.removeItem('wedding_admin_pw'); });

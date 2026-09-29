@@ -29,6 +29,12 @@ a{color:var(--gold)}
 .login-box p{color:var(--soft);font-size:.85rem;margin-bottom:24px}
 .login-box input{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);margin-bottom:14px}
 .login-box input:focus{outline:none;border-color:var(--gold)}
+.login-box label.flabel{display:block;text-align:left;font-size:.76rem;font-weight:600;color:var(--soft);margin-bottom:6px}
+.pw-wrap{position:relative;margin-bottom:14px}
+.pw-wrap input{margin-bottom:0;padding-right:46px}
+.pw-toggle{position:absolute;top:0;right:0;height:100%;width:44px;display:grid;place-items:center;border:none;background:transparent;color:var(--soft);cursor:pointer}
+.pw-toggle:hover{color:var(--gold)}
+.pw-toggle svg{width:20px;height:20px}
 .btn{width:100%;padding:13px;border:none;border-radius:12px;background:var(--gold);color:#20190a;font-weight:700;transition:transform .15s,filter .2s}
 .btn:hover{filter:brightness(1.06)} .btn:active{transform:scale(.99)}
 .err{color:var(--red);font-size:.83rem;margin-top:12px;min-height:1.1em}
@@ -98,14 +104,27 @@ tr:last-child td{border-bottom:none}
     <div class="mark">&#10086;</div>
     <h1>Panel Pemilik</h1>
     <p>Masuk untuk mengelola akun client</p>
-    <input type="password" id="pw" placeholder="Password owner" autocomplete="current-password" />
+    <label class="flabel" for="username">Username</label>
+    <input type="text" id="username" placeholder="owner" autocomplete="username" autocapitalize="none" spellcheck="false" />
+    <label class="flabel" for="pw">Password</label>
+    <div class="pw-wrap">
+      <input type="password" id="pw" placeholder="Password owner" autocomplete="current-password" />
+      <button type="button" class="pw-toggle" id="pwToggle" aria-label="Tampilkan password" title="Tampilkan password">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
     <button class="btn" id="loginBtn">Masuk</button>
     <p class="err" id="loginErr"></p>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashView" class="hidden">
+<!-- DASHBOARD: disuntikkan ke DOM hanya setelah login berhasil (lihat showDash).
+     Markup di dalam <template> bersifat INERT — tidak masuk DOM sampai di-clone,
+     sehingga tidak bocor lewat Inspect Element sebelum autentikasi. -->
+<div id="app"></div>
+
+<template id="dashTemplate">
+<div id="dashView">
   <div class="topbar">
     <div class="brand">
       <b>Panel Pemilik</b>
@@ -191,8 +210,15 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 </div>
+</template>
 
 <div id="toast"></div>
+
+<div id="fatalError" style="display:none;position:fixed;inset:auto 12px 12px 12px;z-index:300;background:var(--panel);border:1.5px solid var(--red);border-radius:16px;padding:16px;box-shadow:var(--shadow)">
+  <strong style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">Terjadi kesalahan pada halaman ini</strong>
+  <p class="hint" id="fatalErrorMsg" style="margin-top:4px"></p>
+  <button class="btn-gold" onclick="location.reload()" style="margin-top:10px;width:auto;padding:10px 20px">Muat ulang halaman</button>
+</div>
 
 <script>
 'use strict';
@@ -200,6 +226,15 @@ const $ = (s) => document.querySelector(s);
 let OPW = sessionStorage.getItem('owner_pw') || '';
 
 const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); };
+
+/* Jaring pengaman: tampilkan pesan bila ada error JS, jangan biarkan blank. */
+window.addEventListener('error', (e) => {
+  const box = document.getElementById('fatalError');
+  if (!box) return;
+  box.style.display = 'block';
+  const d = document.getElementById('fatalErrorMsg');
+  if (d) d.textContent = (e && e.message) ? e.message : 'Terjadi kesalahan tak terduga.';
+});
 const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
 async function api(url, opts = {}) {
@@ -210,91 +245,25 @@ async function api(url, opts = {}) {
   return data;
 }
 
-function showDash() { $('#loginView').classList.add('hidden'); $('#dashView').classList.remove('hidden'); loadAll(); }
-
-async function tryLogin(pw) {
-  const res = await fetch('/api/owner/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }) });
-  return res.ok;
-}
-
-async function doLogin() {
-  const pw = $('#pw').value.trim();
-  if (!pw) return;
-  $('#loginErr').textContent = '';
-  const ok = await tryLogin(pw).catch(() => false);
-  if (ok) { OPW = pw; sessionStorage.setItem('owner_pw', pw); showDash(); }
-  else $('#loginErr').textContent = 'Password owner salah.';
-}
-
-$('#loginBtn').addEventListener('click', doLogin);
-$('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
-$('#logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('owner_pw'); location.reload(); });
-
-const THEME_LABEL = { botanical: 'Botanical', midnight: 'Midnight Luxe', blush: 'Ivory Blush', javanese: 'Javanese', minimal: 'Modern Minimal', baroque: 'Baroque Gold' };
-const themeBadge = (t) => `<span class="badge theme"><span class="swatch sw-${esc(t)}"></span>${THEME_LABEL[t] || t}</span>`;
-
-async function loadAll() {
-  try {
-    const accounts = await api('/api/owner/accounts');
-    const totalGuests = accounts.reduce((a, x) => a + (x.guests || 0), 0);
-    const totalRsvp = accounts.reduce((a, x) => a + (x.rsvp || 0), 0);
-    const active = accounts.filter((x) => x.status === 'active').length;
-
-    $('#stats').innerHTML = `
-      <div class="stat"><div class="n gold">${accounts.length}</div><div class="l">Total Undangan</div></div>
-      <div class="stat"><div class="n">${active}</div><div class="l">Aktif</div></div>
-      <div class="stat"><div class="n">${totalGuests}</div><div class="l">Total Tamu</div></div>
-      <div class="stat"><div class="n">${totalRsvp}</div><div class="l">Total RSVP</div></div>`;
-
-    renderAccounts(accounts);
-  } catch (e) {
-    if (e.status === 401) { sessionStorage.removeItem('owner_pw'); location.reload(); }
-    else toast('Error: ' + e.message);
+/* Suntikkan markup dashboard dari <template> (inert) ke DOM HANYA setelah login.
+   Sebelum autentikasi, tidak ada struktur dashboard sama sekali di DOM. */
+let ownerDashBound = false;
+function showDash() {
+  const login = $('#loginView');
+  if (login) login.remove();
+  if (!ownerDashBound) {
+    const app = $('#app');
+    const tpl = $('#dashTemplate');
+    if (app && tpl && !$('#dashView')) app.appendChild(tpl.content.cloneNode(true));
+    bindOwnerDashboard();
+    ownerDashBound = true;
   }
+  loadAll();
 }
 
-function renderAccounts(accounts) {
-  if (!accounts.length) { $('#accountsTable').innerHTML = '<p class="empty">Belum ada undangan. Buat yang pertama di atas.</p>'; return; }
-  const origin = location.origin;
-  const THEMES = [['botanical', 'Botanical'], ['midnight', 'Midnight Luxe'], ['blush', 'Ivory Blush'], ['javanese', 'Javanese'], ['minimal', 'Modern Minimal'], ['baroque', 'Baroque Gold']];
-  const expireCell = (a) => {
-    if (!a.expires_at) return '<span style="font-size:.74rem;color:var(--soft)">Tanpa batas</span>';
-    const d = a.days_left;
-    const cls = d < 0 ? 'suspended' : d <= 14 ? 'theme' : 'active';
-    const label = d < 0 ? `Lewat ${Math.abs(d)} hari` : `${d} hari lagi`;
-    return `<span class="badge ${cls}">${label}</span><br><span style="font-size:.72rem;color:var(--soft)">${esc(a.expires_at)}</span>`;
-  };
-  $('#accountsTable').innerHTML = `
-    <table>
-      <thead><tr><th>Undangan</th><th>Slug / URL</th><th>Template</th><th>Masa Aktif</th><th>Tamu</th><th>Status</th><th>Aksi</th></tr></thead>
-      <tbody>
-      ${accounts.map((a) => `
-        <tr>
-          <td><strong>${esc(a.title || a.slug)}</strong><br><span style="font-size:.72rem;color:var(--soft)">${esc((a.created_at||'').slice(0,10))}</span></td>
-          <td><span class="slug">/u/${esc(a.slug)}</span></td>
-          <td>
-            <select class="f" data-settheme="${a.id}" style="padding:6px 8px;font-size:.8rem;min-width:130px">
-              ${THEMES.map(([v, l]) => `<option value="${v}" ${a.theme === v ? 'selected' : ''}>${l}</option>`).join('')}
-            </select>
-          </td>
-          <td>${expireCell(a)}</td>
-          <td>${a.guests}</td>
-          <td><span class="badge ${esc(a.effective_status || a.status)}">${a.effective_status === 'active' ? 'Aktif' : a.effective_status === 'expired' ? 'Kedaluwarsa' : 'Nonaktif'}</span></td>
-          <td>
-            <div class="acts">
-              <a class="btn-xs" href="/u/${esc(a.slug)}" target="_blank">Lihat</a>
-              <a class="btn-xs" href="/u/${esc(a.slug)}/admin" target="_blank">Admin</a>
-              <button class="btn-xs" data-copy="${esc(origin + '/u/' + a.slug)}">Salin URL</button>
-              <button class="btn-xs" data-extend="${a.id}" data-days="30" data-name="${esc(a.title||a.slug)}">+30 hari</button>
-              <button class="btn-xs" data-reset="${a.id}" data-name="${esc(a.title||a.slug)}">Reset Sandi</button>
-              <button class="btn-xs" data-toggle="${a.id}" data-status="${esc(a.status)}">${a.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}</button>
-              <button class="btn-xs danger" data-del="${a.id}" data-name="${esc(a.title||a.slug)}">Hapus</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
-}
+/* Semua event dashboard dipasang di sini, sekali, setelah markup disuntik. */
+function bindOwnerDashboard() {
+$('#logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('owner_pw'); location.reload(); });
 
 /* ---- create ---- */
 $('#createBtn').addEventListener('click', async () => {
@@ -373,9 +342,101 @@ $('#ownerPassBtn').addEventListener('click', async () => {
     toast('Password owner diperbarui ✓');
   } catch (e) { toast(e.message); }
 });
+}
 
 /* auto-login bila tersimpan */
-if (OPW) tryLogin(OPW).then((ok) => { if (ok) showDash(); else sessionStorage.removeItem('owner_pw'); });
+if (OPW) tryLogin('', OPW).then((ok) => { if (ok) showDash(); else sessionStorage.removeItem('owner_pw'); });
+
+async function tryLogin(user, pw) {
+  const res = await fetch('/api/owner/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: user, password: pw }) });
+  return res.ok;
+}
+
+async function doLogin() {
+  const user = ($('#username').value || '').trim();
+  const pw = $('#pw').value.trim();
+  if (!pw) return;
+  $('#loginErr').textContent = '';
+  const ok = await tryLogin(user, pw).catch(() => false);
+  if (ok) { OPW = pw; sessionStorage.setItem('owner_pw', pw); showDash(); }
+  else $('#loginErr').textContent = 'Username atau password salah.';
+}
+
+$('#loginBtn').addEventListener('click', doLogin);
+$('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+$('#username').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#pw').focus(); });
+$('#pwToggle').addEventListener('click', () => {
+  const i = $('#pw');
+  const show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  $('#pwToggle').setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+});
+
+const THEME_LABEL = { botanical: 'Botanical', midnight: 'Midnight Luxe', blush: 'Ivory Blush', javanese: 'Javanese', minimal: 'Modern Minimal', baroque: 'Baroque Gold' };
+const themeBadge = (t) => `<span class="badge theme"><span class="swatch sw-${esc(t)}"></span>${THEME_LABEL[t] || t}</span>`;
+
+async function loadAll() {
+  try {
+    const accounts = await api('/api/owner/accounts');
+    const totalGuests = accounts.reduce((a, x) => a + (x.guests || 0), 0);
+    const totalRsvp = accounts.reduce((a, x) => a + (x.rsvp || 0), 0);
+    const active = accounts.filter((x) => x.status === 'active').length;
+
+    $('#stats').innerHTML = `
+      <div class="stat"><div class="n gold">${accounts.length}</div><div class="l">Total Undangan</div></div>
+      <div class="stat"><div class="n">${active}</div><div class="l">Aktif</div></div>
+      <div class="stat"><div class="n">${totalGuests}</div><div class="l">Total Tamu</div></div>
+      <div class="stat"><div class="n">${totalRsvp}</div><div class="l">Total RSVP</div></div>`;
+
+    renderAccounts(accounts);
+  } catch (e) {
+    if (e.status === 401) { sessionStorage.removeItem('owner_pw'); location.reload(); }
+    else toast('Error: ' + e.message);
+  }
+}
+
+function renderAccounts(accounts) {
+  if (!accounts.length) { $('#accountsTable').innerHTML = '<p class="empty">Belum ada undangan. Buat yang pertama di atas.</p>'; return; }
+  const origin = location.origin;
+  const THEMES = [['botanical', 'Botanical'], ['midnight', 'Midnight Luxe'], ['blush', 'Ivory Blush'], ['javanese', 'Javanese'], ['minimal', 'Modern Minimal'], ['baroque', 'Baroque Gold']];
+  const expireCell = (a) => {
+    if (!a.expires_at) return '<span style="font-size:.74rem;color:var(--soft)">Tanpa batas</span>';
+    const d = a.days_left;
+    const cls = d < 0 ? 'suspended' : d <= 14 ? 'theme' : 'active';
+    const label = d < 0 ? `Lewat ${Math.abs(d)} hari` : `${d} hari lagi`;
+    return `<span class="badge ${cls}">${label}</span><br><span style="font-size:.72rem;color:var(--soft)">${esc(a.expires_at)}</span>`;
+  };
+  $('#accountsTable').innerHTML = `
+    <table>
+      <thead><tr><th>Undangan</th><th>Slug / URL</th><th>Template</th><th>Masa Aktif</th><th>Tamu</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody>
+      ${accounts.map((a) => `
+        <tr>
+          <td><strong>${esc(a.title || a.slug)}</strong><br><span style="font-size:.72rem;color:var(--soft)">${esc((a.created_at||'').slice(0,10))}</span></td>
+          <td><span class="slug">/u/${esc(a.slug)}</span></td>
+          <td>
+            <select class="f" data-settheme="${a.id}" style="padding:6px 8px;font-size:.8rem;min-width:130px">
+              ${THEMES.map(([v, l]) => `<option value="${v}" ${a.theme === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+          </td>
+          <td>${expireCell(a)}</td>
+          <td>${a.guests}</td>
+          <td><span class="badge ${esc(a.effective_status || a.status)}">${a.effective_status === 'active' ? 'Aktif' : a.effective_status === 'expired' ? 'Kedaluwarsa' : 'Nonaktif'}</span></td>
+          <td>
+            <div class="acts">
+              <a class="btn-xs" href="/u/${esc(a.slug)}" target="_blank">Lihat</a>
+              <a class="btn-xs" href="/u/${esc(a.slug)}/admin" target="_blank">Admin</a>
+              <button class="btn-xs" data-copy="${esc(origin + '/u/' + a.slug)}">Salin URL</button>
+              <button class="btn-xs" data-extend="${a.id}" data-days="30" data-name="${esc(a.title||a.slug)}">+30 hari</button>
+              <button class="btn-xs" data-reset="${a.id}" data-name="${esc(a.title||a.slug)}">Reset Sandi</button>
+              <button class="btn-xs" data-toggle="${a.id}" data-status="${esc(a.status)}">${a.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}</button>
+              <button class="btn-xs danger" data-del="${a.id}" data-name="${esc(a.title||a.slug)}">Hapus</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
 </script>
 </body>
 </html>

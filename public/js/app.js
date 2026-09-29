@@ -74,6 +74,45 @@ function applyTheme(theme, tokens, base) {
   if (meta && color) meta.setAttribute('content', color);
 }
 
+/**
+ * Terapkan latar kustom (desktop + mobile) dari setelan admin.
+ * Nilai kosong = pakai gambar bawaan tema (lihat :root di style.css).
+ * Menggunakan url("...") agar CSS tetap aman (nilai sudah disaring server).
+ */
+function applyBackground(settings) {
+  const body = document.body;
+  const s = settings || {};
+  const img = (u) => (u ? `url("${String(u).replace(/["()]/g, '')}")` : '');
+
+  const set = (k, v) => {
+    if (v) body.style.setProperty(k, v);
+    else body.style.removeProperty(k);
+  };
+
+  const heroUrl = img(s.background_image);
+  const heroMob = img(s.background_image_mobile);
+  set('--bg-hero', heroUrl || null);
+  set('--bg-cover', heroUrl || null);
+  set('--bg-hero-mobile', heroMob || heroUrl || null);
+  set('--bg-cover-mobile', heroMob || heroUrl || null);
+
+  const op = Number(s.background_overlay_opacity);
+  if (s.background_overlay && Number.isFinite(op) && op > 0) {
+    const hex = String(s.background_overlay).trim();
+    // Ubah hex → rgba agar opacity terpisah dari warna solid.
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+    const rgb = m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : null;
+    body.style.setProperty('--bg-overlay', rgb ? `rgba(${rgb.join(',')},${op})` : hex);
+  } else {
+    body.style.removeProperty('--bg-overlay');
+  }
+
+  set('--bg-position', s.background_position || null);
+  set('--bg-size', s.background_size || null);
+  set('--bg-repeat', s.background_repeat || null);
+  set('--bg-attachment', s.background_attachment || null);
+}
+
 /* ---------- util ---------- */
 const fmtDateLong = (iso) => {
   const d = new Date(iso);
@@ -120,6 +159,8 @@ function render() {
     settings && settings.theme_tokens,
     settings && settings.theme_base
   );
+
+  applyBackground(settings);
 
   const groomFull = c.groom_full || c.groom_name || 'Mempelai Pria';
   const brideFull = c.bride_full || c.bride_name || 'Mempelai Wanita';

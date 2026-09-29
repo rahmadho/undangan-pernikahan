@@ -21,6 +21,16 @@
   --hero-img: url('https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=1600');
   --cover-img: url('https://images.unsplash.com/photo-1519741497674-611481863552?w=1600');
   --cover-veil: rgba(28, 32, 22, 0.5);
+  /* Latar kustom (diisi app.js dari setelan admin). Kosong = pakai gambar tema. */
+  --bg-hero: var(--hero-img);
+  --bg-cover: var(--cover-img);
+  --bg-hero-mobile: var(--bg-hero);
+  --bg-cover-mobile: var(--bg-cover);
+  --bg-overlay: transparent;
+  --bg-position: center center;
+  --bg-size: cover;
+  --bg-repeat: no-repeat;
+  --bg-attachment: scroll;
   --grain: 0.5;
   --white: var(--surface);
   --danger: #c0614a;
@@ -189,9 +199,16 @@ body {
   justify-content: center;
   text-align: center;
   background:
+    linear-gradient(var(--bg-overlay), var(--bg-overlay)),
     linear-gradient(var(--cover-veil), var(--cover-veil)),
-    var(--cover-img) center/cover no-repeat;
+    var(--bg-cover-mobile) var(--bg-position) / var(--bg-size) var(--bg-repeat) var(--bg-attachment);
   transition: opacity .8s ease, visibility .8s;
+}
+@media (min-width: 900px) {
+  .cover { background:
+    linear-gradient(var(--bg-overlay), var(--bg-overlay)),
+    linear-gradient(var(--cover-veil), var(--cover-veil)),
+    var(--bg-cover) var(--bg-position) / var(--bg-size) var(--bg-repeat) var(--bg-attachment); }
 }
 .cover.closed { opacity: 0; visibility: hidden; pointer-events: none; }
 
@@ -308,8 +325,8 @@ h2 { font-family: var(--serif); font-weight: 600; }
   place-items: center;
   background:
     linear-gradient(color-mix(in srgb, var(--cream) 86%, transparent), color-mix(in srgb, var(--cream) 94%, transparent)),
-    var(--hero-img) center/cover scroll;
-  background-attachment: scroll;
+    linear-gradient(var(--bg-overlay), var(--bg-overlay)),
+    var(--bg-hero-mobile) var(--bg-position) / var(--bg-size) var(--bg-repeat) var(--bg-attachment);
 }
 .hero-inner { animation: fadeUp 1.2s ease both; }
 .hero-names {
@@ -882,7 +899,13 @@ h2 { font-family: var(--serif); font-weight: 600; }
   .section { padding: 72px 22px; }
   .countdown-section { padding: 66px 22px; }
   .story-section { padding: 70px 22px; }
-  .hero { min-height: 78vh; background-attachment: fixed; }
+  .hero {
+    min-height: 78vh;
+    background:
+      linear-gradient(color-mix(in srgb, var(--cream) 86%, transparent), color-mix(in srgb, var(--cream) 94%, transparent)),
+      linear-gradient(var(--bg-overlay), var(--bg-overlay)),
+      var(--bg-hero) var(--bg-position) / var(--bg-size) var(--bg-repeat) var(--bg-attachment);
+  }
   .countdown { gap: clamp(10px, 4vw, 26px); }
   .cd-item { min-width: 82px; padding: 18px 12px; }
   .events-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; }

@@ -637,18 +637,19 @@
 	.cover-bg {
 		position: absolute;
 		inset: 0;
-		background-image: var(--bg-cover-mobile);
-		background-color: var(--cream-2);
-		background-position: var(--bg-position-mobile);
-		background-size: var(--bg-size-mobile);
-		background-repeat: var(--bg-repeat-mobile);
+		/* Lapisan: gradasi warna tema (dasar) + foto latar kustom (bila ada) */
+		background-image: var(--bg-cover-mobile), linear-gradient(160deg, var(--sage) 0%, var(--sage-dark) 100%);
+		background-color: var(--sage-dark);
+		background-position: var(--bg-position-mobile), center;
+		background-size: var(--bg-size-mobile), cover;
+		background-repeat: var(--bg-repeat-mobile), no-repeat;
 	}
 	@media (min-width: 721px) {
 		.cover-bg {
-			background-image: var(--bg-cover);
-			background-position: var(--bg-position);
-			background-size: var(--bg-size);
-			background-repeat: var(--bg-repeat);
+			background-image: var(--bg-cover), linear-gradient(160deg, var(--sage) 0%, var(--sage-dark) 100%);
+			background-position: var(--bg-position), center;
+			background-size: var(--bg-size), cover;
+			background-repeat: var(--bg-repeat), no-repeat;
 			background-attachment: var(--bg-attachment);
 		}
 	}

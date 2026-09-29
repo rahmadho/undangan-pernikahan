@@ -71,6 +71,22 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
   `docker-compose.yml` (app + Postgres), `.dockerignore`, `/healthz`,
   `server/db/migrate.js` (`npm run migrate`), owner awal via env
   `OWNER_USERNAME`/`OWNER_PASSWORD`.
+- **Panduan deploy VPS** ada di **`DEPLOY.md`** — stack final: **Node.js LTS terbaru
+  (24.x) + pm2 + Nginx + Cloudflare**, backup otomatis, update, troubleshooting.
+- **Runtime produksi = `node` (via pm2), BUKAN `bun`** — kode memakai `node:sqlite`
+  (belum tersedia di Bun). Domain target: `undangan.rahmadho.my.id`.
+
+## 8. Keputusan Terkini (PENTING)
+
+- **Produksi SAAT INI memakai SQLite** (bukan Postgres). User memutuskan pakai
+  SQLite dulu; Postgres ditunda. **Jangan** mengubah default `DB_CLIENT`.
+- **Kode server masih SINKRON (100%)** — belum di-refactor ke async. Jadi
+  memindahkan ke Postgres = ganti env **DAN** refactor handler ke `async/await`.
+  Jalur yang disetujui bila nanti dibutuhkan: **refactor async** (Opsi 1),
+  bukan shim sync-over-async.
+- Semua data SQLite ada di satu file (`DATABASE_PATH`). Deploy = volume persisten.
+- **Belum diimplementasi & jangan lakukan tanpa konfirmasi:** template modular
+  (`layout_config` JSON), dan refactor async.
 
 ## 5. Perubahan Sesi Terakhir (2025) — ringkas untuk agent lain
 

@@ -202,36 +202,38 @@ Aplikasi ini **satu proses Node.js** + database. Prinsip utama:
 
 ### Opsi A — VPS (paling murah, kontrol penuh)
 
-Contoh Ubuntu 22.04+, dengan SQLite:
+📄 **Panduan langkah-demi-langkah lengkap ada di [`DEPLOY.md`](DEPLOY.md)** —
+**Node.js LTS terbaru + pm2 + Nginx + Cloudflare**, termasuk backup otomatis,
+update, dan troubleshooting.
+
+> ⚙️ **Stack produksi yang diasumsikan:** Node 24.x LTS · **pm2** (bukan systemd) ·
+> **Cloudflare** untuk DNS + HTTPS (tanpa certbot) · SQLite.
+> ⚠️ **Bun tidak bisa dipakai** — kode memakai `node:sqlite` (bawaan Node, belum ada di Bun).
+
+Ringkas, dengan SQLite:
 
 ```bash
 git clone <repo> && cd undangan-pernikahan
 npm install --omit=dev
-cp .env.example .env      # lalu edit: OWNER_PASSWORD, dst.
-PORT=3000 node server/index.js   # cek jalan
+cp .env.example .env      # edit: DATABASE_PATH (absolut), OWNER_PASSWORD, TRUST_PROXY=1
+npm run migrate           # siapkan skema + owner
+pm2 start server/index.js --name undangan --time --node-args="--no-warnings"
+pm2 save && pm2 startup  # agar auto-start saat reboot
 ```
 
-Agar tetap hidup setelah logout, pakai **systemd** (`/etc/systemd/system/undangan.service`):
+Agar tetap hidup setelah logout & auto-restart saat crash, gunakan **pm2**
+(sudah dipasang di langkah ringkas di atas). Detail lengkap + Nginx + Cloudflare
+ada di **[`DEPLOY.md`](DEPLOY.md)**. Perintah inti:
 
-```ini
-[Unit]
-Description=Undangan SaaS
-After=network.target
-
-[Service]
-WorkingDirectory=/opt/undangan-pernikahan
-EnvironmentFile=/opt/undangan-pernikahan/.env
-ExecStart=/usr/bin/node server/index.js
-Restart=always
-User=www-data
-
-[Install]
-WantedBy=multi-user.target
+```bash
+pm2 start server/index.js --name undangan --time --node-args="--no-warnings"
+pm2 save
+pm2 startup    # jalankan perintah `sudo env ...` yang dicetak agar auto-start saat reboot
 ```
 
-Lalu `systemctl enable --now undangan`. Di depannya pasang **Nginx** (reverse proxy) +
-**HTTPS Let's Encrypt**, dan arahkan `proxy_pass http://127.0.0.1:3000;` dengan
-header `Host`/`X-Forwarded-*` (aplikasi sudah `trust proxy`).
+Di depannya pasang **Nginx** (reverse proxy) yang meneruskan ke `http://127.0.0.1:3000`,
+lalu arahkan domain di **Cloudflare** (SSL mode **Full** — bukan Flexible). Tidak perlu
+certbot karena Cloudflare yang menangani HTTPS.
 
 ### Opsi B — Docker (VPS / cloud apa saja)
 
@@ -254,7 +256,7 @@ Semua platform ini mendukung **Node + volume persisten** dan mengisi `$PORT` oto
 4. Deploy → buka `/owner`, buat akun client pertama.
 
 > ⚠️ Pastikan **Node ≥ 22.5** terpasang/terpilih (memakai `node:sqlite`). Di Render set
-> `NODE_VERSION=22`, di Railway pilih image Node 22, Fly.io gunakan `Dockerfile` ini.
+> `NODE_VERSION=24`, di Railway pilih image Node 24, Fly.io gunakan `Dockerfile` ini.
 
 ## 🐘 Menggunakan PostgreSQL (Produksi, skala besar)
 

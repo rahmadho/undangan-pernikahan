@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Owner — Panel Pemilik Undangan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#14131a; --panel:#1d1b26; --surface:#232130; --line:#322f3d;
+  --ink:#f2ece0; --soft:#b3ab99; --gold:#d8b978; --gold-soft:rgba(216,185,120,.13);
+  --sage:#8a9a7b; --red:#e08572; --green:#8fbf7a;
+  --shadow:0 18px 50px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button{cursor:pointer}
+a{color:var(--gold)}
+.hidden{display:none!important}
+
+/* login */
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(1200px 600px at 50% -10%,rgba(216,185,120,.10),transparent)}
+.login-box{background:var(--panel);padding:40px 32px;border-radius:20px;box-shadow:var(--shadow);width:100%;max-width:390px;text-align:center;border:1px solid var(--line)}
+.login-box .mark{font-family:'Cormorant Garamond',serif;font-size:2.1rem;color:var(--gold);line-height:1}
+.login-box h1{font-size:1.15rem;margin:12px 0 4px;letter-spacing:.01em}
+.login-box p{color:var(--soft);font-size:.85rem;margin-bottom:24px}
+.login-box input{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);margin-bottom:14px}
+.login-box input:focus{outline:none;border-color:var(--gold)}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;background:var(--gold);color:#20190a;font-weight:700;transition:transform .15s,filter .2s}
+.btn:hover{filter:brightness(1.06)} .btn:active{transform:scale(.99)}
+.err{color:var(--red);font-size:.83rem;margin-top:12px;min-height:1.1em}
+
+/* layout */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(29,27,38,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:15px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.topbar .brand{display:flex;flex-direction:column}
+.topbar .brand b{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--gold);letter-spacing:.02em}
+.topbar .brand small{color:var(--soft);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:26px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+.stat .n{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:700;color:var(--ink)}
+.stat .n.gold{color:var(--gold)}
+.stat .l{font-size:.74rem;color:var(--soft);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-bottom:18px}
+.card h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;margin-bottom:4px}
+.card .hint{color:var(--soft);font-size:.83rem;margin-bottom:18px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+label.f{display:block;font-size:.78rem;color:var(--soft);margin-bottom:6px;font-weight:600}
+input.f,select.f{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:11px;background:var(--surface);color:var(--ink)}
+input.f:focus,select.f:focus{outline:none;border-color:var(--gold)}
+.field{margin-bottom:14px}
+
+.btn-gold{padding:12px 22px;border:none;border-radius:11px;background:var(--gold);color:#20190a;font-weight:700}
+.btn-gold:hover{filter:brightness(1.06)}
+.btn-ghost{padding:9px 16px;border:1.5px solid var(--line);background:transparent;border-radius:999px;color:var(--soft);font-weight:600;font-size:.82rem}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-xs{padding:6px 12px;border:1.5px solid var(--line);background:transparent;border-radius:8px;color:var(--soft);font-size:.76rem;font-weight:600}
+.btn-xs:hover{border-color:var(--gold);color:var(--gold)}
+.btn-xs.danger:hover{border-color:var(--red);color:var(--red)}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.86rem;min-width:720px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);font-weight:600}
+tr:last-child td{border-bottom:none}
+.slug{font-family:ui-monospace,monospace;font-size:.8rem;color:var(--gold);background:var(--gold-soft);padding:3px 8px;border-radius:6px}
+.badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:600}
+.badge.active{background:rgba(143,191,122,.16);color:var(--green)}
+.badge.suspended{background:rgba(224,133,114,.16);color:var(--red)}
+.badge.theme{background:var(--gold-soft);color:var(--gold)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.empty{color:var(--soft);text-align:center;padding:30px;font-size:.9rem}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--surface);color:var(--ink);padding:12px 22px;border-radius:999px;border:1px solid var(--line);box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.28s;z-index:100;font-size:.86rem}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-right:6px;border:1px solid rgba(255,255,255,.15)}
+.sw-botanical{background:linear-gradient(135deg,#7d8f6d 0 50%,#b08d47 50% 100%)}
+.sw-midnight{background:linear-gradient(135deg,#14131a 0 50%,#d8b978 50% 100%)}
+.sw-blush{background:linear-gradient(135deg,#fffafa 0 50%,#c98a86 50% 100%)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap">
+  <div class="login-box">
+    <div class="mark">&#10086;</div>
+    <h1>Panel Pemilik</h1>
+    <p>Masuk untuk mengelola akun client</p>
+    <input type="password" id="pw" placeholder="Password owner" autocomplete="current-password" />
+    <button class="btn" id="loginBtn">Masuk</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="hidden">
+  <div class="topbar">
+    <div class="brand">
+      <b>Panel Pemilik</b>
+      <small>Manajemen Undangan Client</small>
+    </div>
+    <button class="btn-ghost" id="logoutBtn">Keluar</button>
+  </div>
+
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <h2>Buat Undangan Baru</h2>
+      <p class="hint">Buatkan akun untuk client. Pilih template default — client bisa menggantinya sendiri nanti.</p>
+      <div class="grid2">
+        <div class="field">
+          <label class="f" for="nTitle">Nama Pasangan / Judul</label>
+          <input class="f" id="nTitle" placeholder="mis. Budi &amp; Citra" />
+        </div>
+        <div class="field">
+          <label class="f" for="nSlug">Slug URL (opsional)</label>
+          <input class="f" id="nSlug" placeholder="budi-citra" />
+        </div>
+        <div class="field">
+          <label class="f" for="nPass">Password Client</label>
+          <input class="f" id="nPass" placeholder="min. 6 karakter" />
+        </div>
+        <div class="field">
+          <label class="f" for="nTheme">Template Default</label>
+          <select class="f" id="nTheme">
+            <option value="botanical">Botanical — sage &amp; emas</option>
+            <option value="midnight">Midnight Luxe — gelap &amp; emas</option>
+            <option value="blush">Ivory Blush — rose &amp; krem</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="f" for="nQuota">Kuota Tamu</label>
+          <input class="f" id="nQuota" type="number" min="1" value="500" />
+        </div>
+        <div class="field">
+          <label class="f" for="nSample">Data Contoh</label>
+          <select class="f" id="nSample">
+            <option value="1">Ya — isi contoh agar client mudah mulai</option>
+            <option value="0">Tidak — mulai kosong</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="f" for="nDays">Masa Aktif</label>
+          <select class="f" id="nDays">
+            <option value="30">30 hari</option>
+            <option value="90">90 hari (3 bulan)</option>
+            <option value="180">180 hari (6 bulan)</option>
+            <option value="365" selected>365 hari (1 tahun)</option>
+            <option value="0">Tanpa batas waktu</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-gold" id="createBtn">Buat Undangan</button>
+    </div>
+
+    <div class="card">
+      <h2>Daftar Undangan</h2>
+      <p class="hint">Semua undangan client yang terdaftar di aplikasi ini.</p>
+      <div class="table-wrap" id="accountsTable"><p class="empty">Memuat…</p></div>
+    </div>
+
+    <div class="card">
+      <h2>Pengaturan Owner</h2>
+      <p class="hint">Ganti password panel pemilik.</p>
+      <div class="grid2">
+        <div class="field">
+          <label class="f" for="opPass">Password Owner Baru</label>
+          <input class="f" id="opPass" type="password" placeholder="min. 6 karakter" />
+        </div>
+        <div class="field">
+          <label class="f">&nbsp;</label>
+          <button class="btn-gold" id="ownerPassBtn" style="width:100%">Simpan Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+let OPW = sessionStorage.getItem('owner_pw') || '';
+
+const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); };
+const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+async function api(url, opts = {}) {
+  opts.headers = Object.assign({ 'Content-Type': 'application/json', 'x-owner-password': OPW }, opts.headers);
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(data.error || 'Gagal'); e.status = res.status; throw e; }
+  return data;
+}
+
+function showDash() { $('#loginView').classList.add('hidden'); $('#dashView').classList.remove('hidden'); loadAll(); }
+
+async function tryLogin(pw) {
+  const res = await fetch('/api/owner/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }) });
+  return res.ok;
+}
+
+async function doLogin() {
+  const pw = $('#pw').value.trim();
+  if (!pw) return;
+  $('#loginErr').textContent = '';
+  const ok = await tryLogin(pw).catch(() => false);
+  if (ok) { OPW = pw; sessionStorage.setItem('owner_pw', pw); showDash(); }
+  else $('#loginErr').textContent = 'Password owner salah.';
+}
+
+$('#loginBtn').addEventListener('click', doLogin);
+$('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+$('#logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('owner_pw'); location.reload(); });
+
+const THEME_LABEL = { botanical: 'Botanical', midnight: 'Midnight Luxe', blush: 'Ivory Blush' };
+const themeBadge = (t) => `<span class="badge theme"><span class="swatch sw-${esc(t)}"></span>${THEME_LABEL[t] || t}</span>`;
+
+async function loadAll() {
+  try {
+    const accounts = await api('/api/owner/accounts');
+    const totalGuests = accounts.reduce((a, x) => a + (x.guests || 0), 0);
+    const totalRsvp = accounts.reduce((a, x) => a + (x.rsvp || 0), 0);
+    const active = accounts.filter((x) => x.status === 'active').length;
+
+    $('#stats').innerHTML = `
+      <div class="stat"><div class="n gold">${accounts.length}</div><div class="l">Total Undangan</div></div>
+      <div class="stat"><div class="n">${active}</div><div class="l">Aktif</div></div>
+      <div class="stat"><div class="n">${totalGuests}</div><div class="l">Total Tamu</div></div>
+      <div class="stat"><div class="n">${totalRsvp}</div><div class="l">Total RSVP</div></div>`;
+
+    renderAccounts(accounts);
+  } catch (e) {
+    if (e.status === 401) { sessionStorage.removeItem('owner_pw'); location.reload(); }
+    else toast('Error: ' + e.message);
+  }
+}
+
+function renderAccounts(accounts) {
+  if (!accounts.length) { $('#accountsTable').innerHTML = '<p class="empty">Belum ada undangan. Buat yang pertama di atas.</p>'; return; }
+  const origin = location.origin;
+  const THEMES = [['botanical', 'Botanical'], ['midnight', 'Midnight Luxe'], ['blush', 'Ivory Blush']];
+  const expireCell = (a) => {
+    if (!a.expires_at) return '<span style="font-size:.74rem;color:var(--soft)">Tanpa batas</span>';
+    const d = a.days_left;
+    const cls = d < 0 ? 'suspended' : d <= 14 ? 'theme' : 'active';
+    const label = d < 0 ? `Lewat ${Math.abs(d)} hari` : `${d} hari lagi`;
+    return `<span class="badge ${cls}">${label}</span><br><span style="font-size:.72rem;color:var(--soft)">${esc(a.expires_at)}</span>`;
+  };
+  $('#accountsTable').innerHTML = `
+    <table>
+      <thead><tr><th>Undangan</th><th>Slug / URL</th><th>Template</th><th>Masa Aktif</th><th>Tamu</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody>
+      ${accounts.map((a) => `
+        <tr>
+          <td><strong>${esc(a.title || a.slug)}</strong><br><span style="font-size:.72rem;color:var(--soft)">${esc((a.created_at||'').slice(0,10))}</span></td>
+          <td><span class="slug">/u/${esc(a.slug)}</span></td>
+          <td>
+            <select class="f" data-settheme="${a.id}" style="padding:6px 8px;font-size:.8rem;min-width:130px">
+              ${THEMES.map(([v, l]) => `<option value="${v}" ${a.theme === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+          </td>
+          <td>${expireCell(a)}</td>
+          <td>${a.guests}</td>
+          <td><span class="badge ${esc(a.effective_status || a.status)}">${a.effective_status === 'active' ? 'Aktif' : a.effective_status === 'expired' ? 'Kedaluwarsa' : 'Nonaktif'}</span></td>
+          <td>
+            <div class="acts">
+              <a class="btn-xs" href="/u/${esc(a.slug)}" target="_blank">Lihat</a>
+              <a class="btn-xs" href="/u/${esc(a.slug)}/admin" target="_blank">Admin</a>
+              <button class="btn-xs" data-copy="${esc(origin + '/u/' + a.slug)}">Salin URL</button>
+              <button class="btn-xs" data-extend="${a.id}" data-days="30" data-name="${esc(a.title||a.slug)}">+30 hari</button>
+              <button class="btn-xs" data-reset="${a.id}" data-name="${esc(a.title||a.slug)}">Reset Sandi</button>
+              <button class="btn-xs" data-toggle="${a.id}" data-status="${esc(a.status)}">${a.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}</button>
+              <button class="btn-xs danger" data-del="${a.id}" data-name="${esc(a.title||a.slug)}">Hapus</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ---- create ---- */
+$('#createBtn').addEventListener('click', async () => {
+  const title = $('#nTitle').value.trim();
+  const slug = $('#nSlug').value.trim();
+  const password = $('#nPass').value;
+  if (!title && !slug) return toast('Isi nama/judul undangan dulu.');
+  if (password.length < 6) return toast('Password minimal 6 karakter.');
+  try {
+    await api('/api/owner/accounts', { method: 'POST', body: JSON.stringify({
+      title, slug, password, theme: $('#nTheme').value, max_guests: $('#nQuota').value, withSample: $('#nSample').value === '1',
+      days: parseInt($('#nDays').value, 10) || undefined,
+    })});
+    toast('Undangan dibuat ✓');
+    $('#nTitle').value = ''; $('#nSlug').value = ''; $('#nPass').value = '';
+    loadAll();
+  } catch (e) { toast(e.message); }
+});
+
+/* ---- row actions (delegasi) ---- */
+$('#accountsTable').addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  try {
+    if (b.dataset.copy) {
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Tersalin ✓'; setTimeout(() => (b.textContent = 'Salin URL'), 1500); }
+      catch { prompt('Salin URL:', b.dataset.copy); }
+      return;
+    }
+    if (b.dataset.extend) {
+      const days = parseInt(b.dataset.days, 10) || 30;
+      const r = await api('/api/owner/accounts/' + b.dataset.extend, { method: 'PUT', body: JSON.stringify({ extend_days: days }) });
+      toast(`Ditambah ${days} hari → ${r.expires_at} ✓`); loadAll();
+      return;
+    }
+    if (b.dataset.reset) {
+      const pw = prompt(`Password baru untuk "${b.dataset.name}" (min. 6):`);
+      if (!pw) return;
+      if (pw.length < 6) return toast('Password minimal 6 karakter.');
+      await api('/api/owner/accounts/' + b.dataset.reset, { method: 'PUT', body: JSON.stringify({ password: pw }) });
+      toast('Password direset ✓');
+      return;
+    }
+    if (b.dataset.toggle) {
+      const next = b.dataset.status === 'active' ? 'suspended' : 'active';
+      await api('/api/owner/accounts/' + b.dataset.toggle, { method: 'PUT', body: JSON.stringify({ status: next }) });
+      toast(next === 'active' ? 'Diaktifkan ✓' : 'Dinonaktifkan'); loadAll();
+      return;
+    }
+    if (b.dataset.del) {
+      if (!confirm(`Hapus undangan "${b.dataset.name}" beserta SEMUA datanya? Tidak bisa dibatalkan.`)) return;
+      await api('/api/owner/accounts/' + b.dataset.del, { method: 'DELETE' });
+      toast('Undangan dihapus'); loadAll();
+      return;
+    }
+  } catch (err) { toast(err.message); }
+});
+
+/* ---- ganti template client (select) ---- */
+$('#accountsTable').addEventListener('change', async (e) => {
+  const sel = e.target.closest('select[data-settheme]');
+  if (!sel) return;
+  try {
+    await api('/api/owner/accounts/' + sel.dataset.settheme, { method: 'PUT', body: JSON.stringify({ theme: sel.value }) });
+    toast('Template diubah ✓');
+  } catch (err) { toast(err.message); loadAll(); }
+});
+
+/* ---- ganti password owner ---- */
+$('#ownerPassBtn').addEventListener('click', async () => {
+  const np = $('#opPass').value;
+  if (np.length < 6) return toast('Password minimal 6 karakter.');
+  try {
+    await api('/api/owner/password', { method: 'PUT', body: JSON.stringify({ new_password: np }) });
+    OPW = np; sessionStorage.setItem('owner_pw', np);
+    $('#opPass').value = '';
+    toast('Password owner diperbarui ✓');
+  } catch (e) { toast(e.message); }
+});
+
+/* auto-login bila tersimpan */
+if (OPW) tryLogin(OPW).then((ok) => { if (ok) showDash(); else sessionStorage.removeItem('owner_pw'); });
+</script>
+</body>
+</html>

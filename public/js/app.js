@@ -5,8 +5,18 @@
    ========================================================= */
 
 const $ = (sel) => document.querySelector(sel);
-const api = async (url, opts) => {
-  const res = await fetch(url, opts);
+
+/* Slug undangan diambil dari server (window.__ACCOUNT__) atau dari URL /u/<slug>. */
+const ACCOUNT_SLUG = (() => {
+  if (window.__ACCOUNT__ && window.__ACCOUNT__.slug) return window.__ACCOUNT__.slug;
+  const m = location.pathname.match(/^\/u\/([^/]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+})();
+
+const api = async (url, opts = {}) => {
+  const headers = Object.assign({}, opts.headers || {});
+  if (ACCOUNT_SLUG) headers['x-account'] = ACCOUNT_SLUG;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan.');
   return data;
@@ -16,6 +26,22 @@ const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustu
 const DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
 let STATE = { data: null, guest: null, targetDate: null };
+
+const THEMES = ['botanical', 'midnight', 'blush'];
+
+/** Terapkan tema ke <body> berdasarkan setelan (botanical | midnight | blush). */
+function applyTheme(theme) {
+  const t = THEMES.includes(theme) ? theme : 'botanical';
+  const body = document.body;
+  THEMES.forEach((name) => body.classList.toggle('theme-' + name, name === t));
+  body.dataset.theme = t;
+  // selaraskan warna address-bar browser dengan tema
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    const colors = { botanical: '#7d8f6d', midnight: '#14131a', blush: '#c98a86' };
+    meta.setAttribute('content', colors[t]);
+  }
+}
 
 /* ---------- util ---------- */
 const fmtDateLong = (iso) => {
@@ -44,7 +70,7 @@ async function load() {
 
   if (toSlug) {
     try {
-      STATE.guest = await api(`/api/guest/${encodeURIComponent(toSlug)}`);
+      STATE.guest = await api(`/api/guest/${encodeURIComponent(toSlug)}?to=${encodeURIComponent(toSlug)}`);
     } catch { /* slug tidak dikenal -> tamu umum */ }
   }
 
@@ -55,8 +81,10 @@ async function load() {
 
 /* ---------- render ---------- */
 function render() {
-  const { couple, events, gallery, gifts, wishes, settings } = STATE.data;
+  const { couple, events, gallery, gifts, wishes, settings, account } = STATE.data;
   const c = couple || {};
+
+  applyTheme((settings && settings.theme) || (account && account.theme));
 
   const groomFull = c.groom_full || c.groom_name || 'Mempelai Pria';
   const brideFull = c.bride_full || c.bride_name || 'Mempelai Wanita';
@@ -141,12 +169,22 @@ function render() {
     $('#musicBtn').style.display = 'none';
   }
 
+  // navigasi antar-section
+  bindSectionNav();
+  trackActiveSection();
+
   // prefill nama tamu
   if (STATE.guest) {
     $('#rsvpName').value = STATE.guest.name;
     $('#wishName').value = STATE.guest.name;
     const q = STATE.guest.quota;
-    if (q) { $('#rsvpPax').max = Math.max(q, 1); $('#rsvpPax').value = 1; }
+    if (q) {
+      const pax = $('#rsvpPax');
+      pax.max = Math.max(q, 1);
+      pax.value = 1;
+      const wrap = document.querySelector('[data-stepper]');
+      if (wrap && wrap._refresh) wrap._refresh();
+    }
   }
 }
 
@@ -203,6 +241,194 @@ function startCountdown() {
   cdTimer = setInterval(tick, 1000);
 }
 
+/* ---------- section navigation ---------- */
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- stepper jumlah orang ---------- */
+function bindStepper() {
+  const input = document.getElementById('rsvpPax');
+  const wrap = document.querySelector('[data-stepper]');
+  if (!input || !wrap) return;
+
+  const min = () => parseInt(input.min, 10) || 1;
+  const max = () => parseInt(input.max, 10) || 20;
+
+  const clamp = (n) => Math.max(min(), Math.min(max(), n));
+
+  const refresh = () => {
+    const v = clamp(parseInt(input.value, 10) || min());
+    input.value = v;
+    const btnMinus = wrap.querySelector('[data-step="-1"]');
+    const btnPlus = wrap.querySelector('[data-step="1"]');
+    if (btnMinus) btnMinus.disabled = v <= min();
+    if (btnPlus) btnPlus.disabled = v >= max();
+  };
+
+  wrap.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-step]');
+    if (!b || b.disabled) return;
+    const step = parseInt(b.dataset.step, 10) || 0;
+    input.value = clamp((parseInt(input.value, 10) || min()) + step);
+    refresh();
+  });
+
+  input.addEventListener('input', refresh);
+  input.addEventListener('blur', refresh);
+  wrap._refresh = refresh; // agar bisa dipanggil ulang saat kuota tamu berubah
+  refresh();
+}
+
+// State internal navigasi (dibungkus agar tidak bocor ke global scope lain).
+const NavState = {
+  bound: false,
+  btns: [],
+  items: [], // { section, btn }
+  ticking: false,
+  current: null,
+  pendingUntil: 0, // saat program-scroll berlangsung, tahan scroll-spy agar tidak "berkedip"
+  footerView: null, // elemen opsional yang menandai akhir konten
+};
+
+/** Tinggi bagian bawah layar yang "tertutup" (nav bawah + safe area) saat mobile. */
+function navReservedBottom() {
+  const nav = document.getElementById('sectionNav');
+  if (!nav || nav.hidden || getComputedStyle(nav).display === 'none') return 0;
+  return nav.offsetHeight || 0;
+}
+
+/** Kumpulkan tombol nav + pasangan section-nya. Aman bila elemen belum ada. */
+function collectNavItems() {
+  const nav = document.getElementById('sectionNav');
+  if (!nav) return [];
+  const btns = Array.from(nav.querySelectorAll('.nav-btn'));
+  return btns
+    .map((btn) => {
+      const section = btn.dataset.target ? document.getElementById(btn.dataset.target) : null;
+      return section ? { section, btn } : null;
+    })
+    .filter(Boolean);
+}
+
+/**
+ * Tentukan section yang sedang aktif berdasarkan posisi scroll.
+ *
+ * Memakai getBoundingClientRect (bukan offsetTop) supaya tetap akurat walau
+ * ada ancestor ber-position/ber-transform. Tidak memakai "break" karena rect
+ * tiap section bisa tidak monoton saat scroll halus/animasi. Section aktif =
+ * section yang tepi atasnya PALING DEKAT dan sudah melewati garis baca.
+ */
+function computeActiveButton() {
+  const { items } = NavState;
+  if (!items.length) return null;
+
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  const line = vh * 0.3; // garis baca 30% dari atas viewport
+  let active = items[0];
+  let bestTop = -Infinity;
+
+  for (const item of items) {
+    const top = item.section.getBoundingClientRect().top;
+    // pilih section yang sudah melewati garis baca & paling dekat garis itu
+    if (top <= line && top > bestTop) {
+      bestTop = top;
+      active = item;
+    }
+  }
+
+  // Bila sudah mentok paling bawah, tandai section terakhir sebagai aktif.
+  const doc = document.documentElement;
+  const atBottom =
+    (window.innerHeight + window.scrollY) >= ((doc ? doc.scrollHeight : document.body.scrollHeight) - 2);
+  if (atBottom) active = items[items.length - 1];
+
+  return active;
+}
+
+/** Set kelas .active pada satu tombol (tanpa menyentuh NavState). */
+function paintActive(btn) {
+  NavState.btns.forEach((b) => b.classList.toggle('active', b === btn));
+}
+
+/** Perbarui kelas .active pada tombol nav (hanya bila berubah). */
+function updateActiveNav() {
+  // Saat program-scroll sedang berjalan, jangan biarkan spy menggeser highlight
+  // (mencegah indikator "loncat-loncat" tak responsif di tengah animasi).
+  if (performance.now() < NavState.pendingUntil) return;
+  const active = computeActiveButton();
+  if (!active) return;
+  if (NavState.current === active.btn) return; // hindari penulisan DOM berulang
+  NavState.current = active.btn;
+  paintActive(active.btn);
+}
+
+/** Throttle update via requestAnimationFrame agar tidak berat saat scroll. */
+function onScrollUpdateNav() {
+  if (NavState.ticking) return;
+  NavState.ticking = true;
+  requestAnimationFrame(() => {
+    updateActiveNav();
+    NavState.ticking = false;
+  });
+}
+
+/** Klik tombol nav -> gulir ke section (dibind sekali; delegasi event). */
+function bindSectionNav() {
+  const nav = document.getElementById('sectionNav');
+  if (!nav || NavState.bound) return;
+  NavState.bound = true;
+
+  nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn || !nav.contains(btn)) return;
+    const target = btn.dataset.target;
+    if (!target) return;
+    const section = document.getElementById(target);
+    if (!section) return;
+
+    // Respons instan: nyalakan highlight segera, dan tahan spy sejenak.
+    NavState.current = btn;
+    paintActive(btn);
+    NavState.pendingUntil = performance.now() + (reduceMotion() ? 60 : 700);
+
+    // Kompensasi tinggi nav bawah agar section tidak tertutup (khusus mobile).
+    const rect = section.getBoundingClientRect();
+    const top = Math.max(0, rect.top + window.scrollY - 4);
+    window.scrollTo({ top, behavior: reduceMotion() ? 'auto' : 'smooth' });
+
+    // Setelah animasi selesai, sinkronkan ulang agar status final pasti tepat.
+    clearTimeout(NavState.syncTimer);
+    NavState.syncTimer = setTimeout(() => {
+      const a = computeActiveButton();
+      if (a) {
+        NavState.current = a.btn;
+        paintActive(a.btn);
+      }
+    }, reduceMotion() ? 80 : 780);
+  });
+}
+
+/** Siapkan scroll-spy (hanya sekali). Aman dipanggil berkali-kali. */
+function trackActiveSection() {
+  const items = collectNavItems();
+  if (!items.length) return; // elemen belum siap; akan dicoba lagi nanti
+
+  NavState.items = items;
+  NavState.btns = items.map((it) => it.btn);
+
+  if (!NavState.spyBound) {
+    NavState.spyBound = true;
+    window.addEventListener('scroll', onScrollUpdateNav, { passive: true });
+    window.addEventListener('resize', onScrollUpdateNav, { passive: true });
+    window.addEventListener('orientationchange', onScrollUpdateNav, { passive: true });
+    // Scroll berakhir (mis. smooth-scroll / inersia) -> sinkronkan indikator.
+    window.addEventListener('scrollend', () => {
+      NavState.pendingUntil = 0;
+      updateActiveNav();
+    }, { passive: true });
+  }
+  updateActiveNav();
+}
+
 /* ---------- reveal on scroll ---------- */
 function observeReveal() {
   const io = new IntersectionObserver(
@@ -222,6 +448,24 @@ function bindUI() {
     window.scrollTo({ top: 0 });
     playMusic(true);
     observeReveal();
+
+    // tampilkan navigasi antar-section
+    const nav = document.getElementById('sectionNav');
+    if (nav) {
+      nav.removeAttribute('hidden');
+      requestAnimationFrame(() => nav.classList.add('show'));
+    }
+    // pastikan scroll-spy aktif & status awal benar setelah konten terlihat
+    trackActiveSection();
+    updateActiveNav();
+
+    // Layout bergeser setelah gambar/font selesai dimuat (umum di HP), jadi
+    // sinkronkan ulang indikator agar tidak "nyangkut" di section yang salah.
+    const resync = () => { NavState.pendingUntil = 0; updateActiveNav(); };
+    window.addEventListener('load', resync, { once: true });
+    setTimeout(resync, 350);
+    setTimeout(resync, 1200);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(resync).catch(() => {});
   });
 
   // musik
@@ -229,13 +473,23 @@ function bindUI() {
   const btn = $('#musicBtn');
   btn.addEventListener('click', () => playMusic(audio.paused));
 
-  // tampil/sembunyi jumlah orang
+  // tampil/sembunyi jumlah orang + kelola pilihan konfirmasi
+  const syncPaxVisibility = () => {
+    const checked = document.querySelector('input[name="attendance"]:checked');
+    const att = checked ? checked.value : 'hadir';
+    const paxField = $('#paxField');
+    if (!paxField) return;
+    const show = att === 'hadir';
+    paxField.hidden = !show;
+    paxField.style.display = show ? '' : 'none';
+  };
   document.querySelectorAll('input[name="attendance"]').forEach((r) => {
-    r.addEventListener('change', () => {
-      const att = document.querySelector('input[name="attendance"]:checked').value;
-      $('#paxField').style.display = att === 'hadir' ? '' : 'none';
-    });
+    r.addEventListener('change', syncPaxVisibility);
   });
+  syncPaxVisibility();
+
+  // stepper jumlah orang (- / +)
+  bindStepper();
 
   // salin nomor rekening
   document.addEventListener('click', async (e) => {

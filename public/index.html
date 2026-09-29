@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Undangan Pernikahan</title>
 <meta name="description" content="Undangan pernikahan online" />
+<meta name="theme-color" content="#8a9a7b" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Italianno&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -42,7 +43,7 @@
 <main id="main" class="main hidden">
 
   <!-- HERO -->
-  <section class="section hero">
+  <section id="sec-hero" class="section hero">
     <div class="hero-inner reveal">
       <p class="eyebrow">Undangan Pernikahan</p>
       <h2 class="hero-names" id="heroNames">Rizky &amp; Amelia</h2>
@@ -52,7 +53,7 @@
   </section>
 
   <!-- COUNTDOWN -->
-  <section class="section countdown-section">
+  <section id="sec-countdown" class="section countdown-section">
     <div class="reveal">
       <p class="eyebrow">Menuju Hari Bahagia</p>
       <div class="countdown" id="countdown">
@@ -65,7 +66,7 @@
   </section>
 
   <!-- COUPLE -->
-  <section class="section couple-section">
+  <section id="sec-couple" class="section couple-section">
     <div class="reveal">
       <p class="eyebrow">Mempelai</p>
       <p class="section-lead">Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan resepsi pernikahan putra-putri kami.</p>
@@ -88,7 +89,7 @@
   </section>
 
   <!-- LOVE STORY -->
-  <section class="section story-section">
+  <section id="sec-story" class="section story-section">
     <div class="reveal">
       <p class="eyebrow">Cerita Kami</p>
       <p class="story-text" id="loveStory"></p>
@@ -96,51 +97,88 @@
   </section>
 
   <!-- EVENTS -->
-  <section class="section events-section">
+  <section id="sec-events" class="section events-section">
     <div class="reveal"><p class="eyebrow">Rangkaian Acara</p></div>
     <div class="events-grid" id="eventsGrid"></div>
   </section>
 
   <!-- GALLERY -->
-  <section class="section gallery-section">
+  <section id="sec-gallery" class="section gallery-section">
     <div class="reveal"><p class="eyebrow">Galeri</p></div>
     <div class="gallery-grid" id="galleryGrid"></div>
   </section>
 
   <!-- RSVP -->
-  <section class="section rsvp-section">
+  <section id="sec-rsvp" class="section rsvp-section">
     <div class="reveal">
       <p class="eyebrow">Konfirmasi Kehadiran</p>
       <p class="section-lead">Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.</p>
     </div>
-    <form class="card-form reveal" id="rsvpForm">
+    <form class="card-form reveal" id="rsvpForm" novalidate>
       <div class="field">
         <label for="rsvpName">Nama</label>
-        <input type="text" id="rsvpName" name="name" required placeholder="Nama Anda" />
+        <input type="text" id="rsvpName" name="name" required placeholder="Nama Anda" autocomplete="name" />
       </div>
-      <div class="field">
-        <label>Konfirmasi</label>
-        <div class="radio-row">
-          <label class="radio"><input type="radio" name="attendance" value="hadir" checked /> <span>Hadir</span></label>
-          <label class="radio"><input type="radio" name="attendance" value="ragu" /> <span>Ragu</span></label>
-          <label class="radio"><input type="radio" name="attendance" value="tidak_hadir" /> <span>Tidak Hadir</span></label>
+
+      <div class="field field-choice">
+        <span class="field-label">Konfirmasi Kehadiran</span>
+        <div class="choice-grid" role="radiogroup" aria-label="Konfirmasi kehadiran">
+          <label class="choice-card">
+            <input type="radio" name="attendance" value="hadir" checked />
+            <span class="choice-inner">
+              <span class="choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="choice-text"><strong>Hadir</strong><small>Saya akan datang</small></span>
+            </span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="attendance" value="ragu" />
+            <span class="choice-inner">
+              <span class="choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.8.3-1.4.9-1.4 1.7v.3"/><path d="M12 17h.01"/></svg>
+              </span>
+              <span class="choice-text"><strong>Ragu</strong><small>Belum bisa memastikan</small></span>
+            </span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="attendance" value="tidak_hadir" />
+            <span class="choice-inner">
+              <span class="choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+              <span class="choice-text"><strong>Tidak Hadir</strong><small>Maaf, berhalangan</small></span>
+            </span>
+          </label>
         </div>
       </div>
+
       <div class="field" id="paxField">
-        <label for="rsvpPax">Jumlah Orang</label>
-        <input type="number" id="rsvpPax" name="pax" min="1" max="20" value="1" />
+        <span class="field-label">Jumlah Orang yang Hadir</span>
+        <div class="stepper" data-stepper>
+          <button type="button" class="stepper-btn" data-step="-1" aria-label="Kurangi jumlah">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+          </button>
+          <input type="number" id="rsvpPax" name="pax" min="1" max="20" value="1" inputmode="numeric" aria-label="Jumlah orang" />
+          <button type="button" class="stepper-btn" data-step="1" aria-label="Tambah jumlah">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <p class="field-hint" id="paxHint">Termasuk Anda</p>
       </div>
+
       <div class="field">
-        <label for="rsvpMsg">Pesan (opsional)</label>
-        <textarea id="rsvpMsg" name="message" rows="2" placeholder="Ucapan singkat..."></textarea>
+        <label for="rsvpMsg">Pesan <span class="opt">(opsional)</span></label>
+        <textarea id="rsvpMsg" name="message" rows="2" placeholder="Ucapan singkat untuk mempelai..."></textarea>
       </div>
+
       <button type="submit" class="btn-primary">Kirim Konfirmasi</button>
-      <p class="form-note" id="rsvpNote"></p>
+      <p class="form-note" id="rsvpNote" role="status" aria-live="polite"></p>
     </form>
   </section>
 
   <!-- WISHES / BUKU TAMU -->
-  <section class="section wishes-section">
+  <section id="sec-wishes" class="section wishes-section">
     <div class="reveal">
       <p class="eyebrow">Ucapan &amp; Doa</p>
       <p class="section-lead" id="wishCount">0 ucapan</p>
@@ -160,7 +198,7 @@
   </section>
 
   <!-- GIFTS -->
-  <section class="section gifts-section">
+  <section id="sec-gifts" class="section gifts-section">
     <div class="reveal">
       <p class="eyebrow">Amplop Digital</p>
       <p class="section-lead">Tanpa mengurangi rasa hormat, bagi Anda yang ingin memberikan tanda kasih, dapat melalui:</p>
@@ -175,6 +213,34 @@
     <p class="footer-tiny">Dibuat dengan ♥ · Undangan Digital</p>
   </footer>
 </main>
+
+<!-- ============ BOTTOM SECTION NAV (mobile-first) ============ -->
+<nav id="sectionNav" class="section-nav" aria-label="Navigasi bagian undangan" hidden>
+  <button class="nav-btn" data-target="sec-hero" aria-label="Beranda">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+    <span>Beranda</span>
+  </button>
+  <button class="nav-btn" data-target="sec-couple" aria-label="Mempelai">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+    <span>Mempelai</span>
+  </button>
+  <button class="nav-btn" data-target="sec-events" aria-label="Acara">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    <span>Acara</span>
+  </button>
+  <button class="nav-btn" data-target="sec-gallery" aria-label="Galeri">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 16-5-5L5 20"/></svg>
+    <span>Galeri</span>
+  </button>
+  <button class="nav-btn" data-target="sec-rsvp" aria-label="Konfirmasi">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span>Konfirmasi</span>
+  </button>
+  <button class="nav-btn" data-target="sec-wishes" aria-label="Ucapan">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
+    <span>Ucapan</span>
+  </button>
+</nav>
 
 <script src="/js/app.js"></script>
 </body>

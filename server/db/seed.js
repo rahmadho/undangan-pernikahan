@@ -1,6 +1,28 @@
 'use strict';
 
+/**
+ * Seed data contoh multi-tenant.
+ *
+ * Membuat:
+ *   - 1 owner (super admin)  : username `owner`,  password `owner123`
+ *   - 1 account demo (client): slug `demo`,       password `admin123`
+ * plus data undangan lengkap untuk account demo tersebut.
+ *
+ * Idempoten: kalau owner/account sudah ada, data contoh tidak ditimpa
+ * kecuali dijalankan dengan --force.
+ */
+
 const { db } = require('./schema');
+const { hashPassword } = require('../security');
+
+const OWNER = { username: 'owner', password: 'owner123' };
+
+const DEMO_ACCOUNT = {
+  slug: 'demo',
+  title: 'Rizky & Amelia',
+  password: 'admin123',
+  theme: 'botanical',
+};
 
 const DEFAULT_COUPLE = {
   groom_name: 'Rizky',
@@ -67,68 +89,123 @@ const DEFAULT_GALLERY = [
   { url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800', caption: 'Pre-wedding', sort: 3 },
 ];
 
+// Backsound demo — Canon in D Major (Kevin MacLeod, CC-BY / ISRC USUAN1100301).
 const DEFAULT_SETTINGS = {
-  music_url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
+  music_url:
+    'https://upload.wikimedia.org/wikipedia/commons/c/c6/Canon_in_D_Major_%28ISRC_USUAN1100301%29.mp3',
   quote:
     '"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan hidup dari jenjangmu sendiri supaya kamu dapat ketenangan hati dan menjadikan kasih sayang di antara kamu." (QS. Ar-Rum: 21)',
-  admin_password: 'admin123',
 };
 
+/** Pastikan owner ada (untuk login super admin). */
+function ensureOwner({ force = false } = {}) {
+  const existing = db.prepare('SELECT id FROM owners WHERE username = ?').get(OWNER.username);
+  const hash = hashPassword(OWNER.password);
+  if (existing) {
+    if (force) db.prepare('UPDATE owners SET password_hash = ? WHERE id = ?').run(hash, existing.id);
+    return existing.id;
+  }
+  const info = db
+    .prepare('INSERT INTO owners (username, password_hash) VALUES (?, ?)')
+    .run(OWNER.username, hash);
+  return Number(info.lastInsertRowid);
+}
+
+/** Isi konten contoh ke sebuah account. */
+function seedAccountContent(accountId) {
+  const tx = db.transaction(() => {
+    db.prepare('DELETE FROM couple WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM events WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM guests WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM wishes WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM gifts WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM gallery WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM rsvp WHERE account_id = ?').run(accountId);
+    db.prepare('DELETE FROM settings WHERE account_id = ?').run(accountId);
+
+    db.prepare(`
+      INSERT INTO couple (account_id, groom_name, groom_full, groom_ig, groom_photo, groom_parents,
+                          bride_name, bride_full, bride_ig, bride_photo, bride_parents, love_story)
+      VALUES (@account_id, @groom_name, @groom_full, @groom_ig, @groom_photo, @groom_parents,
+              @bride_name, @bride_full, @bride_ig, @bride_photo, @bride_parents, @love_story)
+    `).run({ account_id: accountId, ...DEFAULT_COUPLE });
+
+    const insEvent = db.prepare(`
+      INSERT INTO events (account_id, key, title, date_iso, time_text, venue, address, maps_url, sort)
+      VALUES (@account_id, @key, @title, @date_iso, @time_text, @venue, @address, @maps_url, @sort)
+    `);
+    DEFAULT_EVENTS.forEach((e) => insEvent.run({ account_id: accountId, ...e }));
+
+    const insGuest = db.prepare(
+      'INSERT INTO guests (account_id, slug, name, phone, category, quota) VALUES (@account_id, @slug, @name, @phone, @category, @quota)'
+    );
+    DEFAULT_GUESTS.forEach((g) => insGuest.run({ account_id: accountId, ...g }));
+
+    const insWish = db.prepare(
+      'INSERT INTO wishes (account_id, name, message, attending) VALUES (@account_id, @name, @message, @attending)'
+    );
+    DEFAULT_WISHES.forEach((w) => insWish.run({ account_id: accountId, ...w }));
+
+    const insGift = db.prepare(
+      'INSERT INTO gifts (account_id, type, bank_name, account_no, account_name, sort) VALUES (@account_id, @type, @bank_name, @account_no, @account_name, @sort)'
+    );
+    DEFAULT_GIFTS.forEach((g) => insGift.run({ account_id: accountId, ...g }));
+
+    const insGallery = db.prepare('INSERT INTO gallery (account_id, url, caption, sort) VALUES (@account_id, @url, @caption, @sort)');
+    DEFAULT_GALLERY.forEach((g) => insGallery.run({ account_id: accountId, ...g }));
+
+    const insSet = db.prepare('INSERT INTO settings (account_id, key, value) VALUES (@account_id, @key, @value)');
+    Object.entries(DEFAULT_SETTINGS).forEach(([key, value]) => insSet.run({ account_id: accountId, key, value }));
+  });
+  tx();
+}
+
+/** Buat account baru + (opsional) konten contoh. Dipakai owner & seed. */
+function createAccount({ slug, title, password, theme = 'botanical', withSample = false, status = 'active' }) {
+  const info = db
+    .prepare(
+      `INSERT INTO accounts (slug, title, password_hash, theme, status)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(String(slug).toLowerCase().trim(), title || slug, hashPassword(String(password)), theme, status);
+  const accountId = Number(info.lastInsertRowid);
+  if (withSample) seedAccountContent(accountId);
+  return accountId;
+}
+
 function seed({ force = false } = {}) {
-  const hasCouple = db.prepare('SELECT COUNT(*) AS c FROM couple').get().c > 0;
-  const hasEvents = db.prepare('SELECT COUNT(*) AS c FROM events').get().c > 0;
-  if (hasCouple && hasEvents && !force) {
-    console.log('ℹ️  Database sudah berisi data. Gunakan --force untuk menimpa.');
+  ensureOwner({ force });
+
+  const hasAccount = db.prepare('SELECT COUNT(*) AS c FROM accounts').get().c > 0;
+  if (hasAccount && !force) {
+    console.log('ℹ️  Sudah ada account. Gunakan --force untuk menimpa data contoh account "demo".');
     return;
   }
 
-  const tx = db.transaction(() => {
-    db.prepare('DELETE FROM couple').run();
-    db.prepare('DELETE FROM events').run();
-    db.prepare('DELETE FROM guests').run();
-    db.prepare('DELETE FROM wishes').run();
-    db.prepare('DELETE FROM gifts').run();
-    db.prepare('DELETE FROM gallery').run();
-    db.prepare('DELETE FROM rsvp').run();
-    db.prepare('DELETE FROM settings').run();
-
-    db.prepare(`
-      INSERT INTO couple (id, groom_name, groom_full, groom_ig, groom_photo, groom_parents,
-                          bride_name, bride_full, bride_ig, bride_photo, bride_parents, love_story)
-      VALUES (1, @groom_name, @groom_full, @groom_ig, @groom_photo, @groom_parents,
-              @bride_name, @bride_full, @bride_ig, @bride_photo, @bride_parents, @love_story)
-    `).run(DEFAULT_COUPLE);
-
-    const insEvent = db.prepare(`
-      INSERT INTO events (key, title, date_iso, time_text, venue, address, maps_url, sort)
-      VALUES (@key, @title, @date_iso, @time_text, @venue, @address, @maps_url, @sort)
-    `);
-    DEFAULT_EVENTS.forEach((e) => insEvent.run(e));
-
-    const insGuest = db.prepare(
-      'INSERT INTO guests (slug, name, phone, category, quota) VALUES (@slug, @name, @phone, @category, @quota)'
+  let account = db.prepare('SELECT * FROM accounts WHERE slug = ?').get(DEMO_ACCOUNT.slug);
+  if (!account) {
+    const id = createAccount({
+      slug: DEMO_ACCOUNT.slug,
+      title: DEMO_ACCOUNT.title,
+      password: DEMO_ACCOUNT.password,
+      theme: DEMO_ACCOUNT.theme,
+      withSample: true,
+    });
+    account = { id };
+  } else {
+    db.prepare('UPDATE accounts SET password_hash = ?, theme = ?, title = ? WHERE id = ?').run(
+      hashPassword(DEMO_ACCOUNT.password),
+      DEMO_ACCOUNT.theme,
+      DEMO_ACCOUNT.title,
+      account.id
     );
-    DEFAULT_GUESTS.forEach((g) => insGuest.run(g));
+    seedAccountContent(account.id);
+  }
 
-    const insWish = db.prepare(
-      'INSERT INTO wishes (name, message, attending) VALUES (@name, @message, @attending)'
-    );
-    DEFAULT_WISHES.forEach((w) => insWish.run(w));
-
-    const insGift = db.prepare(
-      'INSERT INTO gifts (type, bank_name, account_no, account_name, sort) VALUES (@type, @bank_name, @account_no, @account_name, @sort)'
-    );
-    DEFAULT_GIFTS.forEach((g) => insGift.run(g));
-
-    const insGallery = db.prepare('INSERT INTO gallery (url, caption, sort) VALUES (@url, @caption, @sort)');
-    DEFAULT_GALLERY.forEach((g) => insGallery.run(g));
-
-    const insSet = db.prepare('INSERT INTO settings (key, value) VALUES (@key, @value)');
-    Object.entries(DEFAULT_SETTINGS).forEach(([key, value]) => insSet.run({ key, value }));
-  });
-
-  tx();
-  console.log('✅ Data contoh berhasil dimasukkan ke database.');
+  console.log('✅ Data contoh multi-tenant berhasil dimasukkan.');
+  console.log(`   • Owner     : ${OWNER.username} / ${OWNER.password}`);
+  console.log(`   • Undangan  : /u/${DEMO_ACCOUNT.slug}  (admin: /u/${DEMO_ACCOUNT.slug}/admin)`);
+  console.log(`   • Password  : ${DEMO_ACCOUNT.password}`);
 }
 
 if (require.main === module) {
@@ -136,4 +213,4 @@ if (require.main === module) {
   seed({ force });
 }
 
-module.exports = { seed };
+module.exports = { seed, createAccount, seedAccountContent, ensureOwner, OWNER, DEMO_ACCOUNT };

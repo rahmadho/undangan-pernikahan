@@ -80,6 +80,47 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:.86rem;opacity:0;transition:all .3s;z-index:100}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .empty{text-align:center;color:var(--soft);padding:30px;font-size:.88rem}
+
+/* export & live */
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.card-head h2{margin-bottom:0}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-export{padding:8px 14px;border:1.5px solid var(--sage);background:transparent;color:var(--sage);border-radius:8px;font-size:.78rem;font-weight:600}
+.btn-export:hover{background:var(--sage);color:#fff}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;color:var(--soft);font-weight:600}
+.live .dot{width:8px;height:8px;border-radius:50%;background:var(--sage-l);animation:pulse 1.6s ease-in-out infinite}
+.live.off .dot{background:#c8c2b6;animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.hint{font-size:.74rem;color:var(--soft);margin-top:6px}
+
+/* theme picker */
+.theme-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.theme-opt{position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .18s,background .18s,transform .15s}
+.theme-opt input{position:absolute;opacity:0;width:1px;height:1px}
+.theme-opt:hover{border-color:var(--sage-l)}
+.theme-opt:has(input:checked){border-color:var(--sage);background:rgba(107,122,94,.08);box-shadow:0 6px 18px -10px rgba(107,122,94,.7)}
+.theme-opt:active{transform:scale(.99)}
+.theme-swatch{flex:none;width:42px;height:42px;border-radius:10px;border:1px solid rgba(0,0,0,.08);box-shadow:inset 0 0 0 3px rgba(255,255,255,.5)}
+.swatch-botanical{background:linear-gradient(135deg,#7d8f6d 0 50%,#b08d47 50% 100%)}
+.swatch-midnight{background:linear-gradient(135deg,#14131a 0 50%,#d8b978 50% 100%)}
+.swatch-blush{background:linear-gradient(135deg,#fffafa 0 50%,#c98a86 50% 100%)}
+.theme-meta{display:flex;flex-direction:column;line-height:1.25}
+.theme-meta strong{font-size:.9rem}
+.theme-meta small{font-size:.74rem;color:var(--soft)}
+
+/* tabel responsif di mobile */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:640px){
+  .wrap{padding:18px 14px 60px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat .n{font-size:1.5rem}
+  .card{padding:16px}
+  .tab{padding:8px 14px;font-size:.8rem}
+  th,td{padding:9px 8px;white-space:nowrap}
+  td.wrap-cell{white-space:normal;min-width:160px;max-width:220px}
+  .topbar{padding:12px 14px}
+  .row-form input,.row-form select{min-width:100%}
+}
 </style>
 </head>
 <body>
@@ -102,10 +143,17 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
       <h1>Dashboard Undangan</h1>
       <span class="sub" id="coupleSub"></span>
     </div>
-    <button class="btn-ghost" id="logoutBtn">Keluar</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a class="btn-ghost" id="viewInvite" href="#" target="_blank" style="text-decoration:none;display:inline-block">Lihat Undangan</a>
+      <button class="btn-ghost" id="logoutBtn">Keluar</button>
+    </div>
   </div>
 
   <div class="wrap">
+    <div class="stats-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="live" id="liveIndicator"><span class="dot"></span> Live</span>
+      <label class="live" style="cursor:pointer"><input type="checkbox" id="liveToggle" checked /> Perbarui otomatis</label>
+    </div>
     <div class="stats" id="stats"></div>
 
     <div class="tabs">
@@ -118,15 +166,22 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
     <!-- RSVP -->
     <div class="panel active" id="panel-rsvp">
       <div class="card">
-        <h2>Daftar Konfirmasi Kehadiran</h2>
-        <div id="rsvpTable"></div>
+        <div class="card-head">
+          <h2>Daftar Konfirmasi Kehadiran</h2>
+          <div class="card-actions">
+            <button class="btn-export" id="exportRsvp">Export CSV</button>
+          </div>
+        </div>
+        <div id="rsvpTable" class="table-scroll"></div>
       </div>
     </div>
 
     <!-- GUESTS -->
     <div class="panel" id="panel-guests">
       <div class="card">
-        <h2>Tambah Tamu</h2>
+        <div class="card-head"><h2>Daftar &amp; Tambah Tamu</h2>
+          <div class="card-actions"><button class="btn-export" id="exportGuests">Export CSV</button></div>
+        </div>
         <div class="row-form">
           <input id="gName" placeholder="Nama tamu" />
           <input id="gPhone" placeholder="No. WhatsApp (opsional)" />
@@ -136,15 +191,18 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
           <input id="gQuota" type="number" min="1" value="2" placeholder="Kuota" style="max-width:100px" />
           <button class="btn-sm" id="addGuest">Tambah</button>
         </div>
-        <div id="guestsTable"></div>
+        <div id="guestsTable" class="table-scroll"></div>
       </div>
     </div>
 
     <!-- WISHES -->
     <div class="panel" id="panel-wishes">
       <div class="card">
-        <h2>Ucapan &amp; Doa</h2>
-        <div id="wishesTable"></div>
+        <div class="card-head">
+          <h2>Ucapan &amp; Doa</h2>
+          <div class="card-actions"><button class="btn-export" id="exportWishes">Export CSV</button></div>
+        </div>
+        <div id="wishesTable" class="table-scroll"></div>
       </div>
     </div>
 
@@ -168,12 +226,35 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
       </div>
 
       <div class="card">
+        <h2>Pilih Desain Undangan</h2>
+        <p class="hint" style="margin-top:-6px;margin-bottom:14px">Tema mengubah warna, latar, dan nuansa halaman undangan (bukan admin).</p>
+        <div class="theme-picker" id="themePicker">
+          <label class="theme-opt" data-theme="botanical">
+            <input type="radio" name="theme" value="botanical" />
+            <span class="theme-swatch swatch-botanical"></span>
+            <span class="theme-meta"><strong>Botanical</strong><small>Sage &amp; emas · natural, tenang</small></span>
+          </label>
+          <label class="theme-opt" data-theme="midnight">
+            <input type="radio" name="theme" value="midnight" />
+            <span class="theme-swatch swatch-midnight"></span>
+            <span class="theme-meta"><strong>Midnight Luxe</strong><small>Gelap &amp; emas · dramatis, mewah</small></span>
+          </label>
+          <label class="theme-opt" data-theme="blush">
+            <input type="radio" name="theme" value="blush" />
+            <span class="theme-swatch swatch-blush"></span>
+            <span class="theme-meta"><strong>Ivory Blush</strong><small>Rose &amp; krem · lembut, romantis</small></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Setelan</h2>
         <div class="form-grid">
           <div class="field full"><label>Kalimat Kutipan (quote)</label><textarea id="sQuote" rows="2"></textarea></div>
           <div class="field full"><label>URL Musik Latar (mp3)</label><input id="sMusic" /></div>
-          <div class="field"><label>Password Admin</label><input id="sPass" type="text" /></div>
+          <div class="field"><label>Password Admin</label><input id="sPass" type="password" placeholder="Kosongkan bila tidak diganti" /></div>
         </div>
+        <p class="hint">Password disimpan terenkripsi (hash scrypt). Minimal 6 karakter. Kosongkan jika tidak ingin mengganti.</p>
       </div>
 
       <button class="btn-sm" id="saveAll" style="min-width:200px">Simpan Semua Perubahan</button>
@@ -187,6 +268,12 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
 const $ = (s) => document.querySelector(s);
 let PW = sessionStorage.getItem('wedding_admin_pw') || '';
 
+/* Slug undangan ini, diambil dari URL /u/<slug>/admin. */
+const SLUG = (() => {
+  const m = location.pathname.match(/^\/u\/([^/]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+})();
+
 const toast = (msg) => {
   const t = $('#toast');
   t.textContent = msg;
@@ -195,7 +282,7 @@ const toast = (msg) => {
 };
 
 async function api(url, opts = {}) {
-  opts.headers = Object.assign({ 'Content-Type': 'application/json', 'x-admin-password': PW }, opts.headers);
+  opts.headers = Object.assign({ 'Content-Type': 'application/json', 'x-admin-password': PW, 'x-account': SLUG }, opts.headers);
   const res = await fetch(url, opts);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { const e = new Error(data.error || 'Gagal'); e.status = res.status; throw e; }
@@ -209,7 +296,7 @@ const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('id-ID',{day:'2-digi
 async function tryLogin(pw) {
   const res = await fetch('/api/admin/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-account': SLUG },
     body: JSON.stringify({ password: pw }),
   });
   return res.ok;
@@ -237,11 +324,45 @@ $('#logoutBtn').addEventListener('click', () => {
 });
 
 /* ---------- DASHBOARD ---------- */
+let liveTimer = null;
+
 function enterDashboard() {
   $('#loginView').style.display = 'none';
   $('#dashView').style.display = '';
   loadAll();
+  startLive();
 }
+
+/** Polling ringan untuk memperbarui statistik & daftar secara berkala. */
+function startLive() {
+  if (liveTimer) clearInterval(liveTimer);
+  liveTimer = setInterval(refreshLive, 15000);
+  updateLiveIndicator(true);
+}
+
+function stopLive() {
+  if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+  updateLiveIndicator(false);
+}
+
+function updateLiveIndicator(on) {
+  const el = $('#liveIndicator');
+  if (!el) return;
+  el.classList.toggle('off', !on);
+  el.lastChild.textContent = on ? ' Live' : ' Nonaktif';
+}
+
+async function refreshLive() {
+  try {
+    await Promise.all([loadSummary(), loadRsvp(), loadWishes(), loadGuests()]);
+  } catch (e) {
+    if (e.status === 401) { sessionStorage.removeItem('wedding_admin_pw'); location.reload(); }
+  }
+}
+
+$('#liveToggle').addEventListener('change', (e) => {
+  if (e.target.checked) startLive(); else stopLive();
+});
 
 async function loadAll() {
   try {
@@ -287,8 +408,8 @@ async function loadGuests() {
       <td>${g.quota}</td>
       <td>${g.last_attendance ? `<span class="badge ${g.last_attendance}">${g.last_attendance==='hadir'?'Hadir':g.last_attendance==='ragu'?'Ragu':'Tidak Hadir'}</span>` : '<span class="badge none">Belum</span>'}</td>
       <td>
-        <a class="link-out" href="/?to=${esc(g.slug)}" target="_blank">Buka</a>
-        <button class="btn-copy-sm" data-link="${esc(origin + '/?to=' + g.slug)}">Salin Link</button>
+        <a class="link-out" href="/u/${esc(SLUG)}?to=${esc(g.slug)}" target="_blank">Buka</a>
+        <button class="btn-copy-sm" data-link="${esc(origin + '/u/' + SLUG + '?to=' + g.slug)}">Salin Link</button>
       </td>
       <td><button class="btn-del" data-del="${g.id}">Hapus</button></td>
     </tr>`).join('')}
@@ -324,8 +445,12 @@ async function loadCouple() {
   $('#cStory').value = c.love_story || '';
   $('#sQuote').value = d.settings.quote || '';
   $('#sMusic').value = d.settings.music_url || '';
+  const theme = d.settings.theme || 'botanical';
+  document.querySelectorAll('#themePicker input[name="theme"]').forEach((r) => { r.checked = r.value === theme; });
   const full = [c.groom_full || c.groom_name, c.bride_full || c.bride_name].filter(Boolean).join(' & ');
   $('#coupleSub').textContent = full;
+  const view = $('#viewInvite');
+  if (view) view.href = '/u/' + SLUG;
 }
 
 /* ---------- ACTIONS ---------- */
@@ -376,6 +501,7 @@ $('#saveAll').addEventListener('click', async () => {
     })});
     await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({
       quote: $('#sQuote').value, music_url: $('#sMusic').value, admin_password: $('#sPass').value || undefined,
+      theme: (document.querySelector('#themePicker input[name="theme"]:checked') || {}).value,
     })});
     toast('Perubahan disimpan ✓');
     if ($('#sPass').value) { PW = $('#sPass').value; sessionStorage.setItem('wedding_admin_pw', PW); }
@@ -392,6 +518,27 @@ document.querySelectorAll('.tab').forEach((t) => {
     $('#panel-' + t.dataset.tab).classList.add('active');
   });
 });
+
+/* ---------- EXPORT CSV ---------- */
+async function downloadCSV(url, filename) {
+  try {
+    const res = await fetch(url, { headers: { 'x-admin-password': PW, 'x-account': SLUG } });
+    if (!res.ok) throw new Error('Gagal mengunduh (' + res.status + ')');
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+    toast('Berhasil mengunduh ' + filename + ' ✓');
+  } catch (e) { toast(e.message); }
+}
+
+$('#exportRsvp').addEventListener('click', () => downloadCSV('/api/admin/export/rsvp.csv', 'rsvp.csv'));
+$('#exportGuests').addEventListener('click', () => downloadCSV('/api/admin/export/guests.csv', 'tamu.csv'));
+$('#exportWishes').addEventListener('click', () => downloadCSV('/api/admin/export/wishes.csv', 'ucapan.csv'));
 
 /* auto login kalau password tersimpan */
 if (PW) tryLogin(PW).then((ok) => { if (ok) enterDashboard(); else sessionStorage.removeItem('wedding_admin_pw'); });

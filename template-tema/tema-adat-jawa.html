@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undangan Pernikahan — Tema Adat Jawa (Sogan &amp; Emas)</title>
+<style>
+  :root{
+    --primary:#6b4423;   /* coklat sogan */
+    --accent:#b8860b;    /* emas tua */
+    --bg:#f7f0e0;        /* krem batik */
+    --ink:#3c2a18;
+    --muted:#8a7455;
+    --card:#fffdf7;
+    --script:"Great Vibes","Segoe Script","Brush Script MT",cursive;
+    --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+    --sans:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --photo-grad:linear-gradient(135deg,#6b4423 0%,#b8860b 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden}
+  .wrap{max-width:520px;margin:0 auto;position:relative}
+
+  /* ======================= COVER ======================= */
+  .cover{
+    position:relative;min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;
+    background:
+      repeating-linear-gradient(45deg, rgba(184,134,11,.05) 0 12px, transparent 12px 24px),
+      linear-gradient(160deg,#6b4423 0%,#4d3018 60%,#2e1c0d 100%);
+    color:#f7f0e0;overflow:hidden;
+  }
+  .kicker{letter-spacing:.42em;text-transform:uppercase;font-size:.68rem;color:var(--accent);margin-bottom:22px;font-weight:600}
+
+  /* Ornamen: motif gunungan/batik sudut, melayang */
+  .ornament{position:absolute;width:140px;height:140px;opacity:.5;pointer-events:none;color:var(--accent)}
+  .orn-tl{top:10px;left:10px}
+  .orn-tr{top:10px;right:10px;transform:scaleX(-1)}
+  .orn-bl{bottom:10px;left:10px;transform:scaleY(-1)}
+  .orn-br{bottom:10px;right:10px;transform:scale(-1,-1)}
+
+  /* Bingkai foto COVER: ROUNDED + SHADOW besar (kartu foto) */
+  .cover-photo{
+    width:250px;height:320px;
+    border-radius:28px;
+    background:var(--photo-grad);
+    border:6px solid #fffdf7;
+    outline:3px solid var(--accent);
+    outline-offset:-11px;
+    box-shadow:0 30px 60px rgba(0,0,0,.55),0 0 0 1px rgba(184,134,11,.4);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;margin:8px 0 30px;
+    animation:floaty 5.5s ease-in-out infinite;
+  }
+  .cover-photo .initials{font-family:var(--script);font-size:4.6rem;color:rgba(255,255,255,.94);text-shadow:0 3px 12px rgba(0,0,0,.4)}
+  .cover-photo::before{content:"";position:absolute;inset:10px;border:1px solid rgba(184,134,11,.45);border-radius:18px;pointer-events:none}
+
+  .couple-name{font-family:var(--script);font-size:3.6rem;line-height:1.1;color:#fff;text-shadow:0 4px 18px rgba(0,0,0,.45);margin:6px 0}
+  .couple-name .amp{color:var(--accent);font-size:2.4rem;display:block;margin:6px 0}
+  .cover-date{letter-spacing:.3em;font-size:.92rem;margin-top:18px;color:#ecd9b0}
+
+  .btn-open{
+    margin-top:38px;padding:15px 40px;border-radius:999px;border:1px solid var(--accent);
+    background:linear-gradient(135deg,var(--accent),#d9a832);color:#3a2410;font-family:var(--sans);
+    font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;cursor:pointer;
+    box-shadow:0 12px 26px rgba(0,0,0,.4);transition:transform .25s ease,box-shadow .25s ease;
+    animation:pulseGlow 3s ease-in-out infinite;
+  }
+  .btn-open:hover{transform:translateY(-3px) scale(1.03)}
+
+  /* ======================= SECTIONS ======================= */
+  section{padding:74px 24px}
+  .sec-title{text-align:center;margin-bottom:40px}
+  .sec-title .script{font-family:var(--script);font-size:2.5rem;color:var(--primary);display:block}
+  .sec-title .sub{letter-spacing:.32em;text-transform:uppercase;font-size:.66rem;color:var(--accent);font-weight:600}
+  .divider{width:64px;height:2px;background:var(--accent);margin:14px auto 0}
+
+  /* Countdown */
+  .countdown-sec{background:linear-gradient(180deg,#f7f0e0,#efe2c6)}
+  .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto}
+  .cd-box{background:var(--card);border:1px solid rgba(184,134,11,.5);border-top:4px solid var(--primary);border-radius:12px;padding:18px 6px;text-align:center;box-shadow:0 10px 22px rgba(107,68,35,.14)}
+  .cd-box .num{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--primary);display:block}
+  .cd-box .lbl{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  /* Mempelai */
+  .couple-grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center}
+  .person{flex:1 1 200px;max-width:240px;text-align:center}
+  .person .avatar{width:170px;height:170px;margin:0 auto 20px;border-radius:50%;background:var(--photo-grad);border:4px solid var(--accent);box-shadow:0 16px 34px rgba(107,68,35,.3),0 0 0 8px rgba(184,134,11,.12);display:flex;align-items:center;justify-content:center;font-family:var(--script);font-size:3rem;color:#fff;transition:transform .35s ease}
+  .person .avatar:hover{transform:translateY(-6px) rotate(2deg)}
+  .person h3{font-family:var(--script);font-size:1.9rem;color:var(--primary)}
+  .person .role{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+  .person p{font-size:.86rem;color:var(--muted);margin-top:8px}
+
+  /* Galeri */
+  .galeri{background:linear-gradient(180deg,#efe2c6,#f7f0e0)}
+  .gal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:460px;margin:0 auto}
+  .gal-item{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(135deg,#6b4423,#b8860b);border:3px solid #fff;box-shadow:0 10px 22px rgba(107,68,35,.22);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.85);font-family:var(--script);font-size:1.6rem;transition:transform .3s ease}
+  .gal-item:nth-child(even){background:linear-gradient(135deg,#b8860b,#6b4423)}
+  .gal-item:hover{transform:scale(1.04)}
+
+  footer{background:#2e1c0d;color:#e9dcc2;text-align:center;padding:52px 24px 40px}
+  footer .names{font-family:var(--script);font-size:2.3rem;color:var(--accent)}
+  footer .thanks{font-size:.8rem;letter-spacing:.1em;opacity:.85;margin-top:10px}
+  footer .orn-line{margin:22px auto;width:120px;height:1px;background:var(--accent);opacity:.6}
+
+  /* ======================= KEYFRAMES ======================= */
+  @keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 12px 26px rgba(0,0,0,.4),0 0 0 0 rgba(184,134,11,.5)}50%{box-shadow:0 12px 26px rgba(0,0,0,.4),0 0 0 12px rgba(184,134,11,0)}}
+  @keyframes drift{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(3deg)}}
+  .orn-sway{animation:sway 4.2s ease-in-out infinite;transform-origin:top center}
+  .orn-drift{animation:drift 4.8s ease-in-out infinite}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ COVER ============ -->
+  <header class="cover">
+    <!-- Ornamen gunungan/batik: berayun -->
+    <svg class="ornament orn-tl orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M8 60 Q8 20 50 8 Q92 20 92 60"/>
+      <path d="M22 60 Q22 34 50 26 Q78 34 78 60"/>
+      <path d="M36 60 Q36 46 50 42 Q64 46 64 60"/>
+      <line x1="50" y1="8" x2="50" y2="60"/>
+    </svg>
+    <svg class="ornament orn-tr orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M8 60 Q8 20 50 8 Q92 20 92 60"/>
+      <path d="M22 60 Q22 34 50 26 Q78 34 78 60"/>
+      <path d="M36 60 Q36 46 50 42 Q64 46 64 60"/>
+      <line x1="50" y1="8" x2="50" y2="60"/>
+    </svg>
+    <svg class="ornament orn-bl orn-drift" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M50 92 C20 70 14 40 30 18 C46 40 54 40 70 18 C86 40 80 70 50 92Z"/>
+      <circle cx="50" cy="50" r="6"/>
+    </svg>
+    <svg class="ornament orn-br orn-drift" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M50 92 C20 70 14 40 30 18 C46 40 54 40 70 18 C86 40 80 70 50 92Z"/>
+      <circle cx="50" cy="50" r="6"/>
+    </svg>
+
+    <p class="kicker">Undangan Pernikahan Adat Jawa</p>
+
+    <!-- Bingkai ROUNDED + SHADOW -->
+    <div class="cover-photo"><span class="initials">R&amp;D</span></div>
+
+    <h1 class="couple-name">Retno<span class="amp">&amp;</span>Damar</h1>
+    <p class="cover-date">Sabtu Pahing · 20 Desember 2025</p>
+
+    <button class="btn-open" onclick="document.getElementById('countdown').scrollIntoView({behavior:'smooth'})">Buka Undangan</button>
+  </header>
+
+  <!-- ============ COUNTDOWN ============ -->
+  <section class="countdown-sec reveal" id="countdown">
+    <div class="sec-title">
+      <span class="sub">Menuju Hari Bahagia</span>
+      <span class="script">Hitung Hari</span>
+      <div class="divider"></div>
+    </div>
+    <div class="countdown">
+      <div class="cd-box"><span class="num">36</span><span class="lbl">Hari</span></div>
+      <div class="cd-box"><span class="num">12</span><span class="lbl">Jam</span></div>
+      <div class="cd-box"><span class="num">48</span><span class="lbl">Menit</span></div>
+      <div class="cd-box"><span class="num">09</span><span class="lbl">Detik</span></div>
+    </div>
+  </section>
+
+  <!-- ============ MEMPELAI ============ -->
+  <section class="reveal">
+    <div class="sec-title">
+      <span class="sub">Sesungguhnya Kami Menikahkan</span>
+      <span class="script">Mempelai</span>
+      <div class="divider"></div>
+    </div>
+    <div class="couple-grid">
+      <div class="person">
+        <div class="avatar">R</div>
+        <h3>Retno Wulandari</h3>
+        <p class="role">Putri Pertama</p>
+        <p>Bapak Sutrisno &amp; Ibu Sri Wahyuni</p>
+      </div>
+      <div class="person">
+        <div class="avatar">D</div>
+        <h3>Damar Wicaksono</h3>
+        <p class="role">Putra Kedua</p>
+        <p>Bapak Hadi Purnomo &amp; Ibu Rini Astuti</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALERI ============ -->
+  <section class="galeri reveal">
+    <div class="sec-title">
+      <span class="sub">Momen Bahagia</span>
+      <span class="script">Galeri</span>
+      <div class="divider"></div>
+    </div>
+    <div class="gal-grid">
+      <div class="gal-item">01</div>
+      <div class="gal-item">02</div>
+      <div class="gal-item">03</div>
+      <div class="gal-item">04</div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <div class="names">Retno &amp; Damar</div>
+    <div class="orn-line"></div>
+    <p class="thanks">Merupakan suatu kehormatan &amp; kebahagiaan bagi kami<br>apabila Bapak/Ibu/Saudara berkenan hadir.</p>
+    <p class="thanks" style="margin-top:18px;font-size:.68rem;letter-spacing:.24em">TEMA ADAT JAWA</p>
+  </footer>
+</div>
+
+<script>
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); } });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+</script>
+</body>
+</html>

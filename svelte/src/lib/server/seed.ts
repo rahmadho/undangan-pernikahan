@@ -122,7 +122,12 @@ export async function seedDemo(): Promise<number> {
 		['background_repeat', 'no-repeat'],
 		['background_attachment', 'fixed'],
 		['watermark_enabled', '1'],
-		['watermark_text', 'Undangan Digital']
+		['watermark_text', 'Undangan Digital'],
+		// -- Foto & dekorasi cover (fitur baru) --
+		['cover_mode', 'plain'], // plain | frame | shadow | polaroid | arch | circle | none
+		['cover_photo', ''], // URL foto untuk cover (kosong = pakai latar)
+		['decoration', 'floral'], // floral | leaves-sway | ethnic-jawa | ethnic-minang | none
+		['decoration_animated', '1'] // '1' = dekorasi bergerak (daun/bunga berayun)
 	];
 	for (const [k, v] of settings) {
 		await run(

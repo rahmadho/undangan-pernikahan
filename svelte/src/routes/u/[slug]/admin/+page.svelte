@@ -44,7 +44,36 @@
 	let czBase = $state('botanical');
 	let editingThemeId = $state<number | null>(null);
 
-	const THEMES = ['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'];
+	const THEMES = [
+		'botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque',
+		'adat-minang', 'adat-jawa', 'rustic-terracotta', 'emerald-luxury',
+		'rose-gold', 'dusty-blue', 'sakura'
+	];
+	// Label ramah untuk tema (terutama adat)
+	const THEME_LABELS: Record<string, string> = {
+		botanical: 'Botanical', midnight: 'Midnight', blush: 'Blush',
+		javanese: 'Javanese', minimal: 'Minimal', baroque: 'Baroque',
+		'adat-minang': 'Adat Minang', 'adat-jawa': 'Adat Jawa',
+		'rustic-terracotta': 'Rustic Terracotta', 'emerald-luxury': 'Emerald Luxury',
+		'rose-gold': 'Rose Gold', 'dusty-blue': 'Dusty Blue', sakura: 'Sakura'
+	};
+	// Opsi foto cover & dekorasi
+	const COVER_MODES = [
+		{ v: 'plain', l: 'Bundar sederhana' },
+		{ v: 'frame', l: 'Bingkai kartu' },
+		{ v: 'shadow', l: 'Tanpa bingkai + bayangan' },
+		{ v: 'polaroid', l: 'Polaroid' },
+		{ v: 'arch', l: 'Lengkung (arch)' },
+		{ v: 'circle', l: 'Lingkaran emas' },
+		{ v: 'none', l: 'Tanpa foto' }
+	];
+	const DECORATIONS = [
+		{ v: 'floral', l: 'Floral klasik' },
+		{ v: 'leaves-sway', l: 'Sulur daun' },
+		{ v: 'ethnic-jawa', l: 'Batik Jawa' },
+		{ v: 'ethnic-minang', l: 'Songket Minang' },
+		{ v: 'none', l: 'Tanpa dekorasi' }
+	];
 	const BG_POS = ['center center', 'top center', 'bottom center', 'center left', 'center right', 'top left', 'top right', 'bottom left', 'bottom right'];
 	const BG_SIZE = ['cover', 'contain', 'auto', '100% 100%'];
 	const BG_REPEAT = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'];
@@ -206,6 +235,23 @@
 			settings[key] = url;
 			showToast('Latar diunggah ✓');
 		}
+	}
+
+	/** Buka dialog pilih file lalu unggah sebagai foto cover. */
+	function pickCoverUpload() {
+		const inp = document.createElement('input');
+		inp.type = 'file';
+		inp.accept = 'image/*';
+		inp.onchange = async () => {
+			const f = inp.files?.[0];
+			if (!f) return;
+			const url = await uploadFile(f, 'image');
+			if (url) {
+				settings.cover_photo = url;
+				showToast('Foto cover diunggah ✓');
+			}
+		};
+		inp.click();
 	}
 
 	async function onQrisUpload(e: Event) {
@@ -565,6 +611,38 @@
 			</div>
 
 			<div class="card">
+				<h3>📸 Foto &amp; Bingkai Cover</h3>
+				<p class="muted">Pilih cara menampilkan foto di halaman pembuka undangan.</p>
+				<label for="cmode">Gaya bingkai foto</label>
+				<select id="cmode" bind:value={settings.cover_mode}>
+					{#each COVER_MODES as m}<option value={m.v}>{m.l}</option>{/each}
+				</select>
+				<label for="cphoto">URL foto cover {settings.cover_mode === 'none' ? '(nonaktif)' : ''}</label>
+				<input id="cphoto" bind:value={settings.cover_photo} placeholder="https://…/foto.jpg" disabled={settings.cover_mode === 'none'} />
+				<div class="acts">
+					<button class="ghost sm" disabled={settings.cover_mode === 'none'} onclick={() => pickCoverUpload()}>⬆ Unggah foto cover</button>
+				</div>
+				{#if settings.cover_photo}
+					<div class="cover-preview cp-{settings.cover_mode}">
+						<img src={settings.cover_photo} alt="Pratinjau foto cover" />
+					</div>
+				{/if}
+			</div>
+
+			<div class="card">
+				<h3>🌸 Dekorasi &amp; Animasi</h3>
+				<p class="muted">Dekorasi bergerak membuat undangan lebih hidup.</p>
+				<label for="deco">Jenis dekorasi</label>
+				<select id="deco" bind:value={settings.decoration}>
+					{#each DECORATIONS as d}<option value={d.v}>{d.l}</option>{/each}
+				</select>
+				<label class="check">
+					<input type="checkbox" checked={settings.decoration_animated === '1'} onchange={(e) => (settings.decoration_animated = e.currentTarget.checked ? '1' : '0')} />
+					Aktifkan animasi dekorasi (daun/bunga berayun)
+				</label>
+			</div>
+
+			<div class="card">
 				<h3>Watermark</h3>
 				<label class="check"><input type="checkbox" checked={settings.watermark_enabled === '1'} onchange={(e) => (settings.watermark_enabled = e.currentTarget.checked ? '1' : '')} /> Tampilkan watermark</label>
 				<label for="wt">Teks watermark</label>
@@ -578,7 +656,7 @@
 				<div class="theme-picker">
 					{#each THEMES as t}
 						<button class="theme-chip" class:on={content.account.theme === t} onclick={() => setTheme(t)}>
-							<span class="swatch" data-t={t}></span>{t}
+							<span class="swatch" data-t={t}></span>{THEME_LABELS[t] || t}
 						</button>
 					{/each}
 				</div>
@@ -786,6 +864,22 @@
 	.swatch[data-t='javanese'] { background: #8a6d3b; }
 	.swatch[data-t='minimal'] { background: #3f3f46; }
 	.swatch[data-t='baroque'] { background: #6d4b6b; }
+	.swatch[data-t='adat-minang'] { background: #7b1e2b; }
+	.swatch[data-t='adat-jawa'] { background: #6b4423; }
+	.swatch[data-t='rustic-terracotta'] { background: #c65d3b; }
+	.swatch[data-t='emerald-luxury'] { background: #0f5132; }
+	.swatch[data-t='rose-gold'] { background: #b76e79; }
+	.swatch[data-t='dusty-blue'] { background: #5b7c99; }
+	.swatch[data-t='sakura'] { background: #d88aa4; }
+	/* Pratinjau foto cover */
+	.cover-preview { margin-top: .8rem; width: 120px; height: 150px; overflow: hidden; background: #efe9db; }
+	.cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+	.cover-preview.cp-plain, .cover-preview.cp-circle { border-radius: 50%; width: 120px; height: 120px; }
+	.cover-preview.cp-frame { border-radius: 10px; border: 3px solid #fff; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+	.cover-preview.cp-shadow { border-radius: 6px; box-shadow: 0 10px 24px rgba(0,0,0,.3); }
+	.cover-preview.cp-polaroid { padding: 6px 6px 22px; background: #fff; border-radius: 2px; }
+	.cover-preview.cp-arch { border-radius: 50% 50% 8px 8px / 34% 34% 8px 8px; border: 3px solid #b08d47; }
+	.cover-preview.cp-circle { border: 3px solid #b08d47; }
 
 	.cz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: .6rem; }
 	.cz-preview { border-radius: 12px; padding: 1rem; margin-top: .8rem; border: 1px dashed #ccc; text-align: center; }

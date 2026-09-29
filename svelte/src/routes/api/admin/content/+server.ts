@@ -1,19 +1,54 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { run, one } from '$lib/server/db';
+import { run, one, tx } from '$lib/server/db';
 import { requireAccountAdmin, enforceRate } from '$lib/server/auth';
 import { clampStr, clampInt, isSafeUrl, LIMITS } from '$lib/server/util';
 import { getInvitationData, getCustomThemes, publicSettings } from '$lib/server/invitation';
+
+/**
+ * Key settings yang boleh dibaca/ditulis oleh panel admin (self-service).
+ *
+ * SUMBER KEBENARAN TUNGGAL untuk whitelist. Semua key yang dipakai UI admin
+ * HARUS ada di sini, jika tidak nilainya akan diam-diam dibuang saat simpan
+ * (bug "simpan sukses tapi setelan hilang").
+ *
+ * Catatan: `publicSettings()` sengaja dipersempit untuk halaman tamu publik,
+ * jadi daftar itu BUKAN acuan admin. Acuan admin adalah konstanta di bawah.
+ */
+const ADMIN_SETTING_KEYS = [
+	// umum
+	'music_url', 'quote', 'video_url', 'live_url', 'live_text',
+	// amplop digital
+	'qris_image', 'gift_address', 'gift_enabled',
+	// branding
+	'watermark_text', 'watermark_enabled',
+	// latar belakang kustom (desktop)
+	'background_image', 'background_overlay',
+	'background_overlay_opacity', 'background_position', 'background_size',
+	'background_repeat', 'background_attachment',
+	// latar belakang kustom (mobile)
+	'background_image_mobile', 'background_position_mobile',
+	'background_size_mobile', 'background_repeat_mobile',
+	// foto & dekorasi cover (fitur baru)
+	'cover_mode', 'cover_photo',
+	'decoration', 'decoration_animated'
+] as const;
+
+const ADMIN_SETTING_SET = new Set<string>(ADMIN_SETTING_KEYS);
 
 /** GET /api/admin/content — seluruh konten account (untuk panel admin). */
 export const GET: RequestHandler = async (event) => {
 	const acc = await requireAccountAdmin(event);
 	const data = await getInvitationData(acc);
 	const themes = await getCustomThemes(acc.id);
+	// Gabungkan settings MENTAH (semua key termasuk cover/decoration) dengan
+	// nilai publik yang sudah dinormalisasi. Yang mentah dipakai panel admin
+	// agar form bisa memuat ulang nilai yang baru disimpan.
+	const settings: Record<string, string> = { ...data.settings, ...publicSettings(acc, data.settings) };
 	return json({
 		account: { slug: acc.slug, title: acc.title, theme: acc.theme, status: acc.status, expires_at: acc.expires_at },
 		...data,
-		settings: { ...publicSettings(acc, data.settings) },
+		settings,
 		themes
 	});
 };
@@ -79,79 +114,87 @@ export const PUT: RequestHandler = async (event) => {
 		}
 	}
 
-	// -- Events (replace-all) --
+	// -- Events (replace-all, ATOMIK) --
+	// Dibungkus transaksi: bila satu baris gagal, DELETE ikut di-rollback
+	// sehingga daftar lama TIDAK hilang (dulu: DELETE sudah commit → data lenyap).
 	if (Array.isArray(b.events)) {
-		await run('DELETE FROM events WHERE account_id = $1', [id]);
-		let i = 0;
-		for (const e of b.events) {
-			await run(
-				`INSERT INTO events (account_id, key, title, date_iso, time_text, venue, address, maps_url, sort)
-				 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-				[
-					id,
-					clampStr(e.key, 40),
-					clampStr(e.title, LIMITS.short),
-					clampStr(e.date_iso, 40),
-					clampStr(e.time_text, LIMITS.short),
-					clampStr(e.venue, LIMITS.medium),
-					clampStr(e.address, LIMITS.medium),
-					isSafeUrl(e.maps_url) ? clampStr(e.maps_url, LIMITS.url) : '',
-					i++
-				]
-			);
-		}
+		await tx(async (c) => {
+			await c.query('DELETE FROM events WHERE account_id = $1', [id]);
+			let i = 0;
+			for (const e of b.events) {
+				await c.query(
+					`INSERT INTO events (account_id, key, title, date_iso, time_text, venue, address, maps_url, sort)
+					 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+					[
+						id,
+						clampStr(e.key, 40),
+						clampStr(e.title, LIMITS.short),
+						clampStr(e.date_iso, 40),
+						clampStr(e.time_text, LIMITS.short),
+						clampStr(e.venue, LIMITS.medium),
+						clampStr(e.address, LIMITS.medium),
+						isSafeUrl(e.maps_url) ? clampStr(e.maps_url, LIMITS.url) : '',
+						i++
+					]
+				);
+			}
+		});
 	}
 
-	// -- Gallery (replace-all) --
+	// -- Gallery (replace-all, ATOMIK) --
+	// Kolom PERSIS skema gallery: (account_id, url, caption, sort). JANGAN tambah
+	// kolom yang tidak ada di schema.ts (mis. 'icon') — bikin error 42703.
 	if (Array.isArray(b.gallery)) {
-		await run('DELETE FROM gallery WHERE account_id = $1', [id]);
-		let i = 0;
-		for (const g of b.gallery) {
-			const url = isSafeUrl(g.url) ? clampStr(g.url, LIMITS.url) : '';
-			if (!url) continue;
-			await run('INSERT INTO gallery (account_id, url, caption, sort) VALUES ($1,$2,$3,$4)', [
-				id,
-				url,
-				clampStr(g.caption, LIMITS.medium),
-				i++
-			]);
-		}
+		await tx(async (c) => {
+			await c.query('DELETE FROM gallery WHERE account_id = $1', [id]);
+			let i = 0;
+			for (const g of b.gallery) {
+				const url = isSafeUrl(g.url) ? clampStr(g.url, LIMITS.url) : '';
+				if (!url) continue;
+				await c.query('INSERT INTO gallery (account_id, url, caption, sort) VALUES ($1,$2,$3,$4)', [
+					id,
+					url,
+					clampStr(g.caption, LIMITS.medium),
+					i++
+				]);
+			}
+		});
 	}
 
-	// -- Gifts (replace-all) --
+	// -- Gifts (replace-all, ATOMIK) --
+	// Kolom PERSIS skema gifts: (account_id, type, bank_name, account_no,
+	// account_name, sort). Kolom 'icon' TIDAK ada di skema — jangan ditambah.
 	if (Array.isArray(b.gifts)) {
-		await run('DELETE FROM gifts WHERE account_id = $1', [id]);
-		let i = 0;
-		for (const g of b.gifts) {
-			await run(
-				`INSERT INTO gifts (account_id, type, bank_name, account_no, account_name, sort)
-				 VALUES ($1,$2,$3,$4,$5,$6)`,
-				[
-					id,
-					clampStr(g.type, 40),
-					clampStr(g.bank_name, LIMITS.medium),
-					clampStr(g.account_no, LIMITS.short),
-					clampStr(g.account_name, LIMITS.medium),
-					i++
-				]
-			);
-		}
+		await tx(async (c) => {
+			await c.query('DELETE FROM gifts WHERE account_id = $1', [id]);
+			let i = 0;
+			for (const g of b.gifts) {
+				await c.query(
+					`INSERT INTO gifts (account_id, type, bank_name, account_no, account_name, sort)
+					 VALUES ($1,$2,$3,$4,$5,$6)`,
+					[
+						id,
+						// `type` NOT NULL di skema → fallback 'bank' bila kosong.
+						clampStr(g.type, 40) || 'bank',
+						clampStr(g.bank_name, LIMITS.medium),
+						clampStr(g.account_no, LIMITS.short),
+						clampStr(g.account_name, LIMITS.medium),
+						i++
+					]
+				);
+			}
+		});
 	}
 
 	// -- Settings (upsert per key) --
 	if (b.settings && typeof b.settings === 'object') {
-		const allowed = new Set([
-			'music_url', 'quote', 'video_url', 'live_url', 'live_text',
-			'qris_image', 'gift_address', 'gift_enabled',
-			'watermark_text', 'watermark_enabled',
-			'background_image', 'background_image_mobile', 'background_overlay',
-			'background_overlay_opacity', 'background_position', 'background_size',
-			'background_repeat', 'background_attachment',
-			'background_position_mobile', 'background_size_mobile', 'background_repeat_mobile'
-		]);
+		// Nilai enum yang divalidasi ketat (cegah nilai sampah ke DB/CSS).
+		const COVER_MODES = new Set(['plain', 'frame', 'shadow', 'polaroid', 'arch', 'circle', 'none']);
+		const DECORATIONS = new Set(['floral', 'leaves-sway', 'ethnic-jawa', 'ethnic-minang', 'none']);
 		for (const [k, v] of Object.entries(b.settings)) {
-			if (!allowed.has(k)) continue;
+			if (!ADMIN_SETTING_SET.has(k)) continue;
 			let val = String(v ?? '').slice(0, 1000);
+			// URL/gambar: buang bila tidak aman (http/https atau /uploads/…).
 			if (k.includes('url') || k.includes('image') || k === 'qris_image') {
 				if (val && !isSafeUrl(val)) val = '';
 			}
@@ -159,6 +202,10 @@ export const PUT: RequestHandler = async (event) => {
 				const n = Number(val);
 				val = Number.isFinite(n) ? String(Math.max(0, Math.min(1, n))) : '';
 			}
+			// Nilai enum cover/dekorasi: hanya terima nilai yang dikenal.
+			if (k === 'cover_mode' && !COVER_MODES.has(val)) val = 'plain';
+			if (k === 'decoration' && !DECORATIONS.has(val)) val = 'floral';
+			if (k === 'decoration_animated') val = val === '1' || val === 'true' ? '1' : '0';
 			await run(
 				`INSERT INTO settings (account_id, key, value) VALUES ($1,$2,$3)
 				 ON CONFLICT (account_id, key) DO UPDATE SET value = EXCLUDED.value`,

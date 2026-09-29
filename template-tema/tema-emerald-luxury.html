@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undangan Pernikahan — Emerald Luxury (Hijau Zamrud &amp; Emas)</title>
+<style>
+  :root{
+    --primary:#0f5132;   /* emerald */
+    --accent:#c9a227;    /* gold */
+    --bg:#f6f4ee;
+    --ink:#243026;
+    --muted:#6b7a6f;
+    --card:#ffffff;
+    --script:"Great Vibes","Segoe Script","Brush Script MT",cursive;
+    --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+    --sans:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --photo-grad:linear-gradient(135deg,#0f5132 0%,#c9a227 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden}
+  .wrap{max-width:520px;margin:0 auto;position:relative}
+
+  .cover{
+    position:relative;min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(201,162,39,.16), transparent 60%),
+      linear-gradient(160deg,#0f5132 0%,#0a3a24 60%,#062318 100%);
+    color:#f6f4ee;overflow:hidden;
+  }
+  .kicker{letter-spacing:.44em;text-transform:uppercase;font-size:.68rem;color:var(--accent);margin-bottom:22px;font-weight:600}
+
+  /* Ornamen: laurel/leaf luxury emas — berayun & bergemerlap */
+  .ornament{position:absolute;width:140px;height:140px;opacity:.6;pointer-events:none;color:var(--accent)}
+  .orn-tl{top:6px;left:6px}
+  .orn-tr{top:6px;right:6px;transform:scaleX(-1)}
+  .orn-bl{bottom:6px;left:6px;transform:scaleY(-1)}
+  .orn-br{bottom:6px;right:6px;transform:scale(-1,-1)}
+
+  /* Bingkai foto COVER: CIRCLE + double gold ring */
+  .cover-photo{
+    width:240px;height:240px;
+    border-radius:50%;
+    background:var(--photo-grad);
+    border:5px solid var(--accent);
+    box-shadow:0 26px 54px rgba(0,0,0,.5),0 0 0 10px rgba(201,162,39,.16),inset 0 0 40px rgba(0,0,0,.25);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;margin:8px 0 32px;
+    animation:floaty 5s ease-in-out infinite;
+  }
+  .cover-photo .initials{font-family:var(--script);font-size:4.2rem;color:rgba(255,255,255,.95);text-shadow:0 3px 12px rgba(0,0,0,.4)}
+  .cover-photo::after{content:"";position:absolute;inset:-24px;border-radius:50%;border:1px dashed rgba(201,162,39,.6);pointer-events:none}
+
+  .couple-name{font-family:var(--script);font-size:3.6rem;line-height:1.1;color:#fff;text-shadow:0 4px 18px rgba(0,0,0,.45);margin:6px 0}
+  .couple-name .amp{color:var(--accent);font-size:2.4rem;display:block;margin:6px 0}
+  .cover-date{letter-spacing:.3em;font-size:.92rem;margin-top:18px;color:#e7dcc0}
+
+  .btn-open{
+    margin-top:38px;padding:15px 42px;border-radius:999px;border:1px solid var(--accent);
+    background:linear-gradient(135deg,#c9a227,#e6cf7a);color:#06281b;font-family:var(--sans);
+    font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;cursor:pointer;
+    box-shadow:0 12px 26px rgba(0,0,0,.4);transition:transform .25s ease;
+    animation:pulseGlow 3s ease-in-out infinite;
+  }
+  .btn-open:hover{transform:translateY(-3px) scale(1.03)}
+
+  section{padding:74px 24px}
+  .sec-title{text-align:center;margin-bottom:40px}
+  .sec-title .script{font-family:var(--script);font-size:2.5rem;color:var(--primary);display:block}
+  .sec-title .sub{letter-spacing:.32em;text-transform:uppercase;font-size:.66rem;color:var(--accent);font-weight:600}
+  .divider{width:64px;height:2px;background:var(--accent);margin:14px auto 0}
+
+  .countdown-sec{background:linear-gradient(180deg,#f6f4ee,#eae7db)}
+  .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto}
+  .cd-box{background:var(--card);border:1px solid rgba(201,162,39,.45);border-top:4px solid var(--primary);border-radius:12px;padding:18px 6px;text-align:center;box-shadow:0 10px 22px rgba(15,81,50,.12)}
+  .cd-box .num{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--primary);display:block}
+  .cd-box .lbl{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  .couple-grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center}
+  .person{flex:1 1 200px;max-width:240px;text-align:center}
+  .person .avatar{width:170px;height:170px;margin:0 auto 20px;border-radius:50%;background:var(--photo-grad);border:4px solid var(--accent);box-shadow:0 16px 34px rgba(15,81,50,.28),0 0 0 8px rgba(201,162,39,.14);display:flex;align-items:center;justify-content:center;font-family:var(--script);font-size:3rem;color:#fff;transition:transform .35s ease}
+  .person .avatar:hover{transform:translateY(-6px) scale(1.03)}
+  .person h3{font-family:var(--script);font-size:1.9rem;color:var(--primary)}
+  .person .role{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+  .person p{font-size:.86rem;color:var(--muted);margin-top:8px}
+
+  .galeri{background:linear-gradient(180deg,#eae7db,#f6f4ee)}
+  .gal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:460px;margin:0 auto}
+  .gal-item{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(135deg,#0f5132,#c9a227);border:3px solid #fff;box-shadow:0 10px 22px rgba(15,81,50,.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.88);font-family:var(--script);font-size:1.6rem;transition:transform .3s ease}
+  .gal-item:nth-child(even){background:linear-gradient(135deg,#c9a227,#0f5132)}
+  .gal-item:hover{transform:scale(1.04)}
+
+  footer{background:#062318;color:#dfe6dd;text-align:center;padding:52px 24px 40px}
+  footer .names{font-family:var(--script);font-size:2.3rem;color:var(--accent)}
+  footer .thanks{font-size:.8rem;letter-spacing:.1em;opacity:.85;margin-top:10px}
+  footer .orn-line{margin:22px auto;width:120px;height:1px;background:var(--accent);opacity:.6}
+
+  @keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 12px 26px rgba(0,0,0,.4),0 0 0 0 rgba(201,162,39,.5)}50%{box-shadow:0 12px 26px rgba(0,0,0,.4),0 0 0 12px rgba(201,162,39,0)}}
+  @keyframes glimmer{0%,100%{opacity:.35;filter:drop-shadow(0 0 0 rgba(201,162,39,0))}50%{opacity:1;filter:drop-shadow(0 0 6px rgba(201,162,39,.9))}}
+  .orn-sway{animation:sway 4.4s ease-in-out infinite;transform-origin:top center}
+  .orn-glimmer{animation:glimmer 2.6s ease-in-out infinite}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="cover">
+    <!-- Ornamen laurel emas -->
+    <svg class="ornament orn-tl orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M16 84 Q10 40 44 12"/>
+      <path d="M20 66 q-14 -2 -18 -12 q14 -4 22 6"/>
+      <path d="M24 48 q-14 -4 -16 -14 q14 -2 20 10"/>
+      <path d="M32 32 q-12 -6 -12 -16 q14 0 18 12"/>
+    </svg>
+    <svg class="ornament orn-tr orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M16 84 Q10 40 44 12"/>
+      <path d="M20 66 q-14 -2 -18 -12 q14 -4 22 6"/>
+      <path d="M24 48 q-14 -4 -16 -14 q14 -2 20 10"/>
+      <path d="M32 32 q-12 -6 -12 -16 q14 0 18 12"/>
+    </svg>
+    <svg class="ornament orn-bl orn-glimmer" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M50 8 L55 22 L70 22 L58 32 L63 46 L50 37 L37 46 L42 32 L30 22 L45 22 Z"/>
+      <circle cx="50" cy="70" r="4"/>
+    </svg>
+    <svg class="ornament orn-br orn-glimmer" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M50 8 L55 22 L70 22 L58 32 L63 46 L50 37 L37 46 L42 32 L30 22 L45 22 Z"/>
+      <circle cx="50" cy="70" r="4"/>
+    </svg>
+
+    <p class="kicker">The Wedding Celebration</p>
+
+    <!-- Bingkai CIRCLE -->
+    <div class="cover-photo"><span class="initials">V&amp;A</span></div>
+
+    <h1 class="couple-name">Vania<span class="amp">&amp;</span>Adrian</h1>
+    <p class="cover-date">Sabtu · 06 Desember 2025</p>
+
+    <button class="btn-open" onclick="document.getElementById('countdown').scrollIntoView({behavior:'smooth'})">Buka Undangan</button>
+  </header>
+
+  <section class="countdown-sec reveal" id="countdown">
+    <div class="sec-title">
+      <span class="sub">Menuju Hari Bahagia</span>
+      <span class="script">Hitung Hari</span>
+      <div class="divider"></div>
+    </div>
+    <div class="countdown">
+      <div class="cd-box"><span class="num">28</span><span class="lbl">Hari</span></div>
+      <div class="cd-box"><span class="num">16</span><span class="lbl">Jam</span></div>
+      <div class="cd-box"><span class="num">05</span><span class="lbl">Menit</span></div>
+      <div class="cd-box"><span class="num">33</span><span class="lbl">Detik</span></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="sec-title">
+      <span class="sub">With Joyful Hearts</span>
+      <span class="script">Mempelai</span>
+      <div class="divider"></div>
+    </div>
+    <div class="couple-grid">
+      <div class="person">
+        <div class="avatar">V</div>
+        <h3>Vania Larasati</h3>
+        <p class="role">Putri Pertama</p>
+        <p>Bapak Hendra Gunawan &amp; Ibu Lisa Anindita</p>
+      </div>
+      <div class="person">
+        <div class="avatar">A</div>
+        <h3>Adrian Nugroho</h3>
+        <p class="role">Putra Ketiga</p>
+        <p>Bapak Surya Wijaya &amp; Ibu Ratna Sari</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="galeri reveal">
+    <div class="sec-title">
+      <span class="sub">Our Precious Moments</span>
+      <span class="script">Galeri</span>
+      <div class="divider"></div>
+    </div>
+    <div class="gal-grid">
+      <div class="gal-item">01</div>
+      <div class="gal-item">02</div>
+      <div class="gal-item">03</div>
+      <div class="gal-item">04</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="names">Vania &amp; Adrian</div>
+    <div class="orn-line"></div>
+    <p class="thanks">Merupakan suatu kehormatan &amp; kebahagiaan bagi kami<br>apabila Bapak/Ibu/Saudara berkenan hadir.</p>
+    <p class="thanks" style="margin-top:18px;font-size:.68rem;letter-spacing:.24em">TEMA EMERALD LUXURY</p>
+  </footer>
+</div>
+
+<script>
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); } });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+</script>
+</body>
+</html>

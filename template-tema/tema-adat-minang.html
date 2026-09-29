@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undangan Pernikahan — Tema Adat Minang (Marun &amp; Emas)</title>
+<style>
+  :root{
+    --primary:#7b1e2b;
+    --accent:#c9a227;
+    --bg:#faf3e6;
+    --ink:#3a2027;
+    --muted:#8a6a52;
+    --card:#ffffff;
+    /* Font stack self-contained: Google Fonts bila tersedia, fallback system */
+    --script:"Great Vibes","Segoe Script","Brush Script MT","Snell Roundhand",cursive;
+    --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+    --sans:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --photo-grad:linear-gradient(135deg,#8e2b39 0%,#c9a227 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:520px;margin:0 auto;position:relative}
+
+  /* ======================= COVER ======================= */
+  .cover{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:80px 24px 60px;
+    background:
+      radial-gradient(circle at 50% 15%, rgba(201,162,39,.18), transparent 60%),
+      linear-gradient(160deg,#7b1e2b 0%,#5a1420 55%,#3a0d15 100%);
+    color:#fdf6e3;
+    overflow:hidden;
+  }
+  .kicker{
+    letter-spacing:.42em;
+    text-transform:uppercase;
+    font-size:.68rem;
+    color:var(--accent);
+    margin-bottom:22px;
+    font-weight:600;
+  }
+  /* Ornamen daerah: songket / rumah gadang -- sudut-sudut */
+  .ornament{position:absolute;width:150px;height:150px;opacity:.55;pointer-events:none;color:var(--accent)}
+  .orn-tl{top:8px;left:8px}
+  .orn-tr{top:8px;right:8px;transform:scaleX(-1)}
+  .orn-bl{bottom:8px;left:8px;transform:scaleY(-1)}
+  .orn-br{bottom:8px;right:8px;transform:scale(-1,-1)}
+
+  /* Bingkai foto COVER: ARCH (lengkung atas) + sudut songket */
+  .cover-photo{
+    width:230px;
+    height:320px;
+    border-top-left-radius:150px;
+    border-top-right-radius:150px;
+    border-bottom-left-radius:12px;
+    border-bottom-right-radius:12px;
+    background:var(--photo-grad);
+    border:4px solid var(--accent);
+    box-shadow:0 26px 50px rgba(0,0,0,.5),0 0 0 8px rgba(250,243,230,.12);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    margin:8px 0 30px;
+    animation:floaty 5s ease-in-out infinite;
+  }
+  .cover-photo .initials{
+    font-family:var(--script);
+    font-size:4.4rem;
+    color:rgba(255,255,255,.92);
+    text-shadow:0 3px 10px rgba(0,0,0,.35);
+  }
+  .cover-photo::after{
+    content:"";
+    position:absolute;inset:-18px;
+    border-top-left-radius:170px;border-top-right-radius:170px;
+    border:2px dashed rgba(201,162,39,.6);
+    border-bottom:0;
+    pointer-events:none;
+  }
+  .couple-name{
+    font-family:var(--script);
+    font-size:3.6rem;
+    line-height:1.1;
+    color:#fff;
+    text-shadow:0 4px 18px rgba(0,0,0,.4);
+    margin:6px 0;
+  }
+  .couple-name .amp{color:var(--accent);font-size:2.4rem;display:block;margin:6px 0}
+  .cover-date{
+    letter-spacing:.3em;
+    font-size:.92rem;
+    margin-top:18px;
+    color:#f2e2c4;
+  }
+  .btn-open{
+    margin-top:38px;
+    padding:15px 40px;
+    border-radius:999px;
+    border:1px solid var(--accent);
+    background:linear-gradient(135deg,var(--accent),#e3c25a);
+    color:#4a1019;
+    font-family:var(--sans);
+    font-weight:600;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-size:.78rem;
+    cursor:pointer;
+    box-shadow:0 12px 26px rgba(0,0,0,.4);
+    transition:transform .25s ease,box-shadow .25s ease;
+    animation:pulseGlow 2.8s ease-in-out infinite;
+  }
+  .btn-open:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 18px 34px rgba(0,0,0,.5)}
+
+  /* ======================= SECTIONS ======================= */
+  section{padding:74px 24px}
+  .sec-title{text-align:center;margin-bottom:40px}
+  .sec-title .script{
+    font-family:var(--script);
+    font-size:2.5rem;
+    color:var(--primary);
+    display:block;
+  }
+  .sec-title .sub{
+    letter-spacing:.32em;text-transform:uppercase;
+    font-size:.66rem;color:var(--accent);font-weight:600;
+  }
+  .divider{width:64px;height:2px;background:var(--accent);margin:14px auto 0}
+
+  /* Countdown */
+  .countdown-sec{background:linear-gradient(180deg,#faf3e6,#f3e6cf)}
+  .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto}
+  .cd-box{
+    background:var(--card);
+    border:1px solid rgba(201,162,39,.5);
+    border-top:4px solid var(--primary);
+    border-radius:12px;
+    padding:18px 6px;
+    text-align:center;
+    box-shadow:0 10px 22px rgba(123,30,43,.12);
+  }
+  .cd-box .num{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--primary);display:block}
+  .cd-box .lbl{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  /* Mempelai */
+  .couple-grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center}
+  .person{flex:1 1 200px;max-width:240px;text-align:center}
+  .person .avatar{
+    width:170px;height:170px;margin:0 auto 20px;
+    border-radius:50%;
+    background:var(--photo-grad);
+    border:4px solid var(--accent);
+    box-shadow:0 16px 34px rgba(123,30,43,.28),0 0 0 8px rgba(201,162,39,.12);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--script);font-size:3rem;color:#fff;
+    transition:transform .35s ease;
+  }
+  .person .avatar:hover{transform:translateY(-6px) rotate(-2deg)}
+  .person h3{font-family:var(--script);font-size:1.9rem;color:var(--primary)}
+  .person .role{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+  .person p{font-size:.86rem;color:var(--muted);margin-top:8px}
+
+  /* Galeri */
+  .galeri{background:linear-gradient(180deg,#f3e6cf,#faf3e6)}
+  .gal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:460px;margin:0 auto}
+  .gal-item{
+    aspect-ratio:1/1;
+    border-radius:10px;
+    background:linear-gradient(135deg,#8e2b39,#c9a227);
+    border:3px solid #fff;
+    box-shadow:0 10px 22px rgba(123,30,43,.2);
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.85);
+    font-family:var(--script);font-size:1.6rem;
+    transition:transform .3s ease;
+  }
+  .gal-item:nth-child(even){background:linear-gradient(135deg,#c9a227,#8e2b39)}
+  .gal-item:hover{transform:scale(1.04)}
+
+  /* Footer */
+  footer{
+    background:#3a0d15;
+    color:#e9dcc2;
+    text-align:center;
+    padding:52px 24px 40px;
+  }
+  footer .names{font-family:var(--script);font-size:2.3rem;color:var(--accent)}
+  footer .thanks{font-size:.8rem;letter-spacing:.1em;opacity:.85;margin-top:10px}
+  footer .orn-line{margin:22px auto;width:120px;height:1px;background:var(--accent);opacity:.6}
+
+  /* ======================= KEYFRAMES ======================= */
+  @keyframes sway{
+    0%,100%{transform:rotate(-4deg) translateX(0)}
+    50%{transform:rotate(4deg) translateX(4px)}
+  }
+  @keyframes floaty{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-12px)}
+  }
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:0 12px 26px rgba(0,0,0,.4),0 0 0 0 rgba(201,162,39,.5)}
+    50%{box-shadow:0 12px 26px rgba(0,0,0,.4),0 0 0 12px rgba(201,162,39,0)}
+  }
+  @keyframes sparkle{
+    0%,100%{opacity:.35;transform:scale(.9)}
+    50%{opacity:1;transform:scale(1.1)}
+  }
+  .orn-sway{animation:sway 4.5s ease-in-out infinite;transform-origin:top center}
+  .orn-sparkle{animation:sparkle 2.4s ease-in-out infinite}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ COVER ============ -->
+  <header class="cover">
+    <!-- Ornamen sudut: motif songket / rumah gadang, berayun -->
+    <svg class="ornament orn-tl orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 4 L40 4 M4 4 L4 40"/>
+      <path d="M10 10 q18 2 18 20 q0 10 -8 10 q-8 0 -8 -8"/>
+      <circle cx="26" cy="26" r="2.5" fill="currentColor" stroke="none"/>
+    </svg>
+    <svg class="ornament orn-tr orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 4 L40 4 M4 4 L4 40"/>
+      <path d="M10 10 q18 2 18 20 q0 10 -8 10 q-8 0 -8 -8"/>
+      <circle cx="26" cy="26" r="2.5" fill="currentColor" stroke="none"/>
+    </svg>
+    <svg class="ornament orn-bl orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 4 L40 4 M4 4 L4 40"/>
+      <path d="M10 10 q18 2 18 20 q0 10 -8 10 q-8 0 -8 -8"/>
+      <circle class="orn-sparkle" cx="26" cy="26" r="2.5" fill="currentColor" stroke="none"/>
+    </svg>
+    <svg class="ornament orn-br orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 4 L40 4 M4 4 L4 40"/>
+      <path d="M10 10 q18 2 18 20 q0 10 -8 10 q-8 0 -8 -8"/>
+      <circle class="orn-sparkle" cx="26" cy="26" r="2.5" fill="currentColor" stroke="none"/>
+    </svg>
+
+    <p class="kicker">Undangan Pernikahan Adat Minang</p>
+
+    <!-- Bingkai ARCH -->
+    <div class="cover-photo">
+      <span class="initials">A&amp;S</span>
+    </div>
+
+    <h1 class="couple-name">Aisyah<span class="amp">&amp;</span>Syafiq</h1>
+    <p class="cover-date">Sabtu · 14 Desember 2025</p>
+
+    <button class="btn-open" onclick="document.getElementById('countdown').scrollIntoView({behavior:'smooth'})">Buka Undangan</button>
+  </header>
+
+  <!-- ============ COUNTDOWN ============ -->
+  <section class="countdown-sec reveal" id="countdown">
+    <div class="sec-title">
+      <span class="sub">Menuju Hari Bahagia</span>
+      <span class="script">Hitung Hari</span>
+      <div class="divider"></div>
+    </div>
+    <div class="countdown">
+      <div class="cd-box"><span class="num">42</span><span class="lbl">Hari</span></div>
+      <div class="cd-box"><span class="num">08</span><span class="lbl">Jam</span></div>
+      <div class="cd-box"><span class="num">36</span><span class="lbl">Menit</span></div>
+      <div class="cd-box"><span class="num">15</span><span class="lbl">Detik</span></div>
+    </div>
+  </section>
+
+  <!-- ============ MEMPELAI ============ -->
+  <section class="reveal">
+    <div class="sec-title">
+      <span class="sub">Dengan Rahmat Allah</span>
+      <span class="script">Mempelai</span>
+      <div class="divider"></div>
+    </div>
+    <div class="couple-grid">
+      <div class="person">
+        <div class="avatar">A</div>
+        <h3>Aisyah Putri</h3>
+        <p class="role">Putri Pertama</p>
+        <p>Bapak H. Ahmad Yusuf &amp; Ibu Hj. Siti Aminah</p>
+      </div>
+      <div class="person">
+        <div class="avatar">S</div>
+        <h3>Syafiq Ramadhan</h3>
+        <p class="role">Putra Kedua</p>
+        <p>Bapak Ir. Budi Santoso &amp; Ibu Dewi Lestari</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALERI ============ -->
+  <section class="galeri reveal">
+    <div class="sec-title">
+      <span class="sub">Momen Bahagia</span>
+      <span class="script">Galeri</span>
+      <div class="divider"></div>
+    </div>
+    <div class="gal-grid">
+      <div class="gal-item">01</div>
+      <div class="gal-item">02</div>
+      <div class="gal-item">03</div>
+      <div class="gal-item">04</div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <div class="names">Aisyah &amp; Syafiq</div>
+    <div class="orn-line"></div>
+    <p class="thanks">Merupakan suatu kehormatan &amp; kebahagiaan bagi kami<br>apabila Bapak/Ibu/Saudara berkenan hadir.</p>
+    <p class="thanks" style="margin-top:18px;font-size:.68rem;letter-spacing:.24em">TEMA ADAT MINANG</p>
+  </footer>
+</div>
+
+<script>
+  // Reveal on scroll (progressif, tanpa dependensi)
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); } });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+</script>
+</body>
+</html>

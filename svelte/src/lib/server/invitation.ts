@@ -20,7 +20,9 @@ export const SETTING_KEYS = [
 	'background_image', 'background_image_mobile', 'background_overlay',
 	'background_overlay_opacity', 'background_position', 'background_size',
 	'background_repeat', 'background_attachment',
-	'background_position_mobile', 'background_size_mobile', 'background_repeat_mobile'
+	'background_position_mobile', 'background_size_mobile', 'background_repeat_mobile',
+	// foto & dekorasi cover
+	'cover_mode', 'cover_photo', 'decoration', 'decoration_animated'
 ] as const;
 
 /** Ambil semua settings account sebagai objek key->value. */
@@ -76,7 +78,12 @@ export function publicSettings(account: Account, settings: Record<string, string
 		background_attachment: settings.background_attachment || '',
 		background_position_mobile: settings.background_position_mobile || '',
 		background_size_mobile: settings.background_size_mobile || '',
-		background_repeat_mobile: settings.background_repeat_mobile || ''
+		background_repeat_mobile: settings.background_repeat_mobile || '',
+		// foto & dekorasi cover
+		cover_mode: settings.cover_mode || 'plain',
+		cover_photo: settings.cover_photo || '',
+		decoration: settings.decoration || 'floral',
+		decoration_animated: settings.decoration_animated || '1'
 	};
 }
 

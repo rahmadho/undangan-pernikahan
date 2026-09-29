@@ -3,6 +3,7 @@
 	import type { InvitationData } from '$lib/types';
 	import { applyTheme, applyBackground, initReveal } from '$lib/theme';
 	import Ornament from '$lib/components/Ornament.svelte';
+	import CoverPhoto from '$lib/components/CoverPhoto.svelte';
 
 	let { data }: { data: InvitationData & { guest?: string } } = $props();
 
@@ -11,6 +12,26 @@
 	const events = data.events;
 	const gallery = data.gallery;
 	const gifts = data.gifts;
+
+	// ---------- Opsi foto & dekorasi cover (fitur baru) ----------
+	const coverMode = $derived(s.cover_mode || 'plain');
+	const coverPhoto = $derived(s.cover_photo || '');
+	const decoration = $derived(s.decoration || 'floral');
+	const decoAnimated = $derived(s.decoration_animated !== '0');
+
+	// Pilih variant ornamen sesuai jenis dekorasi
+	const decoVariantTL = $derived(
+		decoration === 'ethnic-jawa'
+			? 'corner-adat'
+			: decoration === 'ethnic-minang'
+				? 'songket'
+				: decoration === 'leaves-sway'
+					? 'leaf-vine'
+					: 'corner'
+	);
+	const decoVariantTR = $derived(
+		decoration === 'ethnic-jawa' ? 'batik-kawung' : decoration === 'ethnic-minang' ? 'songket' : 'corner'
+	);
 
 	// ---------- State ----------
 	let opened = $state(false); // cover sudah dibuka?
@@ -262,10 +283,24 @@
 {/if}
 
 <!-- ================= COVER ================= -->
-<div class="cover" class:opened>
+<div class="cover" class:opened class:deco-animated={decoAnimated} data-deco={decoration}>
 	<div class="cover-bg"></div>
+	<!-- Dekorasi sudut: bisa beranimasi (daun/bunga berayun) -->
+	{#if decoration !== 'none'}
+		<span class="cover-deco cd-tl"><Ornament variant={decoVariantTL} animated={decoAnimated} /></span>
+		<span class="cover-deco cd-tr"><Ornament variant={decoVariantTR} animated={decoAnimated} /></span>
+		<span class="cover-deco cd-bl"><Ornament variant={decoVariantTL} animated={decoAnimated} /></span>
+		<span class="cover-deco cd-br"><Ornament variant={decoVariantTR} animated={decoAnimated} /></span>
+	{/if}
 	<div class="cover-inner">
 		<p class="anim-down" style="animation-delay:.1s">The Wedding Of</p>
+
+		{#if coverMode !== 'none'}
+			<div class="anim-down" style="animation-delay:.2s">
+				<CoverPhoto src={coverPhoto} mode={coverMode} groomName={couple?.groom_name || ''} brideName={couple?.bride_name || ''} />
+			</div>
+		{/if}
+
 		<h1 class="script anim-down" style="animation-delay:.25s">
 			{couple?.groom_name} &amp; {couple?.bride_name}
 		</h1>
@@ -625,6 +660,40 @@
 	}
 	:global(body.theme-midnight) .cover-bg::after {
 		background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.75));
+	}
+	/* Dekorasi sudut cover (floral/adat) — bisa beranimasi berayun */
+	.cover-deco {
+		position: absolute;
+		width: clamp(90px, 26vw, 170px);
+		height: clamp(90px, 26vw, 170px);
+		color: var(--gold, #b08d47);
+		opacity: 0.85;
+		pointer-events: none;
+		z-index: 2;
+	}
+	.cover-deco :global(svg) {
+		width: 100%;
+		height: 100%;
+	}
+	.cd-tl { top: 0; left: 0; }
+	.cd-tr { top: 0; right: 0; transform: scaleX(-1); }
+	.cd-bl { bottom: 0; left: 0; transform: scaleY(-1); }
+	.cd-br { bottom: 0; right: 0; transform: scale(-1, -1); }
+	/* Saat animasi aktif, ornamen berayun pelan */
+	.cover.deco-animated .cd-tl,
+	.cover.deco-animated .cd-bl { animation: sway 5s ease-in-out infinite; }
+	.cover.deco-animated .cd-tr,
+	.cover.deco-animated .cd-br { animation: sway 5.8s ease-in-out infinite reverse; }
+	@media (prefers-reduced-motion: reduce) {
+		.cover.deco-animated .cd-tl,
+		.cover.deco-animated .cd-tr,
+		.cover.deco-animated .cd-bl,
+		.cover.deco-animated .cd-br { animation: none; }
+	}
+	/* Cadangan keyframe (jika belum didefinisikan global) */
+	@keyframes sway {
+		0%, 100% { transform-origin: 0% 0%; rotate: 0deg; }
+		50% { rotate: 3.5deg; }
 	}
 	.cover-inner {
 		position: relative;

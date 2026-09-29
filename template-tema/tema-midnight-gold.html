@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undangan Pernikahan — Tema Midnight Gold (Gelap &amp; Emas)</title>
+<style>
+  :root{
+    --primary:#14131a;   /* midnight */
+    --accent:#d8b978;    /* gold */
+    --bg:#f2ece0;
+    --ink:#2a2730;
+    --muted:#7d7688;
+    --card:#ffffff;
+    --script:"Great Vibes","Segoe Script","Brush Script MT",cursive;
+    --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+    --sans:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --photo-grad:linear-gradient(135deg,#14131a 0%,#3a3548 55%,#d8b978 140%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden}
+  .wrap{max-width:520px;margin:0 auto;position:relative}
+
+  .cover{
+    position:relative;min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(216,185,120,.14), transparent 58%),
+      linear-gradient(165deg,#14131a 0%,#1c1a24 55%,#0c0b11 100%);
+    color:#f2ece0;overflow:hidden;
+  }
+  /* bintang kecil berkelip */
+  .stars{position:absolute;inset:0;pointer-events:none;opacity:.6}
+  .stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#d8b978;animation:twinkle 3s ease-in-out infinite}
+  .stars i:nth-child(1){top:14%;left:18%;animation-delay:.2s}
+  .stars i:nth-child(2){top:26%;left:80%;animation-delay:1.1s}
+  .stars i:nth-child(3){top:9%;left:60%;animation-delay:1.8s}
+  .stars i:nth-child(4){top:34%;left:12%;animation-delay:.6s}
+  .stars i:nth-child(5){top:20%;left:44%;animation-delay:2.3s}
+  .stars i:nth-child(6){top:40%;left:88%;animation-delay:1.5s}
+
+  .kicker{letter-spacing:.46em;text-transform:uppercase;font-size:.68rem;color:var(--accent);margin-bottom:22px;font-weight:600;position:relative}
+
+  /* Ornamen: bulan & bintang / art-deco gelap-emas — berdenyut */
+  .ornament{position:absolute;width:130px;height:130px;opacity:.55;pointer-events:none;color:var(--accent)}
+  .orn-tl{top:10px;left:8px}
+  .orn-tr{top:10px;right:8px;transform:scaleX(-1)}
+  .orn-bl{bottom:10px;left:8px;transform:scaleY(-1)}
+  .orn-br{bottom:10px;right:8px;transform:scale(-1,-1)}
+
+  /* Bingkai foto COVER: CIRCLE + ring emas berputar (dashed) */
+  .cover-photo-wrap{position:relative;margin:8px 0 32px}
+  .cover-photo-wrap::before{
+    content:"";position:absolute;inset:-16px;border-radius:50%;
+    border:1px dashed rgba(216,185,120,.65);
+    animation:spin 18s linear infinite;
+  }
+  .cover-photo{
+    width:230px;height:230px;
+    border-radius:50%;
+    background:var(--photo-grad);
+    border:4px solid var(--accent);
+    box-shadow:0 0 0 8px rgba(216,185,120,.12),0 26px 54px rgba(0,0,0,.6),0 0 60px rgba(216,185,120,.18);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    animation:floaty 5s ease-in-out infinite;
+  }
+  .cover-photo .initials{font-family:var(--script);font-size:4.2rem;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.6)}
+
+  .couple-name{font-family:var(--script);font-size:3.6rem;line-height:1.1;color:#fff;text-shadow:0 4px 22px rgba(216,185,120,.35);margin:6px 0}
+  .couple-name .amp{color:var(--accent);font-size:2.4rem;display:block;margin:6px 0}
+  .cover-date{letter-spacing:.3em;font-size:.92rem;margin-top:18px;color:#d8ccb4}
+
+  .btn-open{
+    margin-top:38px;padding:15px 42px;border-radius:999px;border:1px solid var(--accent);
+    background:linear-gradient(135deg,#d8b978,#f0dda6);color:#14131a;font-family:var(--sans);
+    font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;cursor:pointer;
+    box-shadow:0 12px 26px rgba(0,0,0,.5);transition:transform .25s ease;
+    animation:pulseGlow 3s ease-in-out infinite;
+  }
+  .btn-open:hover{transform:translateY(-3px) scale(1.03)}
+
+  section{padding:74px 24px}
+  .sec-title{text-align:center;margin-bottom:40px}
+  .sec-title .script{font-family:var(--script);font-size:2.5rem;color:#3a3548;display:block}
+  .sec-title .sub{letter-spacing:.32em;text-transform:uppercase;font-size:.66rem;color:#b79f66;font-weight:600}
+  .divider{width:64px;height:2px;background:var(--accent);margin:14px auto 0}
+
+  .countdown-sec{background:linear-gradient(180deg,#f2ece0,#e8e0d0)}
+  .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto}
+  .cd-box{background:linear-gradient(160deg,#1c1a24,#14131a);border:1px solid rgba(216,185,120,.5);border-top:3px solid var(--accent);border-radius:12px;padding:18px 6px;text-align:center;box-shadow:0 10px 24px rgba(20,19,26,.28)}
+  .cd-box .num{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--accent);display:block}
+  .cd-box .lbl{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:#a99f8c}
+
+  .couple-grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center}
+  .person{flex:1 1 200px;max-width:240px;text-align:center}
+  .person .avatar{width:170px;height:170px;margin:0 auto 20px;border-radius:50%;background:var(--photo-grad);border:4px solid var(--accent);box-shadow:0 16px 34px rgba(20,19,26,.35),0 0 0 8px rgba(216,185,120,.14);display:flex;align-items:center;justify-content:center;font-family:var(--script);font-size:3rem;color:#fff;transition:transform .35s ease}
+  .person .avatar:hover{transform:translateY(-6px)}
+  .person h3{font-family:var(--script);font-size:1.9rem;color:#3a3548}
+  .person .role{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:#b79f66}
+  .person p{font-size:.86rem;color:var(--muted);margin-top:8px}
+
+  .galeri{background:linear-gradient(180deg,#e8e0d0,#f2ece0)}
+  .gal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:460px;margin:0 auto}
+  .gal-item{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(135deg,#14131a,#d8b978);border:3px solid #fff;box-shadow:0 10px 22px rgba(20,19,26,.24);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9);font-family:var(--script);font-size:1.6rem;transition:transform .3s ease}
+  .gal-item:nth-child(even){background:linear-gradient(135deg,#d8b978,#14131a)}
+  .gal-item:hover{transform:scale(1.04)}
+
+  footer{background:#0c0b11;color:#d8ccb4;text-align:center;padding:52px 24px 40px}
+  footer .names{font-family:var(--script);font-size:2.3rem;color:var(--accent)}
+  footer .thanks{font-size:.8rem;letter-spacing:.1em;opacity:.85;margin-top:10px}
+  footer .orn-line{margin:22px auto;width:120px;height:1px;background:var(--accent);opacity:.6}
+
+  @keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 12px 26px rgba(0,0,0,.5),0 0 0 0 rgba(216,185,120,.5)}50%{box-shadow:0 12px 26px rgba(0,0,0,.5),0 0 0 12px rgba(216,185,120,0)}}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.07);opacity:.8}}
+  .orn-sway{animation:sway 4.6s ease-in-out infinite;transform-origin:center}
+  .orn-pulse{animation:pulse 3.4s ease-in-out infinite;transform-origin:center}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="cover">
+    <div class="stars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+    <!-- Ornamen bulan & bintang art-deco -->
+    <svg class="ornament orn-tl orn-pulse" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M60 20 a30 30 0 1 0 0 60 a24 24 0 1 1 0 -60Z"/>
+      <path d="M20 20 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3Z"/>
+    </svg>
+    <svg class="ornament orn-tr orn-pulse" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M60 20 a30 30 0 1 0 0 60 a24 24 0 1 1 0 -60Z"/>
+      <path d="M20 20 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3Z"/>
+    </svg>
+    <svg class="ornament orn-bl orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M50 6 L57 30 L82 30 L62 46 L70 70 L50 55 L30 70 L38 46 L18 30 L43 30 Z"/>
+    </svg>
+    <svg class="ornament orn-br orn-sway" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M50 6 L57 30 L82 30 L62 46 L70 70 L50 55 L30 70 L38 46 L18 30 L43 30 Z"/>
+    </svg>
+
+    <p class="kicker">Save The Date</p>
+
+    <!-- Bingkai CIRCLE + ring berputar -->
+    <div class="cover-photo-wrap">
+      <div class="cover-photo"><span class="initials">K&amp;R</span></div>
+    </div>
+
+    <h1 class="couple-name">Kirana<span class="amp">&amp;</span>Reza</h1>
+    <p class="cover-date">Sabtu · 31 Desember 2025</p>
+
+    <button class="btn-open" onclick="document.getElementById('countdown').scrollIntoView({behavior:'smooth'})">Buka Undangan</button>
+  </header>
+
+  <section class="countdown-sec reveal" id="countdown">
+    <div class="sec-title">
+      <span class="sub">Menuju Hari Bahagia</span>
+      <span class="script">Hitung Hari</span>
+      <div class="divider"></div>
+    </div>
+    <div class="countdown">
+      <div class="cd-box"><span class="num">52</span><span class="lbl">Hari</span></div>
+      <div class="cd-box"><span class="num">07</span><span class="lbl">Jam</span></div>
+      <div class="cd-box"><span class="num">19</span><span class="lbl">Menit</span></div>
+      <div class="cd-box"><span class="num">44</span><span class="lbl">Detik</span></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="sec-title">
+      <span class="sub">Under The Stars</span>
+      <span class="script">Mempelai</span>
+      <div class="divider"></div>
+    </div>
+    <div class="couple-grid">
+      <div class="person">
+        <div class="avatar">K</div>
+        <h3>Kirana Aulia</h3>
+        <p class="role">Putri Pertama</p>
+        <p>Bapak Fajar Setiawan &amp; Ibu Ira Wulandari</p>
+      </div>
+      <div class="person">
+        <div class="avatar">R</div>
+        <h3>Reza Pratama</h3>
+        <p class="role">Putra Kedua</p>
+        <p>Bapak Gunawan Susilo &amp; Ibu Wulan Sari</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="galeri reveal">
+    <div class="sec-title">
+      <span class="sub">Our Golden Moments</span>
+      <span class="script">Galeri</span>
+      <div class="divider"></div>
+    </div>
+    <div class="gal-grid">
+      <div class="gal-item">01</div>
+      <div class="gal-item">02</div>
+      <div class="gal-item">03</div>
+      <div class="gal-item">04</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="names">Kirana &amp; Reza</div>
+    <div class="orn-line"></div>
+    <p class="thanks">Merupakan suatu kehormatan &amp; kebahagiaan bagi kami<br>apabila Bapak/Ibu/Saudara berkenan hadir.</p>
+    <p class="thanks" style="margin-top:18px;font-size:.68rem;letter-spacing:.24em">TEMA MIDNIGHT GOLD</p>
+  </footer>
+</div>
+
+<script>
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); } });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+</script>
+</body>
+</html>

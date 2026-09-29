@@ -3,15 +3,42 @@
  * Port dari applyTheme/applyBackground di app.js lama.
  */
 
-export const THEMES = ['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'] as const;
+export const THEMES = [
+	// --- Preset lama (JANGAN dihapus/diubah) ---
+	'botanical',
+	'midnight',
+	'blush',
+	'javanese',
+	'minimal',
+	'baroque',
+	// --- Tema adat (BARU) ---
+	'adat-minang',
+	'adat-jawa',
+	// --- Tema tambahan (BARU) ---
+	'rustic-terracotta',
+	'emerald-luxury',
+	'rose-gold',
+	'dusty-blue',
+	'sakura'
+] as const;
 
 export const THEME_COLORS: Record<string, string> = {
+	// Preset lama
 	botanical: '#f7f4ec',
 	midnight: '#14131a',
 	blush: '#fdf4f1',
 	javanese: '#f5ecdd',
 	minimal: '#f4f4f5',
-	baroque: '#f6f1e7'
+	baroque: '#f6f1e7',
+	// Tema adat (BARU)
+	'adat-minang': '#faf3e6',
+	'adat-jawa': '#f7f0e0',
+	// Tema tambahan (BARU)
+	'rustic-terracotta': '#faf5ef',
+	'emerald-luxury': '#f6f4ee',
+	'rose-gold': '#fbf3f1',
+	'dusty-blue': '#f1f4f6',
+	sakura: '#fdf2f4'
 };
 
 let customKeys: string[] = [];

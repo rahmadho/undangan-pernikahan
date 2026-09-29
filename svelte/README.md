@@ -8,6 +8,8 @@ Platform SaaS undangan pernikahan digital. Frontend **SvelteKit (Svelte 5)**, ba
 
 **Halaman undangan (tamu)** — `/u/[slug]`
 - Cover dengan nama tamu personal (`?to=<slug>`), animasi masuk, tombol *Buka Undangan*
+- **Opsi foto cover 7 gaya**: bundar, bingkai kartu, tanpa bingkai+bayangan, polaroid, lengkung (arch), lingkaran emas, tanpa foto
+- **Dekorasi bergerak** (daun/bunga berayun) — floral, sulur daun, batik Jawa, songket Minang
 - Countdown hari-H real-time + *Save the Date* (.ics)
 - Profil mempelai (foto, orang tua, Instagram)
 - Love story, kutipan/ayat
@@ -97,9 +99,19 @@ svelte/
 
 ## 🎨 Tema
 
-6 preset: `botanical`, `midnight`, `blush`, `javanese`, `minimal`, `baroque`.
+**13 preset tema:**
+- Klasik: `botanical`, `midnight`, `blush`, `javanese`, `minimal`, `baroque`
+- Baru: `adat-minang` (marun + emas + songket), `adat-jawa` (sogan + emas + batik),
+  `rustic-terracotta`, `emerald-luxury`, `rose-gold`, `dusty-blue`, `sakura`
+
 Tema kustom disimpan di tabel `themes` (per-account) dengan override CSS variable
 yang **di-whitelist** (anti CSS-injection).
+
+**Dekorasi bergerak**: ornamen floral/adat berayun pelan (`sway`, `flutter`, `drift`,
+`bloom-pulse`) — 9 varian ornamen termasuk `batik-kawung`, `songket`, `corner-adat`,
+`peacock`, `leaf-vine`, `flower-cluster`.
+
+**Template demo** (HTML statis untuk referensi pilihan): lihat folder `../template-tema/` (8 tema).
 
 ## 🗄️ Database
 

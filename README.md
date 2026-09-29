@@ -103,3 +103,5 @@ Ganti warna tema di `public/css/style.css` bagian `:root` (`--sage`, `--gold`, `
 ## 🛠️ Teknologi
 
 Node.js · Express · better-sqlite3 · HTML/CSS/JS vanilla
+
+<!-- pushed via gpush helper -->

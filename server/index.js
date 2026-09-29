@@ -22,9 +22,10 @@ const fs = require('fs');
 // (mis. pemilih backend DB di server/db/index.js).
 require('./env').loadEnv();
 
-const { db, getAccountBySlug, getAccountById } = require('./db/schema');
+const { db, getAccountBySlug, getAccountById, getCustomThemes } = require('./db/schema');
 const { seed, createAccount, ensureOwner } = require('./db/seed');
 const { hashPassword, verifyPassword, rateLimit, securityHeaders } = require('./security');
+const { uploadMusic, UPLOAD_DIR } = require('./upload');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -98,7 +99,18 @@ function getSettings(accountId) {
 
 function publicSettings(account) {
   const s = getSettings(account.id || account);
-  return { music_url: s.music_url || '', quote: s.quote || '', theme: account.theme || 'botanical' };
+  const id = account.id || account;
+  // Tema kustom (bila account memakai tema custom, sertakan token-nya).
+  const customThemes = getCustomThemes(id);
+  const themeSlug = account.theme || 'botanical';
+  const active = customThemes.find((t) => t.slug === themeSlug) || null;
+  return {
+    music_url: s.music_url || '',
+    quote: s.quote || '',
+    theme: themeSlug,
+    theme_tokens: active ? active.tokens : null,
+    theme_base: active ? active.base : null,
+  };
 }
 
 /**
@@ -467,6 +479,117 @@ app.put('/api/admin/settings', requireAccountActive, wrap((req, res) => {
   res.json({ ok: true });
 }));
 
+// =====================================================================
+//  UPLOAD MUSIK LATAR (client admin)
+// =====================================================================
+
+app.post(
+  '/api/admin/upload/music',
+  requireAccountActive,
+  uploadMusic.single('file'),
+  wrap((req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Tidak ada file yang diunggah.' });
+    // Simpan URL relatif ke settings agar dibaca halaman undangan.
+    const url = `/uploads/${req.file.filename}`;
+    db.prepare(
+      'INSERT INTO settings (account_id, key, value) VALUES (?, ?, ?) ON CONFLICT(account_id, key) DO UPDATE SET value = excluded.value'
+    ).run(req.account.id, 'music_url', url);
+    res.status(201).json({
+      ok: true,
+      url,
+      size: req.file.size,
+      original: req.file.originalname,
+    });
+  })
+);
+
+// =====================================================================
+//  TEMA KUSTOM (client admin) — modular: token CSS per-account
+// =====================================================================
+
+// Token yang boleh di-override lewat tema kustom (whitelist).
+const THEME_TOKEN_KEYS = [
+  '--cream', '--cream-2', '--surface', '--sage', '--sage-dark', '--gold',
+  '--ink', '--ink-soft', '--line', '--accent-soft', '--hero-img', '--cover-img',
+  '--cover-veil', '--serif', '--script', '--sans',
+];
+
+/** Validasi & bersihkan token tema; hanya key whitelist, nilai string pendek. */
+function sanitizeTokens(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [k, v] of Object.entries(raw)) {
+    if (!THEME_TOKEN_KEYS.includes(k)) continue;
+    if (v == null) continue;
+    const val = String(v).trim().slice(0, 300);
+    if (!val) continue;
+    // Cegah injection CSS: buang karakter berbahaya.
+    if (/[{}<>;]/.test(val) && !/^url\(/.test(val)) continue;
+    out[k] = val;
+  }
+  return out;
+}
+
+// Daftar tema kustom milik client
+app.get('/api/admin/themes', requireAccountAdmin, wrap((req, res) => {
+  res.json(getCustomThemes(req.account.id));
+}));
+
+// Buat tema kustom baru
+app.post('/api/admin/themes', requireAccountActive, wrap((req, res) => {
+  const accId = req.account.id;
+  const { name, base, tokens } = req.body || {};
+  const cleanName = clampStr(name, 60);
+  if (!cleanName) return res.status(400).json({ error: 'Nama tema wajib diisi.' });
+
+  const validBases = ['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'];
+  const chosenBase = validBases.includes(base) ? base : 'botanical';
+  const cleanTokens = sanitizeTokens(tokens);
+
+  let baseSlug = slugify(cleanName) || 'custom';
+  let slug = baseSlug;
+  let i = 1;
+  while (db.prepare('SELECT 1 FROM themes WHERE account_id = ? AND slug = ?').get(accId, slug)) slug = `${baseSlug}-${i++}`;
+
+  const info = db.prepare(
+    'INSERT INTO themes (account_id, slug, name, base, tokens) VALUES (?, ?, ?, ?, ?)'
+  ).run(accId, slug, cleanName, chosenBase, JSON.stringify(cleanTokens));
+
+  res.status(201).json({ ok: true, id: info.lastInsertRowid, slug, tokens: cleanTokens });
+}));
+
+// Ubah tema kustom
+app.put('/api/admin/themes/:id', requireAccountActive, wrap((req, res) => {
+  const accId = req.account.id;
+  const row = db.prepare('SELECT * FROM themes WHERE id = ? AND account_id = ?').get(req.params.id, accId);
+  if (!row) return res.status(404).json({ error: 'Tema tidak ditemukan.' });
+
+  const { name, tokens } = req.body || {};
+  const sets = [];
+  const vals = [];
+  if (name !== undefined) { sets.push('name = ?'); vals.push(clampStr(name, 60)); }
+  if (tokens !== undefined) { sets.push('tokens = ?'); vals.push(JSON.stringify(sanitizeTokens(tokens))); }
+  if (!sets.length) return res.json({ ok: true, unchanged: true });
+  vals.push(row.id);
+  db.prepare(`UPDATE themes SET ${sets.join(', ')} WHERE id = ?`).run(...vals);
+  res.json({ ok: true });
+}));
+
+// Hapus tema kustom
+app.delete('/api/admin/themes/:id', requireAccountActive, wrap((req, res) => {
+  db.prepare('DELETE FROM themes WHERE id = ? AND account_id = ?').run(req.params.id, req.account.id);
+  res.json({ ok: true });
+}));
+
+// Terapkan tema kustom ke account (set accounts.theme = slug lokal).
+app.post('/api/admin/themes/:id/activate', requireAccountActive, wrap((req, res) => {
+  const accId = req.account.id;
+  const row = db.prepare('SELECT * FROM themes WHERE id = ? AND account_id = ?').get(req.params.id, accId);
+  if (!row) return res.status(404).json({ error: 'Tema tidak ditemukan.' });
+  db.prepare('UPDATE accounts SET theme = ? WHERE id = ?').run(row.slug, accId);
+  res.json({ ok: true, theme: row.slug });
+}));
+
 // ---------- export CSV (client admin) ----------
 function toCSV(rows) {
   if (!rows.length) return '';
@@ -744,10 +867,24 @@ app.get(['/', '/index.html'], (req, res) => {
 // ---------- static assets ----------
 app.use(express.static(PUBLIC_DIR, { index: false }));
 
+// File musik yang diunggah client (disajikan statis).
+app.use('/uploads', express.static(UPLOAD_DIR, {
+  maxAge: '7d',
+  setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+}));
+
 // error handler
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   console.error(err);
   if (res.headersSent) return;
+  // Error dari multer (upload) — beri pesan yang ramah.
+  if (err && err.code === 'LIMIT_FILE_SIZE') {
+    const mb = Math.round((Number(process.env.UPLOAD_MAX_MB) || 10));
+    return res.status(413).json({ error: `Ukuran file terlalu besar. Maksimal ${mb} MB.` });
+  }
+  if (err && err.message && /Format file tidak didukung/.test(err.message)) {
+    return res.status(400).json({ error: err.message });
+  }
   res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
 });
 

@@ -2,6 +2,8 @@ node_modules/
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/uploads/
+data/*.backup*
 .env
 .DS_Store
 npm-debug.log*

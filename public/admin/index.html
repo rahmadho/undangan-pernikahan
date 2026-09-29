@@ -111,6 +111,43 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
 .theme-meta strong{font-size:.9rem}
 .theme-meta small{font-size:.74rem;color:var(--soft)}
 
+/* customizer tema */
+.customizer{margin-top:18px;border-top:1px dashed var(--line);padding-top:18px}
+.customizer-head h3{font-size:.98rem;margin:0}
+.cz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.cz-grid .field label{font-size:.76rem}
+.cz-grid input[type=color]{width:100%;height:40px;padding:3px;border:1.5px solid var(--line);border-radius:9px;background:#fff;cursor:pointer}
+.cz-grid select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.84rem;background:#fff}
+.cz-preview{margin-top:16px;border:1.5px solid var(--line);border-radius:12px;padding:20px;text-align:center;transition:background .2s,color .2s}
+.cz-pv-script{display:block;font-family:'Great Vibes',cursive;font-size:2.1rem;line-height:1.1;transition:font-family .2s}
+.cz-pv-serif{display:block;font-size:.82rem;letter-spacing:.22em;text-transform:uppercase;opacity:.7;margin-top:6px;transition:font-family .2s}
+.cz-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.cz-actions input{flex:1;min-width:170px;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem}
+.cz-actions input:focus{outline:none;border-color:var(--sage)}
+
+/* daftar tema kustom */
+.custom-themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.ct-item{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+.ct-item.active{border-color:var(--sage);background:rgba(107,122,94,.08)}
+.ct-swatch{flex:none;width:38px;height:38px;border-radius:9px;border:1px solid rgba(0,0,0,.08)}
+.ct-meta{display:flex;flex-direction:column;line-height:1.25;min-width:0;flex:1}
+.ct-meta strong{font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-meta small{font-size:.72rem;color:var(--soft)}
+.ct-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.ct-btn{padding:4px 10px;border:1.5px solid var(--line);background:transparent;border-radius:7px;font-size:.72rem;font-weight:600;color:var(--soft);cursor:pointer}
+.ct-btn.use{color:var(--sage);border-color:var(--sage)}
+.ct-btn.use:hover{background:rgba(107,122,94,.1)}
+.ct-btn.del{color:var(--red);border-color:rgba(192,97,74,.4)}
+.ct-btn.del:hover{background:rgba(192,97,74,.08)}
+
+/* upload musik */
+.music-row{display:flex;gap:8px;align-items:stretch}
+.music-row input{flex:1;min-width:0;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem}
+.music-row input:focus{outline:none;border-color:var(--sage)}
+.btn-upload{flex:none;display:inline-flex;align-items:center;padding:0 16px;border-radius:10px;background:var(--sage);color:#fff;font-weight:600;font-size:.84rem;cursor:pointer;white-space:nowrap;transition:background .18s}
+.btn-upload:hover{background:#556349}
+.btn-upload.busy{opacity:.6;pointer-events:none}
+
 /* tabel responsif di mobile */
 .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media (max-width:640px){
@@ -262,14 +299,94 @@ td.wrap-cell{max-width:280px;color:var(--soft)}
             <span class="theme-swatch swatch-baroque"></span>
             <span class="theme-meta"><strong>Baroque Gold</strong><small>Ungu tua &amp; emas · mewah, klasik</small></span>
           </label>
+          <!-- tema kustom milik client akan disuntik ke sini lewat JS -->
         </div>
+
+        <div class="customizer">
+          <div class="customizer-head">
+            <h3>✨ Buat Tema Sendiri</h3>
+            <p class="hint" style="margin:4px 0 0">Sesuaikan warna &amp; font di atas tema dasar, lalu simpan sebagai tema Anda sendiri.</p>
+          </div>
+
+          <div class="cz-grid">
+            <div class="field"><label>Berdasarkan tema</label>
+              <select id="czBase">
+                <option value="botanical">Botanical</option>
+                <option value="midnight">Midnight Luxe</option>
+                <option value="blush">Ivory Blush</option>
+                <option value="javanese">Javanese Heritage</option>
+                <option value="minimal">Modern Minimal</option>
+                <option value="baroque">Baroque Gold</option>
+              </select>
+            </div>
+            <div class="field"><label>Aksen (tombol &amp; highlight)</label>
+              <input type="color" id="czSage" data-token="--sage" />
+            </div>
+            <div class="field"><label>Aksen gelap</label>
+              <input type="color" id="czSageDark" data-token="--sage-dark" />
+            </div>
+            <div class="field"><label>Emas / aksen sekunder</label>
+              <input type="color" id="czGold" data-token="--gold" />
+            </div>
+            <div class="field"><label>Latar (background)</label>
+              <input type="color" id="czCream" data-token="--cream" />
+            </div>
+            <div class="field"><label>Permukaan kartu</label>
+              <input type="color" id="czSurface" data-token="--surface" />
+            </div>
+            <div class="field"><label>Warna teks</label>
+              <input type="color" id="czInk" data-token="--ink" />
+            </div>
+            <div class="field"><label>Font judul</label>
+              <select id="czSerif" data-token="--serif">
+                <option value="'Cormorant Garamond', Georgia, serif">Cormorant Garamond</option>
+                <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
+                <option value="'Lora', Georgia, serif">Lora</option>
+                <option value="'Marcellus', Georgia, serif">Marcellus</option>
+                <option value="Georgia, serif">Georgia (sistem)</option>
+              </select>
+            </div>
+            <div class="field"><label>Font nama mempelai (script)</label>
+              <select id="czScript" data-token="--script">
+                <option value="'Great Vibes', cursive">Great Vibes</option>
+                <option value="'Italianno', cursive">Italianno</option>
+                <option value="'Pinyon Script', cursive">Pinyon Script</option>
+                <option value="'Tangerine', cursive">Tangerine</option>
+                <option value="'Cormorant Garamond', serif">Tanpa script (serif)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="cz-preview" id="czPreview">
+            <span class="cz-pv-script" id="czPvScript">Rizky &amp; Amelia</span>
+            <span class="cz-pv-serif" id="czPvSerif">Undangan Pernikahan</span>
+          </div>
+
+          <div class="cz-actions">
+            <input id="czName" placeholder="Nama tema Anda (mis. Sage Impian)" />
+            <button class="btn-sm" id="czSaveNew">Simpan sebagai Tema Baru</button>
+          </div>
+        </div>
+
+        <div class="custom-themes" id="customThemes"></div>
       </div>
 
       <div class="card">
         <h2>Setelan</h2>
         <div class="form-grid">
           <div class="field full"><label>Kalimat Kutipan (quote)</label><textarea id="sQuote" rows="2"></textarea></div>
-          <div class="field full"><label>URL Musik Latar (mp3)</label><input id="sMusic" /></div>
+          <div class="field full">
+            <label>Musik Latar</label>
+            <div class="music-row">
+              <input id="sMusic" placeholder="https://... atau unggah file di samping" />
+              <label class="btn-upload">
+                <input type="file" id="musicFile" accept="audio/*" hidden />
+                <span id="musicUploadLabel">⬆ Unggah</span>
+              </label>
+            </div>
+            <p class="hint">Unggah file audio (MP3/M4A/OGG/WAV, maks 10 MB) <em>atau</em> tempel URL langsung. Setelah unggah, nama file otomatis terisi.</p>
+            <audio id="musicPreview" controls hidden style="width:100%;margin-top:8px"></audio>
+          </div>
           <div class="field"><label>Password Admin</label><input id="sPass" type="password" placeholder="Kosongkan bila tidak diganti" /></div>
         </div>
         <p class="hint">Password disimpan terenkripsi (hash scrypt). Minimal 6 karakter. Kosongkan jika tidak ingin mengganti.</p>
@@ -384,7 +501,8 @@ $('#liveToggle').addEventListener('change', (e) => {
 
 async function loadAll() {
   try {
-    await Promise.all([loadSummary(), loadRsvp(), loadGuests(), loadWishes(), loadCouple()]);
+    await Promise.all([loadSummary(), loadRsvp(), loadGuests(), loadWishes(), loadCouple(), loadCustomThemes()]);
+    fillCustomizerFromBase($('#czBase').value);
   } catch (e) {
     if (e.status === 401) { sessionStorage.removeItem('wedding_admin_pw'); location.reload(); }
     else toast('Error: ' + e.message);
@@ -465,11 +583,181 @@ async function loadCouple() {
   $('#sMusic').value = d.settings.music_url || '';
   const theme = d.settings.theme || 'botanical';
   document.querySelectorAll('#themePicker input[name="theme"]').forEach((r) => { r.checked = r.value === theme; });
+  renderCustomThemes();
   const full = [c.groom_full || c.groom_name, c.bride_full || c.bride_name].filter(Boolean).join(' & ');
   $('#coupleSub').textContent = full;
   const view = $('#viewInvite');
   if (view) view.href = '/u/' + SLUG;
+  // Preview musik bila ada URL
+  if (d.settings.music_url) {
+    const pv = $('#musicPreview');
+    pv.src = d.settings.music_url;
+    pv.hidden = false;
+  }
 }
+
+/* =====================================================================
+   TEMA KUSTOM — customizer + daftar tema milik client
+   ===================================================================== */
+
+const CZ_DEFAULT = {
+  botanical: { '--sage': '#7d8f6d', '--sage-dark': '#57684a', '--gold': '#b08d47', '--cream': '#f7f4ec', '--surface': '#ffffff', '--ink': '#33352e', '--serif': "'Cormorant Garamond', Georgia, serif", '--script': "'Great Vibes', cursive" },
+  midnight:  { '--sage': '#8a7f52', '--sage-dark': '#c9a86a', '--gold': '#d8b978', '--cream': '#14131a', '--surface': '#201e2a', '--ink': '#f2ece0', '--serif': "'Playfair Display', Georgia, serif", '--script': "'Great Vibes', cursive" },
+  blush:     { '--sage': '#c98a86', '--sage-dark': '#a35e5a', '--gold': '#cb9a7a', '--cream': '#fdf4f1', '--surface': '#fffafa', '--ink': '#3d2f2c', '--serif': "'Lora', Georgia, serif", '--script': "'Italianno', cursive" },
+  javanese:  { '--sage': '#8a6d3b', '--sage-dark': '#5e4a24', '--gold': '#b07d2b', '--cream': '#f5ecdd', '--surface': '#fffaf1', '--ink': '#3a2c1a', '--serif': "'Marcellus', Georgia, serif", '--script': "'Pinyon Script', cursive" },
+  minimal:   { '--sage': '#3f3f46', '--sage-dark': '#18181b', '--gold': '#71717a', '--cream': '#f4f4f5', '--surface': '#ffffff', '--ink': '#1b1b1f', '--serif': "'Space Grotesk', system-ui, sans-serif", '--script': "'Space Grotesk', system-ui, sans-serif" },
+  baroque:   { '--sage': '#6d4b6b', '--sage-dark': '#4a2f49', '--gold': '#a9852f', '--cream': '#f6f1e7', '--surface': '#fffdf8', '--ink': '#2f2436', '--serif': "'Cormorant Garamond', Georgia, serif", '--script': "'Tangerine', cursive" },
+};
+
+let CUSTOM_THEMES = [];
+
+/** Isi form customizer dengan nilai preset dasar. */
+function fillCustomizerFromBase(base) {
+  const def = CZ_DEFAULT[base] || CZ_DEFAULT.botanical;
+  const map = { czSage: '--sage', czSageDark: '--sage-dark', czGold: '--gold', czCream: '--cream', czSurface: '--surface', czInk: '--ink' };
+  Object.entries(map).forEach(([id, tok]) => {
+    const el = $('#' + id);
+    if (el && def[tok] && /^#/.test(def[tok])) el.value = def[tok];
+  });
+  if (def['--serif']) $('#czSerif').value = def['--serif'];
+  if (def['--script']) $('#czScript').value = def['--script'];
+  updateCzPreview();
+}
+
+/** Ambil semua token dari form customizer (untuk preview). */
+function readCustomizerTokensAll() {
+  const t = {};
+  document.querySelectorAll('.cz-grid [data-token]').forEach((el) => { if (el.value) t[el.dataset.token] = el.value; });
+  return t;
+}
+
+/** Perbarui kotak preview tema sesuai pilihan saat ini. */
+function updateCzPreview() {
+  const pv = $('#czPreview');
+  if (!pv) return;
+  const tokens = readCustomizerTokensAll();
+  const base = $('#czBase').value;
+  const def = CZ_DEFAULT[base] || CZ_DEFAULT.botanical;
+  const val = (k) => tokens[k] || def[k];
+  pv.style.background = val('--cream');
+  pv.style.color = val('--ink');
+  const ps = $('#czPvScript'), pf = $('#czPvSerif');
+  if (ps) { ps.style.fontFamily = val('--script'); ps.style.color = val('--sage-dark'); }
+  if (pf) pf.style.fontFamily = val('--serif');
+}
+
+/** Render daftar tema kustom milik client. */
+function renderCustomThemes() {
+  const box = $('#customThemes');
+  if (!CUSTOM_THEMES.length) { box.innerHTML = ''; return; }
+  box.innerHTML = CUSTOM_THEMES.map((t) => {
+    const tk = t.tokens || {};
+    const a = tk['--sage'] || '#7d8f6d';
+    const b = tk['--gold'] || '#b08d47';
+    return `<div class="ct-item" data-ct="${t.id}">
+      <span class="ct-swatch" style="background:linear-gradient(135deg,${esc(a)} 0 50%,${esc(b)} 50% 100%)"></span>
+      <span class="ct-meta">
+        <strong>${esc(t.name)}</strong>
+        <small>dari ${esc(t.base)}</small>
+        <span class="ct-actions">
+          <button class="ct-btn use" data-use="${t.id}">Pakai</button>
+          <button class="ct-btn" data-edit="${t.id}">Edit</button>
+          <button class="ct-btn del" data-ctdel="${t.id}">Hapus</button>
+        </span>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+async function loadCustomThemes() {
+  try {
+    CUSTOM_THEMES = await api('/api/admin/themes');
+    renderCustomThemes();
+  } catch (e) { /* diamkan */ }
+}
+
+/* interaksi customizer */
+$('#czBase').addEventListener('change', () => fillCustomizerFromBase($('#czBase').value));
+document.querySelectorAll('.cz-grid [data-token]').forEach((el) => {
+  el.addEventListener('input', updateCzPreview);
+  el.addEventListener('change', updateCzPreview);
+});
+
+$('#czSaveNew').addEventListener('click', async () => {
+  const name = $('#czName').value.trim();
+  if (!name) return toast('Beri nama tema Anda dulu.');
+  try {
+    const tokens = readCustomizerTokensAll();
+    const res = await api('/api/admin/themes', { method: 'POST', body: JSON.stringify({ name, base: $('#czBase').value, tokens }) });
+    toast('Tema "' + name + '" disimpan ✓');
+    $('#czName').value = '';
+    await loadCustomThemes();
+    // langsung terapkan tema baru
+    await api('/api/admin/themes/' + res.id + '/activate', { method: 'POST' });
+    toast('Tema baru diterapkan ke undangan ✓');
+    loadCouple();
+  } catch (e) { toast(e.message); }
+});
+
+/* aksi pada daftar tema kustom */
+document.addEventListener('click', async (e) => {
+  const use = e.target.closest('[data-use]');
+  if (use) {
+    await api('/api/admin/themes/' + use.dataset.use + '/activate', { method: 'POST' });
+    toast('Tema diterapkan ✓'); loadCouple(); return;
+  }
+  const ed = e.target.closest('[data-edit]');
+  if (ed) {
+    const t = CUSTOM_THEMES.find((x) => String(x.id) === ed.dataset.edit);
+    if (!t) return;
+    $('#czBase').value = t.base || 'botanical';
+    const tk = t.tokens || {};
+    document.querySelectorAll('.cz-grid [data-token]').forEach((el) => {
+      if (tk[el.dataset.token]) el.value = tk[el.dataset.token];
+    });
+    $('#czName').value = t.name;
+    updateCzPreview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast('Tema dimuat ke editor. Ubah lalu simpan (akan buat tema baru).');
+    return;
+  }
+  const dl = e.target.closest('[data-ctdel]');
+  if (dl) {
+    if (!confirm('Hapus tema ini?')) return;
+    await api('/api/admin/themes/' + dl.dataset.ctdel, { method: 'DELETE' });
+    toast('Tema dihapus'); loadCustomThemes(); return;
+  }
+});
+
+/* ---------- UPLOAD MUSIK ---------- */
+$('#musicFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const label = $('#musicUploadLabel');
+  const fd = new FormData();
+  fd.append('file', file);
+  label.textContent = 'Mengunggah…';
+  label.parentElement.classList.add('busy');
+  try {
+    const res = await fetch('/api/admin/upload/music', {
+      method: 'POST',
+      headers: { 'x-admin-password': PW, 'x-account': SLUG },
+      body: fd,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal mengunggah');
+    $('#sMusic').value = data.url;
+    const pv = $('#musicPreview');
+    pv.src = data.url; pv.hidden = false;
+    toast('Musik berhasil diunggah ✓');
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    label.textContent = '⬆ Unggah';
+    label.parentElement.classList.remove('busy');
+    e.target.value = '';
+  }
+});
 
 /* ---------- ACTIONS ---------- */
 $('#addGuest').addEventListener('click', async () => {

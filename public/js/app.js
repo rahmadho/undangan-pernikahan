@@ -39,15 +39,39 @@ const THEME_COLORS = {
   baroque: '#6d4b6b',
 };
 
-/** Terapkan tema ke <body> berdasarkan setelan (botanical | midnight | blush | ...). */
-function applyTheme(theme) {
-  const t = THEMES.includes(theme) ? theme : 'botanical';
+/**
+ * Terapkan tema ke <body>.
+ * @param {string} theme   - nama preset (botanical | midnight | ...) atau slug tema kustom
+ * @param {object} [tokens] - override CSS variable dari tema kustom ({'--sage':'#...', ...})
+ * @param {string} [base]  - preset dasar yang dipakai saat tema kustom (agar token lain tetap)
+ */
+function applyTheme(theme, tokens, base) {
   const body = document.body;
-  THEMES.forEach((name) => body.classList.toggle('theme-' + name, name === t));
-  body.dataset.theme = t;
+  const isPreset = THEMES.includes(theme);
+  // Untuk tema kustom: pakai preset `base` lalu timpa dengan token.
+  const effective = isPreset ? theme : (THEMES.includes(base) ? base : 'botanical');
+
+  THEMES.forEach((name) => body.classList.toggle('theme-' + name, name === effective));
+  body.dataset.theme = theme;
+
+  // Bersihkan override sebelumnya lalu terapkan token kustom.
+  if (body._customThemeKeys) {
+    body._customThemeKeys.forEach((k) => body.style.removeProperty(k));
+  }
+  const keys = [];
+  if (tokens && typeof tokens === 'object') {
+    for (const [k, v] of Object.entries(tokens)) {
+      if (!k.startsWith('--')) continue;
+      body.style.setProperty(k, v);
+      keys.push(k);
+    }
+  }
+  body._customThemeKeys = keys;
+
   // selaraskan warna address-bar browser dengan tema
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta && THEME_COLORS[t]) meta.setAttribute('content', THEME_COLORS[t]);
+  const color = (tokens && tokens['--cream']) || THEME_COLORS[effective];
+  if (meta && color) meta.setAttribute('content', color);
 }
 
 /* ---------- util ---------- */
@@ -91,7 +115,11 @@ function render() {
   const { couple, events, gallery, gifts, wishes, settings, account } = STATE.data;
   const c = couple || {};
 
-  applyTheme((settings && settings.theme) || (account && account.theme));
+  applyTheme(
+    (settings && settings.theme) || (account && account.theme),
+    settings && settings.theme_tokens,
+    settings && settings.theme_base
+  );
 
   const groomFull = c.groom_full || c.groom_name || 'Mempelai Pria';
   const brideFull = c.bride_full || c.bride_name || 'Mempelai Wanita';

@@ -170,6 +170,22 @@ function init() {
       value TEXT,
       PRIMARY KEY (account_id, key)
     );
+
+    -- Tema kustom per-account (modular).
+    -- Kolom tokens menyimpan JSON berisi override CSS variable (warna, font, gambar).
+    -- Contoh: {"--sage":"#7d8f6d","--gold":"#b08d47","--serif":"Lora, serif"}
+    -- Tema kustom bisa diturunkan dari preset mana pun (kolom base).
+    CREATE TABLE IF NOT EXISTS themes (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id INTEGER NOT NULL,
+      slug       TEXT NOT NULL,           -- id unik lokal (mis. "custom-teal")
+      name       TEXT NOT NULL,           -- label yang dilihat client
+      base       TEXT DEFAULT 'botanical',-- preset dasar saat membuat token
+      tokens     TEXT NOT NULL DEFAULT '{}',
+      is_custom  INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE (account_id, slug)
+    );
   `));
 
   migrateLegacy();
@@ -343,4 +359,14 @@ function getAccountById(id) {
   return db.prepare('SELECT * FROM accounts WHERE id = ?').get(id) || null;
 }
 
-module.exports = { db, init, DB_PATH, getAccountBySlug, getAccountById, client };
+/** Ambil semua tema kustom milik satu account. */
+function getCustomThemes(accountId) {
+  const rows = db.prepare('SELECT id, slug, name, base, tokens FROM themes WHERE account_id = ? ORDER BY created_at').all(accountId);
+  return rows.map((r) => {
+    let tokens = {};
+    try { tokens = JSON.parse(r.tokens || '{}'); } catch { tokens = {}; }
+    return { ...r, tokens };
+  });
+}
+
+module.exports = { db, init, DB_PATH, getAccountBySlug, getAccountById, getCustomThemes, client };

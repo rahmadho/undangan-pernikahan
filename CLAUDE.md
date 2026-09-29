@@ -56,12 +56,35 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
 - Owner panel: buat akun, ganti template, aktif/nonaktif, perpanjang masa aktif,
   reset sandi, hapus; masa aktif (`expires_at` + `accountLifecycle()`).
 - Keamanan: scrypt, rate limit (publik/tulis/login), batas input, security headers.
-- **6 tema** (dulu 3): `botanical`, `midnight`, `blush`, `javanese`, `minimal`,
+- **6 tema preset** (dulu 3): `botanical`, `midnight`, `blush`, `javanese`, `minimal`,
   `baroque`. Tiap tema = blok CSS `body.theme-<nama>` yang menimpa variabel
-  `--serif`/`--script` + palet. Validasi tema ada di **3 tempat** (server:
+  `--serif`/`--script` + palet. Validasi tema preset ada di **3 tempat** (server:
   `validThemes` di POST & PUT owner + admin settings; frontend: `THEMES` di
   `app.js`; label: `THEME_LABEL`/`THEMES` di `owner/index.html`). **Kalau
-  menambah tema, ubah SEMUA lokasi itu + swatch di admin & owner.**
+  menambah tema preset, ubah SEMUA lokasi itu + swatch di admin & owner.**
+- **TEMA KUSTOM (modular, BARU):** client bisa membuat tema sendiri dari admin
+  (kartu "✨ Buat Tema Sendiri"). Alur:
+  - Tabel `themes` (per-account): `slug`, `name`, `base` (preset dasar),
+    `tokens` (JSON override CSS var). Query: `getCustomThemes(accountId)`.
+  - Endpoint: `GET/POST /api/admin/themes`, `PUT/DELETE /api/admin/themes/:id`,
+    `POST /api/admin/themes/:id/activate` (set `accounts.theme = slug`).
+  - Token di-whitelist di `THEME_TOKEN_KEYS` (server) & disanitasi `sanitizeTokens()`
+    (buang `{ } < > ;` → cegah CSS injection). **Update whitelist di server kalau
+    menambah var baru yang boleh di-override.**
+  - Frontend: `applyTheme(theme, tokens, base)` di `app.js` — kalau `theme` bukan
+    preset, pakai kelas preset `base` lalu terapkan `tokens` via
+    `body.style.setProperty()`. Token dikirim server lewat
+    `settings.theme_tokens`/`theme_base` (`publicSettings()`).
+  - Admin: customizer di `public/admin/index.html` (`CZ_DEFAULT` mirror palet
+    preset → **jaga sinkron dengan `style.css`**), preview langsung, daftar tema
+    dengan tombol Pakai/Edit/Hapus.
+- **UPLOAD MUSIK (BARU):** admin bisa unggah file audio (bukan hanya URL).
+  - `server/upload.js` (multer diskStorage) → `data/uploads/music-<uniq>.<ext>`,
+    whitelist MIME+ext audio, batas `UPLOAD_MAX_MB` (default 10 MB).
+  - Endpoint `POST /api/admin/upload/music` (auth admin + account aktif) →
+    simpan ke `settings.music_url` sebagai `/uploads/<nama>`.
+  - File disajikan statis di `/uploads` (di `index.js`), `X-Content-Type-Options: nosniff`.
+  - Error multer (413 terlalu besar / 400 format salah) ditangani di error handler.
 - Navigasi section: bottom bar mobile, **5 tombol** (Beranda/Mempelai/Acara/
   Galeri/Ucapan), **indikator pil geser** (`.nav-ind`), scroll-spy dengan
   `getBoundingClientRect` + `pendingUntil` lock + resync (load/fonts/scrollend).
@@ -85,8 +108,12 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
   Jalur yang disetujui bila nanti dibutuhkan: **refactor async** (Opsi 1),
   bukan shim sync-over-async.
 - Semua data SQLite ada di satu file (`DATABASE_PATH`). Deploy = volume persisten.
+  File upload musik ada di `data/uploads/` — **volume persisten juga**.
 - **Belum diimplementasi & jangan lakukan tanpa konfirmasi:** template modular
-  (`layout_config` JSON), dan refactor async.
+  (`layout_config` JSON — mengatur URUTAN/SUSUNAN section, berbeda dari tema
+  kustom yang hanya warna/font), dan refactor async.
+- **Tema kustom (warna/font) SUDAH ada** (lihat bagian 4) — jangan bingung dengan
+  `layout_config` yang masih tertunda.
 
 ## 5. Perubahan Sesi Terakhir (2025) — ringkas untuk agent lain
 
@@ -99,6 +126,9 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
    `navReservedBottom()` dipakai untuk `padding-bottom` `.main` di mobile.
 5. 3 tema baru + font (Marcellus/Pinyon Script, Space Grotesk, Tangerine).
 6. RSVP UI: `.choice-mark`, grid 2 baris, stepper full-width.
+7. **Tema kustom** (tabel `themes` + customizer admin) & **upload musik**
+   (`server/upload.js` + `multer`) — lihat bagian 4.
+8. Dependensi baru: **`multer`** (upload musik). Tetap tanpa dependensi native.
 
 ## 6. Konvensi & Pitfall
 
@@ -113,14 +143,20 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
 - `admin/index.html` & `owner/index.html` **self-contained** (CSS/JS inline).
   Jangan asumsikan `style.css`/`app.js` termuat di sana.
 - Env dibaca kode: `PORT`, `DB_CLIENT`, `DATABASE_URL`, `PGSSL`, `TRUST_PROXY`,
-  `DATABASE_PATH`, `OWNER_USERNAME`, `OWNER_PASSWORD`.
+  `DATABASE_PATH`, `OWNER_USERNAME`, `OWNER_PASSWORD`, `UPLOAD_MAX_MB`, `UPLOAD_DIR`.
 - Sandbox dev: `npm run start/seed` bisa gagal spawn node; jalankan manual
-  `PORT=xxxx node server/index.js` lalu `curl`. Selalu `taskkill //F //IM node.exe`
-  sebelum tes (port bentrok). Background process mati antar tool-call → jalankan
-  server + semua tes dalam SATU perintah terminal.
+  `PORT=xxxx node server/index.js` lalu `curl`. Selalu taskkill node sebelum tes
+  (port bentrok). Background process mati antar tool-call → jalankan server +
+  semua tes dalam SATU perintah terminal.
 - Reset DB SQLite: `rm -f data/wedding.db*` (gagal bila node hidup).
-- **Belum diimplementasi (diminta "jelaskan dulu"):** template modular
-  (layout_config JSON). **Jangan implementasi tanpa konfirmasi user.**
+- **Tema kustom & preset**: `CZ_DEFAULT` di `admin/index.html` harus **sinkron**
+  dengan palet di `style.css`; whitelist token (`THEME_TOKEN_KEYS`) ada di server.
+  Jangan pakai backtick di komentar yang berada di dalam template literal SQL.
+- **Upload musik**: `data/uploads/` & `data/*.backup*` di-`.gitignore`. Pastikan
+  volume persisten saat deploy. Uji format/ukuran via error handler multer.
+- **Belum diimplementasi (diminta jelaskan dulu):** template modular
+  (`layout_config` JSON — urutan section, BUKAN warna). **Jangan implementasi
+  tanpa konfirmasi user.**
 
 ## 7. Perintah Berguna
 

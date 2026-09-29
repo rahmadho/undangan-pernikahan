@@ -124,15 +124,14 @@ export const PUT: RequestHandler = async (event) => {
 		let i = 0;
 		for (const g of b.gifts) {
 			await run(
-				`INSERT INTO gifts (account_id, type, bank_name, account_no, account_name, icon, sort)
-				 VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+				`INSERT INTO gifts (account_id, type, bank_name, account_no, account_name, sort)
+				 VALUES ($1,$2,$3,$4,$5,$6)`,
 				[
 					id,
 					clampStr(g.type, 40),
 					clampStr(g.bank_name, LIMITS.medium),
 					clampStr(g.account_no, LIMITS.short),
 					clampStr(g.account_name, LIMITS.medium),
-					clampStr(g.icon, 120),
 					i++
 				]
 			);

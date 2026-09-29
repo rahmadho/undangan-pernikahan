@@ -1,0 +1,281 @@
+/* ============================================================
+   style.css — Gaya global undangan (SvelteKit)
+   Tema via CSS variables; 6 preset + tema kustom per-account.
+   ============================================================ */
+
+:root {
+	/* Palet default = Botanical */
+	--cream: #f7f4ec;
+	--cream-2: #efe9db;
+	--surface: #ffffff;
+	--sage: #7d8f6d;
+	--sage-dark: #57684a;
+	--gold: #b08d47;
+	--ink: #33352e;
+	--ink-soft: #5f5a51;
+	--line: rgba(60, 55, 45, 0.14);
+	--white: var(--surface);
+
+	--serif: 'Cormorant Garamond', Georgia, serif;
+	--script: 'Great Vibes', cursive;
+	--sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+	/* Latar (di-override oleh latar kustom per-account) */
+	--hero-img: none;
+	--cover-img: none;
+	--bg-hero: var(--hero-img);
+	--bg-cover: var(--cover-img);
+	--bg-hero-mobile: var(--bg-hero);
+	--bg-cover-mobile: var(--bg-cover);
+	--bg-overlay: transparent;
+	--bg-position: center center;
+	--bg-size: cover;
+	--bg-repeat: no-repeat;
+	--bg-attachment: scroll;
+	--bg-position-mobile: var(--bg-position);
+	--bg-size-mobile: var(--bg-size);
+	--bg-repeat-mobile: var(--bg-repeat);
+
+	--radius: 18px;
+	--shadow: 0 18px 50px -22px rgba(40, 35, 25, 0.45);
+}
+
+/* ---------- Preset tema ---------- */
+body.theme-botanical {
+	--sage: #7d8f6d;
+	--sage-dark: #57684a;
+	--gold: #b08d47;
+	--cream: #f7f4ec;
+	--cream-2: #efe9db;
+	--surface: #ffffff;
+	--ink: #33352e;
+	--ink-soft: #5f5a51;
+	--serif: 'Cormorant Garamond', Georgia, serif;
+	--script: 'Great Vibes', cursive;
+}
+body.theme-midnight {
+	--sage: #8a7f52;
+	--sage-dark: #c9a86a;
+	--gold: #d8b978;
+	--cream: #14131a;
+	--cream-2: #1b1a24;
+	--surface: #201e2a;
+	--ink: #f2ece0;
+	--ink-soft: #c8c0b2;
+	--line: rgba(255, 255, 255, 0.14);
+	--serif: 'Playfair Display', Georgia, serif;
+	--script: 'Great Vibes', cursive;
+}
+body.theme-blush {
+	--sage: #c98a86;
+	--sage-dark: #a35e5a;
+	--gold: #cb9a7a;
+	--cream: #fdf4f1;
+	--cream-2: #f8e9e5;
+	--surface: #fffafa;
+	--ink: #3d2f2c;
+	--ink-soft: #6f5f5b;
+	--serif: 'Lora', Georgia, serif;
+	--script: 'Italianno', cursive;
+}
+body.theme-javanese {
+	--sage: #8a6d3b;
+	--sage-dark: #5e4a24;
+	--gold: #b07d2b;
+	--cream: #f5ecdd;
+	--cream-2: #ede0c9;
+	--surface: #fffaf1;
+	--ink: #3a2c1a;
+	--ink-soft: #6b5a3e;
+	--serif: 'Marcellus', Georgia, serif;
+	--script: 'Pinyon Script', cursive;
+}
+body.theme-minimal {
+	--sage: #3f3f46;
+	--sage-dark: #18181b;
+	--gold: #71717a;
+	--cream: #f4f4f5;
+	--cream-2: #e9e9ec;
+	--surface: #ffffff;
+	--ink: #1b1b1f;
+	--ink-soft: #52525b;
+	--serif: 'Space Grotesk', system-ui, sans-serif;
+	--script: 'Plus Jakarta Sans', sans-serif;
+}
+body.theme-baroque {
+	--sage: #6d4b6b;
+	--sage-dark: #4a2f49;
+	--gold: #a9852f;
+	--cream: #f6f1e7;
+	--cream-2: #efe6d6;
+	--surface: #fffdf8;
+	--ink: #2f2436;
+	--ink-soft: #5e4f66;
+	--serif: 'Cormorant Garamond', Georgia, serif;
+	--script: 'Tangerine', cursive;
+}
+
+* {
+	box-sizing: border-box;
+}
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+body {
+	background: var(--cream);
+	color: var(--ink);
+	font-family: var(--sans);
+	font-size: 16px;
+	line-height: 1.65;
+	-webkit-font-smoothing: antialiased;
+	overflow-x: hidden;
+}
+img {
+	max-width: 100%;
+	display: block;
+}
+a {
+	color: inherit;
+	text-decoration: none;
+}
+h1,
+h2,
+h3 {
+	margin: 0;
+	font-family: var(--serif);
+	font-weight: 600;
+	line-height: 1.2;
+}
+.script {
+	font-family: var(--script);
+	font-weight: 400;
+}
+
+/* ---------- Animasi reveal saat scroll ---------- */
+[data-reveal] {
+	opacity: 0;
+	transform: translateY(28px);
+	transition:
+		opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+		transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+	will-change: opacity, transform;
+}
+[data-reveal='down'] {
+	transform: translateY(-28px);
+}
+[data-reveal='left'] {
+	transform: translateX(-36px);
+}
+[data-reveal='right'] {
+	transform: translateX(36px);
+}
+[data-reveal='zoom'] {
+	transform: scale(0.9);
+}
+[data-reveal].is-visible {
+	opacity: 1;
+	transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	[data-reveal] {
+		opacity: 1 !important;
+		transform: none !important;
+		transition: none !important;
+	}
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes fadeInDown {
+	from {
+		opacity: 0;
+		transform: translateY(-24px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(24px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+@keyframes floatY {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-10px);
+	}
+}
+@keyframes pulseGrow {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.08);
+	}
+}
+.anim-down {
+	animation: fadeInDown 1s both;
+}
+.anim-up {
+	animation: fadeInUp 1s both;
+}
+.float {
+	animation: floatY 4s ease-in-out infinite;
+}
+
+/* ---------- Ornamen floral sudut (SVG data-URI, bisa diwarnai) ---------- */
+.ornament {
+	position: absolute;
+	pointer-events: none;
+	opacity: 0.85;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+.ornament.tl {
+	top: -8px;
+	left: -8px;
+	width: 132px;
+	height: 132px;
+	transform: rotate(0deg);
+}
+.ornament.tr {
+	top: -8px;
+	right: -8px;
+	width: 132px;
+	height: 132px;
+	transform: scaleX(-1);
+}
+.ornament.bl {
+	bottom: -8px;
+	left: -8px;
+	width: 132px;
+	height: 132px;
+	transform: scaleY(-1);
+}
+.ornament.br {
+	bottom: -8px;
+	right: -8px;
+	width: 132px;
+	height: 132px;
+	transform: scale(-1, -1);
+}
+
+/* Pembatas gelombang antar-section */
+.wave-divider {
+	display: block;
+	width: 100%;
+	height: 32px;
+	color: var(--cream-2);
+}

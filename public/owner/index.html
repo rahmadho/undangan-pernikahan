@@ -85,6 +85,9 @@ tr:last-child td{border-bottom:none}
 .sw-botanical{background:linear-gradient(135deg,#7d8f6d 0 50%,#b08d47 50% 100%)}
 .sw-midnight{background:linear-gradient(135deg,#14131a 0 50%,#d8b978 50% 100%)}
 .sw-blush{background:linear-gradient(135deg,#fffafa 0 50%,#c98a86 50% 100%)}
+.sw-javanese{background:linear-gradient(135deg,#8a6d3b 0 50%,#b07d2b 50% 100%)}
+.sw-minimal{background:linear-gradient(135deg,#3f3f46 0 50%,#e4e4e7 50% 100%)}
+.sw-baroque{background:linear-gradient(135deg,#6d4b6b 0 50%,#a9852f 50% 100%)}
 </style>
 </head>
 <body>
@@ -136,6 +139,9 @@ tr:last-child td{border-bottom:none}
             <option value="botanical">Botanical — sage &amp; emas</option>
             <option value="midnight">Midnight Luxe — gelap &amp; emas</option>
             <option value="blush">Ivory Blush — rose &amp; krem</option>
+            <option value="javanese">Javanese Heritage — cokelat &amp; kunyit</option>
+            <option value="minimal">Modern Minimal — netral tegas</option>
+            <option value="baroque">Baroque Gold — ungu &amp; emas</option>
           </select>
         </div>
         <div class="field">
@@ -224,7 +230,7 @@ $('#loginBtn').addEventListener('click', doLogin);
 $('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
 $('#logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('owner_pw'); location.reload(); });
 
-const THEME_LABEL = { botanical: 'Botanical', midnight: 'Midnight Luxe', blush: 'Ivory Blush' };
+const THEME_LABEL = { botanical: 'Botanical', midnight: 'Midnight Luxe', blush: 'Ivory Blush', javanese: 'Javanese', minimal: 'Modern Minimal', baroque: 'Baroque Gold' };
 const themeBadge = (t) => `<span class="badge theme"><span class="swatch sw-${esc(t)}"></span>${THEME_LABEL[t] || t}</span>`;
 
 async function loadAll() {
@@ -250,7 +256,7 @@ async function loadAll() {
 function renderAccounts(accounts) {
   if (!accounts.length) { $('#accountsTable').innerHTML = '<p class="empty">Belum ada undangan. Buat yang pertama di atas.</p>'; return; }
   const origin = location.origin;
-  const THEMES = [['botanical', 'Botanical'], ['midnight', 'Midnight Luxe'], ['blush', 'Ivory Blush']];
+  const THEMES = [['botanical', 'Botanical'], ['midnight', 'Midnight Luxe'], ['blush', 'Ivory Blush'], ['javanese', 'Javanese'], ['minimal', 'Modern Minimal'], ['baroque', 'Baroque Gold']];
   const expireCell = (a) => {
     if (!a.expires_at) return '<span style="font-size:.74rem;color:var(--soft)">Tanpa batas</span>';
     const d = a.days_left;

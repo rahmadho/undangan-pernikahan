@@ -1,0 +1,60 @@
+# =====================================================================
+#  docker-compose.yml — menjalankan app + PostgreSQL sekaligus.
+#  Cocok untuk VPS / server sendiri.
+#
+#  Cara pakai:
+#    1. Salin .env.example -> .env, isi OWNER_PASSWORD, dll.
+#    2. docker compose up -d --build
+#    3. Buka http://<IP-server>:3000  (panel owner: /owner)
+#
+#  Catatan: block `app` di bawah memakai SQLite (volume `app-data`).
+#  Untuk memakai PostgreSQL, aktifkan variabel DB_CLIENT + DATABASE_URL
+#  pada bagian `environment` app (lihat komentar) dan hapus volume SQLite.
+# =====================================================================
+
+services:
+  app:
+    build: .
+    image: undangan-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      TRUST_PROXY: "1"
+      # --- Pilih database: 'sqlite' (default) atau 'postgres' ---
+      DB_CLIENT: sqlite
+      DATABASE_PATH: /data/wedding.db
+      # --- Untuk Postgres: batalkan komentar tiga baris di bawah,
+      #     ganti DB_CLIENT menjadi 'postgres', DAN tambahkan
+      #     `depends_on: [db]` pada service ini. ---
+      # DB_CLIENT: postgres
+      # DATABASE_URL: postgres://undangan:undangan@db:5432/undangan
+      # PGSSL: "false"
+      # --- Kredensial owner awal (ganti!) ---
+      OWNER_USERNAME: owner
+      OWNER_PASSWORD: ganti-sandi-kuat-anda
+    volumes:
+      # Simpan database SQLite di volume persisten (tidak hilang saat rebuild).
+      - app-data:/data
+    # depends_on:
+    #   - db
+
+  # PostgreSQL — hanya dipakai bila DB_CLIENT=postgres.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: undangan
+      POSTGRES_PASSWORD: undangan
+      POSTGRES_DB: undangan
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    # Port dibuka ke host hanya bila perlu akses dari luar docker.
+    # ports:
+    #   - "5432:5432"
+
+volumes:
+  app-data:
+  pg-data:

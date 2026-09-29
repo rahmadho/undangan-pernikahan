@@ -83,6 +83,87 @@ body.theme-blush {
   --script: 'Italianno', cursive;
 }
 
+/* ---------- TEMA 4: JAVANESE HERITAGE (cokelat batik + kunyit) ---------- */
+body.theme-javanese {
+  --cream: #f5ecdd;
+  --cream-2: #ecdfc9;
+  --surface: #fffaf1;
+  --sage: #8a6d3b;
+  --sage-dark: #5e4a24;
+  --gold: #b07d2b;
+  --ink: #3a2c1a;
+  --ink-soft: #6c5a41;
+  --line: #ddcdb0;
+  --shadow: 0 14px 44px rgba(74, 55, 25, 0.16);
+  --accent-soft: rgba(138, 109, 59, 0.14);
+  --hero-img: url('https://images.unsplash.com/photo-1519741497674-611481863552?w=1600');
+  --cover-img: url('https://images.unsplash.com/photo-1587271339318-2c1b1dce4a2b?w=1600');
+  --cover-veil: rgba(48, 34, 16, 0.55);
+  --grain: 0.55;
+  --white: var(--surface);
+  --danger: #b0552f;
+  --warm: #9c6f2a;
+  --muted: #b3a086;
+  --neutral: #e6d6bb;
+  /* Tipografi khas tema: serif hangat klasik + script kaligrafi. */
+  --serif: 'Marcellus', Georgia, serif;
+  --script: 'Pinyon Script', cursive;
+}
+
+/* ---------- TEMA 5: MODERN MINIMAL (mono-netral + aksen tegas) ---------- */
+body.theme-minimal {
+  --cream: #f4f4f5;
+  --cream-2: #e9e9ec;
+  --surface: #ffffff;
+  --sage: #3f3f46;
+  --sage-dark: #18181b;
+  --gold: #71717a;
+  --ink: #1b1b1f;
+  --ink-soft: #52525b;
+  --line: #e4e4e7;
+  --shadow: 0 12px 40px rgba(24, 24, 27, 0.1);
+  --accent-soft: rgba(63, 63, 70, 0.08);
+  --hero-img: url('https://images.unsplash.com/photo-1529634597503-139d3726fed5?w=1600');
+  --cover-img: url('https://images.unsplash.com/photo-1502635385003-ee1e6a1a742d?w=1600');
+  --cover-veil: rgba(24, 24, 27, 0.55);
+  --grain: 0.25;
+  --white: var(--surface);
+  --danger: #b91c1c;
+  --warm: #52525b;
+  --muted: #a1a1aa;
+  --neutral: #e4e4e7;
+  /* Tipografi khas tema: sans tegas untuk display + sans netral untuk body. */
+  --serif: 'Space Grotesk', system-ui, sans-serif;
+  --script: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* ---------- TEMA 6: BAROQUE GOLD (ungu tua + emas, mewah klasik) ---------- */
+body.theme-baroque {
+  --cream: #f6f1e7;
+  --cream-2: #ece2d0;
+  --surface: #fffdf8;
+  --sage: #6d4b6b;
+  --sage-dark: #4a2f49;
+  --gold: #a9852f;
+  --ink: #2f2436;
+  --ink-soft: #5d5261;
+  --line: #e0d5c3;
+  --shadow: 0 16px 50px rgba(58, 38, 56, 0.16);
+  --accent-soft: rgba(109, 75, 107, 0.13);
+  --hero-img: url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1600');
+  --cover-img: url('https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=1600');
+  --cover-veil: rgba(40, 24, 40, 0.55);
+  --grain: 0.6;
+  --white: var(--surface);
+  --danger: #a83250;
+  --warm: #9c7a2a;
+  --muted: #a99dad;
+  --neutral: #e6d9c8;
+  /* Tipografi khas tema: serif display mewah + script klasik. */
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --script: 'Tangerine', cursive;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -456,7 +537,7 @@ h2 { font-family: var(--serif); font-weight: 600; }
 .choice-inner {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 11px;
   padding: 13px 15px;
   min-height: 60px;
   border: 1.5px solid var(--line);
@@ -476,15 +557,34 @@ h2 { font-family: var(--serif); font-weight: 600; }
   border: 1px solid var(--line);
   transition: color .18s, background .18s, border-color .18s;
 }
-.choice-text { display: flex; flex-direction: column; line-height: 1.25; }
+.choice-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .choice-text strong { font-size: .96rem; font-weight: 700; color: var(--ink); }
 .choice-text small { font-size: .76rem; color: var(--ink-soft); }
+
+/* penanda centang di sudut kartu terpilih */
+.choice-mark {
+  margin-left: auto;
+  flex: none;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--line);
+  color: transparent;
+  background: transparent;
+  transition: background .18s, border-color .18s, color .18s, transform .18s;
+}
 
 .choice-card input:checked ~ .choice-inner {
   border-color: var(--sage);
   background: var(--accent-soft);
   box-shadow: 0 6px 20px -10px color-mix(in srgb, var(--sage) 60%, transparent);
 }
+.choice-card input:checked ~ .choice-inner .choice-mark {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: var(--white);
+}
+.choice-card input:checked ~ .choice-inner .choice-text strong { color: var(--sage-dark); }
 .choice-card input:checked ~ .choice-inner .choice-icon {
   background: var(--sage);
   color: var(--white);
@@ -501,9 +601,10 @@ h2 { font-family: var(--serif); font-weight: 600; }
 .stepper {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
+  max-width: 260px;
   padding: 5px;
   border: 1.5px solid var(--line);
   border-radius: 999px;
@@ -529,7 +630,8 @@ h2 { font-family: var(--serif); font-weight: 600; }
 .stepper-btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
 .stepper-btn:disabled:hover { background: var(--surface); color: var(--sage-dark); }
 .stepper input {
-  width: 54px;
+  width: 100%;
+  min-width: 0;
   min-height: 46px;
   text-align: center;
   border: none;
@@ -699,7 +801,60 @@ h2 { font-family: var(--serif); font-weight: 600; }
 .nav-btn:active { transform: scale(0.94); }
 .nav-btn.active { color: var(--sage-dark); background: var(--accent-soft); }
 
+/* Indikator pil yang mengikuti tombol aktif */
+.section-nav .nav-ind {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  height: calc(100% - 12px - env(safe-area-inset-bottom));
+  min-height: 52px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: transform .32s cubic-bezier(.22,1,.36,1), width .32s cubic-bezier(.22,1,.36,1), opacity .2s;
+  will-change: transform, width;
+}
+.section-nav .nav-ind.show { opacity: 1; }
+.nav-btn { position: relative; z-index: 1; }
+
+/* Nav yang bisa digeser horizontal di layar sempit (banyak item). */
+.section-nav {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.section-nav::-webkit-scrollbar { display: none; }
+.nav-btn { scroll-margin-inline: 12px; }
+
 /* ---------- PROGRESSIVE ENHANCEMENT: LARGER SCREENS ---------- */
+
+/* Pendekatan MOBILE-FIRST: form konfirmasi jadi 2 baris (1 besar + 2 kecil).
+   Baris 1 = 2 kartu "Hadir"/"Ragu"; baris 2 = kartu "Tidak Hadir" selebar penuh. */
+@media (max-width: 560px) {
+  .choice-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .choice-card:last-child { grid-column: 1 / -1; }
+  .choice-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 14px 10px;
+    min-height: 96px;
+    position: relative;
+  }
+  .choice-card:last-child .choice-inner { flex-direction: row; text-align: left; min-height: 62px; }
+  .choice-icon { width: 38px; height: 38px; }
+  .choice-text strong { font-size: .9rem; }
+  .choice-text small { font-size: .7rem; }
+  .choice-mark { position: absolute; top: 8px; right: 8px; margin: 0; width: 20px; height: 20px; }
+  .choice-card:last-child .choice-mark { position: static; margin-left: auto; }
+
+  /* beri ruang bawah agar konten terakhir tidak tertutup nav bawah */
+  .main { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
+}
 
 /* Small tablets / large phones: two columns */
 @media (min-width: 640px) {
@@ -707,6 +862,7 @@ h2 { font-family: var(--serif); font-weight: 600; }
   .events-grid { grid-template-columns: repeat(2, 1fr); }
   .gifts-grid { grid-template-columns: repeat(2, 1fr); }
   .gallery-grid { gap: 14px; }
+  .choice-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Tablet: couple side by side */

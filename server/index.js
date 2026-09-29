@@ -17,14 +17,29 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+
+// Muat variabel .env LEBIH DULU sebelum modul lain membaca process.env
+// (mis. pemilih backend DB di server/db/index.js).
+require('./env').loadEnv();
+
 const { db, getAccountBySlug, getAccountById } = require('./db/schema');
 const { seed, createAccount, ensureOwner } = require('./db/seed');
 const { hashPassword, verifyPassword, rateLimit, securityHeaders } = require('./security');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.set('trust proxy', Number(process.env.TRUST_PROXY || 1));
+
+// ---------- health check (untuk load balancer / platform hosting) ----------
+app.get('/healthz', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ status: 'ok', db: process.env.DB_CLIENT || 'sqlite', uptime: Math.round(process.uptime()) });
+  } catch (err) {
+    res.status(503).json({ status: 'error', message: err.message });
+  }
+});
 
 // ---------- security headers ----------
 app.use(securityHeaders());
@@ -436,7 +451,7 @@ app.put('/api/admin/settings', requireAccountActive, wrap((req, res) => {
     if (!allowed.includes(k)) return;
     if (k === 'theme') {
       const t = String(v || '').trim();
-      if (['botanical', 'midnight', 'blush'].includes(t)) db.prepare('UPDATE accounts SET theme = ? WHERE id = ?').run(t, accId);
+      if (['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'].includes(t)) db.prepare('UPDATE accounts SET theme = ? WHERE id = ?').run(t, accId);
       return;
     }
     if (k === 'admin_password') {
@@ -537,7 +552,7 @@ app.post('/api/owner/accounts', requireOwner, wrap((req, res) => {
   if (db.prepare('SELECT 1 FROM accounts WHERE slug = ?').get(cleanSlug)) {
     return res.status(409).json({ error: 'Slug sudah dipakai. Pilih yang lain.' });
   }
-  const validThemes = ['botanical', 'midnight', 'blush'];
+  const validThemes = ['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'];
   const chosenTheme = validThemes.includes(theme) ? theme : 'botanical';
   const id = createAccount({
     slug: cleanSlug,
@@ -565,7 +580,7 @@ app.put('/api/owner/accounts/:id', requireOwner, wrap((req, res) => {
   const sets = [];
   const vals = [];
   if (status && ['active', 'suspended'].includes(status)) { sets.push('status = ?'); vals.push(status); }
-  if (theme && ['botanical', 'midnight', 'blush'].includes(theme)) { sets.push('theme = ?'); vals.push(theme); }
+  if (theme && ['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'].includes(theme)) { sets.push('theme = ?'); vals.push(theme); }
   if (Number.isFinite(Number(max_guests))) { sets.push('max_guests = ?'); vals.push(parseInt(max_guests, 10) || 500); }
   if (title !== undefined) { sets.push('title = ?'); vals.push(clampStr(title, 120)); }
   if (expires_at !== undefined) { sets.push('expires_at = ?'); vals.push(expires_at ? String(expires_at).slice(0, 10) : null); }
@@ -730,8 +745,9 @@ app.get(['/', '/index.html'], (req, res) => {
 app.use(express.static(PUBLIC_DIR, { index: false }));
 
 // error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   console.error(err);
+  if (res.headersSent) return;
   res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
 });
 

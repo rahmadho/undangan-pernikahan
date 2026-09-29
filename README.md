@@ -72,14 +72,17 @@ Set `Tanpa batas waktu` saat membuat akun bila tidak mau memakai masa aktif.
 ```bash
 npm install     # install dependencies
 npm start       # jalankan server  (atau: npm run dev  untuk auto-reload)
+npm run migrate # (opsional) siapkan skema + owner + data contoh di server baru
 npm run seed    # (opsional) buat ulang data contoh
 ```
 
 Buka:
 - Panel pemilik: **http://localhost:3000/owner** → login `owner` / `owner123`
 - Contoh undangan: **http://localhost:3000/u/demo** (admin: `/u/demo/admin`, sandi `admin123`)
+- Health check: **http://localhost:3000/healthz**
 
-> Ganti port: `PORT=3100 npm start`
+> Konfigurasi lewat file **`.env`** (salin dari `.env.example`), mis.: `PORT`, `TRUST_PROXY`,
+> `DB_CLIENT`, `DATABASE_PATH`, `DATABASE_URL`, `OWNER_USERNAME`, `OWNER_PASSWORD`.
 > ⚠️ **Ganti password owner & client default sebelum publikasi.**
 
 ## 🗂️ Struktur
@@ -87,6 +90,7 @@ Buka:
 ```
 undangan-saas/
 ├── server/
+│   ├── env.js            # memuat .env (dotenv / fallback bawaan)
 │   ├── index.js          # server Express + semua API (publik, client admin, owner)
 │   ├── security.js       # hash password (scrypt), rate limit, security headers
 │   └── db/
@@ -94,14 +98,17 @@ undangan-saas/
 │       ├── sqlite.js     # adapter SQLite (node:sqlite bawaan, sinkron)
 │       ├── postgres.js   # adapter Postgres (driver pg, asinkron) — untuk produksi
 │       ├── schema.js     # skema multi-tenant + migrasi otomatis + dialect() SQLite→PG
-│       └── seed.js       # data contoh (owner + account demo)
+│       ├── seed.js       # data contoh (owner + account demo)
+│       └── migrate.js    # CLI: siapkan skema + seed (npm run migrate)
 ├── public/
 │   ├── index.html        # halaman undangan (mobile-first + nav bawah)
-│   ├── css/style.css
+│   ├── css/style.css     # styling + 6 tema
 │   ├── js/app.js
-│   ├── admin/index.html  # dashboard client
-│   └── owner/index.html  # panel pemilik (super admin)
-└── data/wedding.db       # database (auto-dibuat)
+│   ├── admin/index.html  # dashboard client (self-contained)
+│   └── owner/index.html  # panel pemilik (self-contained)
+├── Dockerfile · docker-compose.yml · .dockerignore · .env.example
+├── CLAUDE.md             # catatan proyek untuk AI agent
+└── data/wedding.db       # database SQLite (auto-dibuat)
 ```
 
 ## 🔌 API
@@ -149,7 +156,7 @@ Nama tamu muncul otomatis di cover & form. Salin link dari dashboard client (tom
 
 ## 🎨 Pilihan Desain
 
-Ada **3 tema** (dipilih owner saat membuat, bisa diganti client kapan saja). Tiap tema
+Ada **6 tema** (dipilih owner saat membuat, bisa diganti client kapan saja). Tiap tema
 punya palet **dan** tipografi berbeda:
 
 | Tema | Nuansa | Font judul | Font script |
@@ -157,9 +164,14 @@ punya palet **dan** tipografi berbeda:
 | **Botanical** (default) | Sage hijau & emas — natural, tenang | Cormorant Garamond | Great Vibes |
 | **Midnight Luxe** | Latar gelap & emas — dramatis, mewah | Playfair Display | Great Vibes |
 | **Ivory Blush** | Rose & krem — lembut, romantis | Lora | Italianno |
+| **Javanese Heritage** | Cokelat batik & kunyit — hangat, tradisional | Marcellus | Pinyon Script |
+| **Modern Minimal** | Netral tegas — bersih, kontemporer | Space Grotesk | — |
+| **Baroque Gold** | Ungu tua & emas — mewah, klasik | Cormorant Garamond | Tangerine |
 
 Tema didefinisikan sebagai variabel CSS di `public/css/style.css`
-(`body.theme-midnight { ... }`, `body.theme-blush { ... }`).
+(`body.theme-<nama> { ... }`). Menambah tema baru cukup menyalin satu blok
+`body.theme-*` + menambahkannya di: `THEMES` (`public/js/app.js`), opsi di
+`admin/index.html` & `owner/index.html`, dan `validThemes` di `server/index.js`.
 
 ### 🎵 Backsound / Musik Latar
 
@@ -178,56 +190,122 @@ Diubah lewat **Admin client → tab Mempelai & Setelan → kolom Musik**. Isi de
 > dengan `/music/lagu.mp3`. Jangan hotlink Pixabay (diblokir). Sumber gratis: Pixabay Music,
 > Free Music Archive, Uppbeat.
 
-## 🐘 Migrasi ke PostgreSQL (Produksi)
+## 🚀 Panduan Deploy ke Server
 
-Aplikasi dirancang agar mudah pindah dari SQLite ke Postgres:
+Aplikasi ini **satu proses Node.js** + database. Prinsip utama:
 
-1. **Semua akses DB terpusat** di `server/db/schema.js` (koneksi) + pola `db.prepare(...)`
-   bergaya better-sqlite3 (`.run/.get/.all`).
-2. Untuk pindah: sediakan **adapter dengan API sama** di atas driver `pg`/`postgres`
-   (ubah `?` → `$1`, `INTEGER PRIMARY KEY AUTOINCREMENT` → `SERIAL PRIMARY KEY`,
-   `datetime('now')` → `now()`, tipe `TEXT` → `text`), lalu set `DATABASE_PATH`/koneksi
-   via env. Schema & query aplikasi tidak perlu dirombak.
-3. Atau gunakan layanan seperti Supabase/Neon dan ganti layer koneksi saja.
+- **Data WAJIB di volume persisten.** Untuk SQLite, `data/wedding.db` harus berada di
+  volume (bukan disk sementara/ephemeral container) — kalau tidak, data hilang saat redeploy.
+- **Set env** sesuai `.env.example` (salin jadi `.env` untuk lokal; isi langsung di dashboard
+  hosting untuk produksi).
+- **Ganti kredensial default** (`OWNER_USERNAME`/`OWNER_PASSWORD`) sebelum publik.
 
-> Struktur tabel & isolasi tenant (`account_id`) sudah kompatibel dengan Postgres.
+### Opsi A — VPS (paling murah, kontrol penuh)
 
-## 🐘 Migrasi ke PostgreSQL (Produksi)
+Contoh Ubuntu 22.04+, dengan SQLite:
 
-Aplikasi sudah menyiapkan **layer adapter** sehingga pindah backend = ganti konfigurasi,
-bukan rombak query:
+```bash
+git clone <repo> && cd undangan-pernikahan
+npm install --omit=dev
+cp .env.example .env      # lalu edit: OWNER_PASSWORD, dst.
+PORT=3000 node server/index.js   # cek jalan
+```
 
-- `server/db/index.js` — memilih backend dari env `DB_CLIENT` (`sqlite` default, atau `postgres`).
-- `server/db/sqlite.js` — adapter SQLite (`node:sqlite` bawaan, **sinkron**).
-- `server/db/postgres.js` — adapter Postgres (driver `pg`, **asinkron**). Sudah menerjemahkan
-  `?`/`@name` → `$1, $2, ...` otomatis.
-- `server/db/schema.js` — skema + fungsi `dialect()` yang mengubah DDL SQLite
-  (`AUTOINCREMENT`, `datetime('now')`, `TEXT`) → Postgres (`SERIAL`, `now()`, `text`).
+Agar tetap hidup setelah logout, pakai **systemd** (`/etc/systemd/system/undangan.service`):
 
-### Langkah pindah
+```ini
+[Unit]
+Description=Undangan SaaS
+After=network.target
 
-1. **Install driver:** `npm i pg`
-2. **Set env:** `DB_CLIENT=postgres` dan `DATABASE_URL=postgres://user:pass@host:5432/dbname`
-3. **Buat skema:** jalankan sekali `node -e "require('./server/db/schema')"` (tabel dibuat otomatis).
-4. **⚠️ Wajib: ubah handler Express menjadi `async`.** SQLite sinkron, Postgres asinkron —
-   `db.prepare(sql).get()` harus jadi `await db.prepare(sql).get()`, dan handler-nya `async`.
-   Pola `wrap((req,res)=>{...})` diganti menjadi `wrapAsync(async (req,res)=>{...})`.
-   Ini satu-satunya pekerjaan manual; semua SQL & struktur data sudah kompatibel.
+[Service]
+WorkingDirectory=/opt/undangan-pernikahan
+EnvironmentFile=/opt/undangan-pernikahan/.env
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+User=www-data
 
-> **Kenapa tidak otomatis 100%?** `node:sqlite` sinkron sedangkan `pg` asinkron — perbedaan
-> ini hanya bisa dijembatani dengan menjadikan handler `async`. Struktur tabel, isolasi tenant
-> (`account_id`), dan seluruh query sudah disiapkan agar tidak perlu dirombak.
+[Install]
+WantedBy=multi-user.target
+```
 
-> 💡 **Alternatif tanpa ubah kode:** tetap pakai SQLite untuk skala < ~200 undangan (sudah
-> sangat cukup & gratis). Pindah ke Postgres saat trafik/tim sudah butuh multi-server.
+Lalu `systemctl enable --now undangan`. Di depannya pasang **Nginx** (reverse proxy) +
+**HTTPS Let's Encrypt**, dan arahkan `proxy_pass http://127.0.0.1:3000;` dengan
+header `Host`/`X-Forwarded-*` (aplikasi sudah `trust proxy`).
+
+### Opsi B — Docker (VPS / cloud apa saja)
+
+```bash
+docker compose up -d --build     # app + (opsional) Postgres
+```
+
+- Default compose memakai **SQLite** dengan volume `app-data` (persisten).
+- Untuk **Postgres**: aktifkan blok `DB_CLIENT=postgres` + `DATABASE_URL` di
+  `docker-compose.yml`, tambahkan `depends_on: [db]`, lalu
+  `docker compose exec app node server/db/migrate.js` untuk membuat skema.
+
+### Opsi C — Platform (Render / Railway / Fly.io)
+
+Semua platform ini mendukung **Node + volume persisten** dan mengisi `$PORT` otomatis.
+
+1. **Build:** `npm install` · **Start:** `npm start` · **Health check:** `/healthz`.
+2. Tambahkan **Persistent Volume**, mount ke `/data`, dan set `DATABASE_PATH=/data/wedding.db`.
+3. Isi env: `OWNER_USERNAME`, `OWNER_PASSWORD`, `TRUST_PROXY=1` (dan DB bila memakai Postgres).
+4. Deploy → buka `/owner`, buat akun client pertama.
+
+> ⚠️ Pastikan **Node ≥ 22.5** terpasang/terpilih (memakai `node:sqlite`). Di Render set
+> `NODE_VERSION=22`, di Railway pilih image Node 22, Fly.io gunakan `Dockerfile` ini.
+
+## 🐘 Menggunakan PostgreSQL (Produksi, skala besar)
+
+SQLite **sangat cukup** untuk < ~200 undangan (rekomendasi default). Pindah ke Postgres
+saat butuh multi-server / trafik tinggi / replikasi.
+
+### Pengaturan Postgres
+
+1. Sediakan server Postgres (Neon/Supabase/RDS/Docker). Dapatkan **connection string**.
+2. Pastikan driver terpasang: `npm i pg` (sudah ada di `optionalDependencies`, tapi
+   `npm install --omit=optional` tidak memasangnya — jadi install eksplisit bila perlu).
+3. Set env (di `.env` atau dashboard hosting):
+
+   ```
+   DB_CLIENT=postgres
+   DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DBNAME
+   PGSSL=false              # hanya bila Postgres lokal tanpa SSL (docker-compose)
+   ```
+
+4. **Buat skema:** `node server/db/migrate.js` (atau otomatis saat `npm start` pertama).
+5. Selesai. Adapter `server/db/postgres.js` menerjemahkan `?`/`@name` → `$1,$2,...` otomatis.
+
+### ⚠️ Satu langkah manual (WAJIB)
+
+`node:sqlite` **sinkron**, sedangkan `pg` **asinkron**. Agar benar-benar jalan di Postgres,
+seluruh handler Express yang menyentuh DB harus diubah jadi `async` + `await`:
+
+```js
+// dari:
+wrap((req, res) => { const row = db.prepare('SELECT 1').get(); ... })
+// menjadi:
+wrapAsync(async (req, res) => { const row = await db.prepare('SELECT 1').get(); ... })
+```
+
+Struktur tabel, isolasi tenant (`account_id`), dan semua SQL sudah kompatibel — hanya
+butuh penambahan `async/await` (lihat `wrap`/`wrapAsync` di `server/index.js`).
+
+> 💡 **Jujur soal ini:** tanpa refactor async tersebut, aplikasi **belum** benar-benar
+> berjalan di atas `pg`. Karena itu untuk produksi cepat, **SQLite + volume persisten**
+> (semua data satu file, gampang di-backup) seringkali pilihan paling praktis.
 
 ## 📝 Catatan Produksi
 
-- **Ganti password owner** (`/owner`) & semua sandi client default.
+- **Ganti password owner** (`/owner`) & semua sandi client default. Set `OWNER_PASSWORD`
+  di env **sebelum** start pertama (dipakai hanya saat tabel `owners` masih kosong).
 - Ganti nomor rekening & foto contoh dengan data asli tiap client.
-- Hosting: VPS/Render/Railway, reverse proxy (Nginx) + HTTPS. Untuk skala besar, pindah ke Postgres.
 - Backup berkala `data/wedding.db` (atau DB Postgres Anda).
+- Health check tersedia di `/healthz` untuk load balancer / platform.
+- `npm run migrate` menyiapkan skema + owner + data contoh di server baru.
 
 ## 🛠️ Teknologi
 
-Node.js (>= 22.5) · Express · `node:sqlite` (bawaan) · HTML/CSS/JS vanilla · multi-tenant
+Node.js (>= 22.5) · Express · `node:sqlite` (default) / PostgreSQL `pg` (opsional) ·
+HTML/CSS/JS vanilla · multi-tenant · Docker

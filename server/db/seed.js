@@ -15,7 +15,12 @@
 const { db } = require('./schema');
 const { hashPassword } = require('../security');
 
-const OWNER = { username: 'owner', password: 'owner123' };
+// Owner awal bisa diatur via env (dipakai bila tabel `owners` masih kosong).
+// Fallback ke kredensial default bila env tidak di-set.
+const OWNER = {
+  username: (process.env.OWNER_USERNAME || 'owner').trim() || 'owner',
+  password: (process.env.OWNER_PASSWORD || 'owner123').trim() || 'owner123',
+};
 
 const DEMO_ACCOUNT = {
   slug: 'demo',

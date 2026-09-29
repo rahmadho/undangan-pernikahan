@@ -27,9 +27,19 @@ const DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
 let STATE = { data: null, guest: null, targetDate: null };
 
-const THEMES = ['botanical', 'midnight', 'blush'];
+const THEMES = ['botanical', 'midnight', 'blush', 'javanese', 'minimal', 'baroque'];
 
-/** Terapkan tema ke <body> berdasarkan setelan (botanical | midnight | blush). */
+/** Warna theme-color (address bar browser) per tema. */
+const THEME_COLORS = {
+  botanical: '#7d8f6d',
+  midnight: '#14131a',
+  blush: '#c98a86',
+  javanese: '#8a6d3b',
+  minimal: '#3f3f46',
+  baroque: '#6d4b6b',
+};
+
+/** Terapkan tema ke <body> berdasarkan setelan (botanical | midnight | blush | ...). */
 function applyTheme(theme) {
   const t = THEMES.includes(theme) ? theme : 'botanical';
   const body = document.body;
@@ -37,10 +47,7 @@ function applyTheme(theme) {
   body.dataset.theme = t;
   // selaraskan warna address-bar browser dengan tema
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) {
-    const colors = { botanical: '#7d8f6d', midnight: '#14131a', blush: '#c98a86' };
-    meta.setAttribute('content', colors[t]);
-  }
+  if (meta && THEME_COLORS[t]) meta.setAttribute('content', THEME_COLORS[t]);
 }
 
 /* ---------- util ---------- */
@@ -309,44 +316,60 @@ function collectNavItems() {
     .filter(Boolean);
 }
 
+/** Offset tinggi area bawah yang menutupi konten (nav bawah + sedikit jeda). */
+function navOffsetBottom() {
+  return navReservedBottom() + 8;
+}
+
 /**
  * Tentukan section yang sedang aktif berdasarkan posisi scroll.
  *
- * Memakai getBoundingClientRect (bukan offsetTop) supaya tetap akurat walau
- * ada ancestor ber-position/ber-transform. Tidak memakai "break" karena rect
- * tiap section bisa tidak monoton saat scroll halus/animasi. Section aktif =
- * section yang tepi atasnya PALING DEKAT dan sudah melewati garis baca.
+ * Memakai getBoundingClientRect (bukan offsetTop) supaya tetap akurat walau ada
+ * ancestor ber-position/ber-transform. "Garis baca" ditaruh sedikit di bawah
+ * tengah viewport; bila belum ada section yang melewatinya (mis. masih di hero),
+ * section pertama dianggap aktif.
  */
 function computeActiveButton() {
   const { items } = NavState;
   if (!items.length) return null;
 
   const vh = window.innerHeight || document.documentElement.clientHeight;
-  const line = vh * 0.3; // garis baca 30% dari atas viewport
-  let active = items[0];
+  const line = vh * 0.42 + navOffsetBottom() * 0.5;
+  let active = null;
   let bestTop = -Infinity;
 
   for (const item of items) {
     const top = item.section.getBoundingClientRect().top;
-    // pilih section yang sudah melewati garis baca & paling dekat garis itu
     if (top <= line && top > bestTop) {
       bestTop = top;
       active = item;
     }
   }
+  if (!active) active = items[0]; // sebelum section pertama melewati garis baca
 
   // Bila sudah mentok paling bawah, tandai section terakhir sebagai aktif.
   const doc = document.documentElement;
   const atBottom =
-    (window.innerHeight + window.scrollY) >= ((doc ? doc.scrollHeight : document.body.scrollHeight) - 2);
+    window.innerHeight + window.scrollY >= (doc ? doc.scrollHeight : document.body.scrollHeight) - 4;
   if (atBottom) active = items[items.length - 1];
 
   return active;
 }
 
+/** Geser indikator pil ke tombol yang aktif. */
+function moveIndicator(btn, animate = true) {
+  const ind = document.querySelector('#sectionNav .nav-ind');
+  if (!ind || !btn || !btn.offsetWidth) return;
+  ind.style.transition = animate && !reduceMotion() ? '' : 'none';
+  ind.style.width = btn.offsetWidth + 'px';
+  ind.style.transform = 'translateX(' + btn.offsetLeft + 'px)';
+  ind.classList.add('show');
+}
+
 /** Set kelas .active pada satu tombol (tanpa menyentuh NavState). */
-function paintActive(btn) {
+function paintActive(btn, animate = true) {
   NavState.btns.forEach((b) => b.classList.toggle('active', b === btn));
+  moveIndicator(btn, animate);
 }
 
 /** Perbarui kelas .active pada tombol nav (hanya bila berubah). */
@@ -356,7 +379,12 @@ function updateActiveNav() {
   if (performance.now() < NavState.pendingUntil) return;
   const active = computeActiveButton();
   if (!active) return;
-  if (NavState.current === active.btn) return; // hindari penulisan DOM berulang
+  if (NavState.current === active.btn) {
+    // Tombol aktif belum berubah, tapi posisi/ukuran bisa berubah (resize/font) —
+    // tetap perbarui indikator agar selalu selaras.
+    moveIndicator(active.btn, false);
+    return;
+  }
   NavState.current = active.btn;
   paintActive(active.btn);
 }
@@ -391,6 +419,7 @@ function bindSectionNav() {
     NavState.pendingUntil = performance.now() + (reduceMotion() ? 60 : 700);
 
     // Kompensasi tinggi nav bawah agar section tidak tertutup (khusus mobile).
+    // Section digulir sedikit di atas tepi atas viewport bila ada nav bawah.
     const rect = section.getBoundingClientRect();
     const top = Math.max(0, rect.top + window.scrollY - 4);
     window.scrollTo({ top, behavior: reduceMotion() ? 'auto' : 'smooth' });
@@ -414,6 +443,10 @@ function trackActiveSection() {
 
   NavState.items = items;
   NavState.btns = items.map((it) => it.btn);
+
+  // Reset lebar indikator (kalau belum ada tombol aktif, sembunyikan).
+  const ind = document.querySelector('#sectionNav .nav-ind');
+  if (ind && !NavState.current) ind.classList.remove('show');
 
   if (!NavState.spyBound) {
     NavState.spyBound = true;
@@ -461,7 +494,12 @@ function bindUI() {
 
     // Layout bergeser setelah gambar/font selesai dimuat (umum di HP), jadi
     // sinkronkan ulang indikator agar tidak "nyangkut" di section yang salah.
-    const resync = () => { NavState.pendingUntil = 0; updateActiveNav(); };
+    const resync = () => {
+      NavState.pendingUntil = 0;
+      updateActiveNav();
+      // gambar ulang indikator tanpa animasi agar selalu pas
+      if (NavState.current) moveIndicator(NavState.current, false);
+    };
     window.addEventListener('load', resync, { once: true });
     setTimeout(resync, 350);
     setTimeout(resync, 1200);

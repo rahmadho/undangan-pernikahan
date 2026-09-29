@@ -1,7 +1,7 @@
 {
   "name": "undangan-saas",
   "version": "2.0.0",
-  "description": "SaaS undangan pernikahan online multi-tenant - Node.js + Express + SQLite (siap migrasi ke Postgres)",
+  "description": "SaaS undangan pernikahan online multi-tenant - Node.js + Express (SQLite default / Postgres opsional)",
   "main": "server/index.js",
   "type": "commonjs",
   "engines": {
@@ -10,9 +10,14 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "seed": "node server/db/seed.js"
+    "seed": "node server/db/seed.js",
+    "migrate": "node server/db/migrate.js"
   },
   "dependencies": {
+    "dotenv": "^18.0.4",
     "express": "^4.21.0"
+  },
+  "optionalDependencies": {
+    "pg": "^8.13.0"
   }
 }

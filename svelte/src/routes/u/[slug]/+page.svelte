@@ -3,6 +3,7 @@
 	import type { InvitationData } from '$lib/types';
 	import { applyTheme, applyBackground, initReveal } from '$lib/theme';
 	import Ornament from '$lib/components/Ornament.svelte';
+	import DecoAsset from '$lib/components/DecoAsset.svelte';
 	import CoverPhoto from '$lib/components/CoverPhoto.svelte';
 
 	let { data }: { data: InvitationData & { guest?: string } } = $props();
@@ -32,6 +33,15 @@
 	const decoVariantTR = $derived(
 		decoration === 'ethnic-jawa' ? 'batik-kawung' : decoration === 'ethnic-minang' ? 'songket' : 'corner'
 	);
+
+	// ---------- Dekorasi ASET LOKAL (opsional, ADDITIF) ----------
+	// Berjalan di atas dekorasi `Ornament` di atas — tidak mengganti/menghapusnya.
+	// Kosong/'none' → tidak ada yang dirender. Slot menentukan di mana ia muncul.
+	const decoAsset = $derived(s.decoration_asset || 'none');
+	const decoAssetOn = $derived(decoAsset !== 'none');
+	const decoAssetSlot = $derived(s.decoration_asset_slot || 'both');
+	const decoAssetOnCover = $derived(decoAssetOn && decoAssetSlot !== 'hero');
+	const decoAssetOnHero = $derived(decoAssetOn && decoAssetSlot !== 'cover');
 
 	// ---------- State ----------
 	let opened = $state(false); // cover sudah dibuka?
@@ -292,6 +302,12 @@
 		<span class="cover-deco cd-bl"><Ornament variant={decoVariantTL} animated={decoAnimated} /></span>
 		<span class="cover-deco cd-br"><Ornament variant={decoVariantTR} animated={decoAnimated} /></span>
 	{/if}
+	<!-- Dekorasi ASET LOKAL (opsional) — lapisan terpisah, tidak menyentuh Ornament. -->
+	{#if decoAssetOnCover}
+		<span class="cover-deco-asset" data-asset={decoAsset}>
+			<DecoAsset id={decoAsset} animated={decoAnimated} />
+		</span>
+	{/if}
 	<div class="cover-inner">
 		<p class="anim-down" style="animation-delay:.1s">The Wedding Of</p>
 
@@ -329,6 +345,12 @@
 			<span class="orn ornament tl"><Ornament variant="corner" /></span>
 			<span class="orn ornament tr"><Ornament variant="corner" /></span>
 		</div>
+		<!-- Dekorasi ASET LOKAL (opsional) pada hero — lapisan terpisah. -->
+		{#if decoAssetOnHero}
+			<div class="hero-deco-asset" data-asset={decoAsset} aria-hidden="true">
+				<DecoAsset id={decoAsset} animated={decoAnimated} />
+			</div>
+		{/if}
 		<div class="hero-content">
 			<p data-reveal="down">Kami akan menikah</p>
 			<h1 class="script" data-reveal="zoom" data-reveal-delay="120">
@@ -680,6 +702,42 @@
 	.cd-tr { top: 0; right: 0; transform: scaleX(-1); }
 	.cd-bl { bottom: 0; left: 0; transform: scaleY(-1); }
 	.cd-br { bottom: 0; right: 0; transform: scale(-1, -1); }
+	/*
+	 * Dekorasi ASET LOKAL pada cover (opsional, ADDITIF).
+	 * Lapisan terpisah dari `.cover-deco` di atas — tidak mengganti/menutupinya.
+	 * Aset di-mask & diwarnai via currentColor (lihat DecoAsset.svelte), jadi
+	 * cukup atur warna/ukuran/posisi di sini. `pointer-events:none` diwarisi
+	 * dari `.deco-asset`, dan span ini juga non-interaktif.
+	 */
+	.cover-deco-asset {
+		position: absolute;
+		inset: 0;
+		display: block;
+		color: var(--gold, #b08d47);
+		opacity: 0.85;
+		pointer-events: none;
+		z-index: 1;
+	}
+	/* Sudut: penuh-bingkai, diputar per sudut di dalam komponen. */
+	.cover-deco-asset[data-asset='corner-vine'] {
+		opacity: 0.7;
+	}
+	/* Blok/pembatas: satu elemen di tengah-bawah, tidak menutupi teks. */
+	.cover-deco-asset[data-asset='flourish'],
+	.cover-deco-asset[data-asset='divider-motif'] {
+		inset: auto 1.2rem 12%;
+		height: clamp(60px, 16vw, 110px);
+	}
+	/* Sulur menjuntai: di tepi kiri. */
+	.cover-deco-asset[data-asset='vine-left'] {
+		inset: 0 auto 0 0;
+		width: clamp(80px, 22vw, 150px);
+	}
+	/* Pola berulang: jadi latar hias, tetap samar. */
+	.cover-deco-asset[data-asset='petals-scatter'],
+	.cover-deco-asset[data-asset='kawung-tile'] {
+		opacity: 0.28;
+	}
 	/* Saat animasi aktif, ornamen berayun pelan */
 	.cover.deco-animated .cd-tl,
 	.cover.deco-animated .cd-bl { animation: sway 5s ease-in-out infinite; }
@@ -819,6 +877,33 @@
 	.ornament.small {
 		width: 84px;
 		height: 84px;
+	}
+	/*
+	 * Dekorasi ASET LOKAL pada hero (opsional, ADDITIF) — lapisan terpisah,
+	 * tidak mengganti `.ornament` (Ornament inline). Aset di-mask & diwarnai
+	 * via currentColor, jadi cukup atur warna/ukuran/posisi.
+	 */
+	.hero-deco-asset {
+		position: absolute;
+		inset: 0;
+		display: block;
+		color: var(--gold);
+		opacity: 0.6;
+		pointer-events: none;
+		z-index: 1;
+	}
+	.hero-deco-asset[data-asset='flourish'],
+	.hero-deco-asset[data-asset='divider-motif'] {
+		inset: auto 1.2rem 8%;
+		height: clamp(56px, 14vw, 96px);
+	}
+	.hero-deco-asset[data-asset='vine-left'] {
+		inset: 0 auto 0 0;
+		width: clamp(80px, 20vw, 140px);
+	}
+	.hero-deco-asset[data-asset='petals-scatter'],
+	.hero-deco-asset[data-asset='kawung-tile'] {
+		opacity: 0.22;
 	}
 	.hero-content {
 		position: relative;

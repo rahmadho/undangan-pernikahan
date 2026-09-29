@@ -4,6 +4,17 @@
  */
 import { many, one, type Row } from './db';
 import type { Account } from './auth';
+import { normalizeDecoAsset } from '$lib/decoAssets';
+
+/** Slot tampilan dekorasi aset lokal (opsional). */
+export const DECO_SLOTS = ['both', 'cover', 'hero'] as const;
+export type DecoSlot = (typeof DECO_SLOTS)[number];
+
+/** Validasi slot; default 'both'. */
+export function normalizeDecoSlot(v: unknown): DecoSlot {
+	const s = typeof v === 'string' ? v.trim() : '';
+	return (DECO_SLOTS as readonly string[]).includes(s) ? (s as DecoSlot) : 'both';
+}
 
 /** Semua key settings yang boleh ada. */
 export const SETTING_KEYS = [
@@ -22,7 +33,9 @@ export const SETTING_KEYS = [
 	'background_repeat', 'background_attachment',
 	'background_position_mobile', 'background_size_mobile', 'background_repeat_mobile',
 	// foto & dekorasi cover
-	'cover_mode', 'cover_photo', 'decoration', 'decoration_animated'
+	'cover_mode', 'cover_photo', 'decoration', 'decoration_animated',
+	// dekorasi dari aset file lokal (opsional; lihat decoAssets.ts)
+	'decoration_asset', 'decoration_asset_slot'
 ] as const;
 
 /** Ambil semua settings account sebagai objek key->value. */
@@ -83,7 +96,11 @@ export function publicSettings(account: Account, settings: Record<string, string
 		cover_mode: settings.cover_mode || 'plain',
 		cover_photo: settings.cover_photo || '',
 		decoration: settings.decoration || 'floral',
-		decoration_animated: settings.decoration_animated || '1'
+		decoration_animated: settings.decoration_animated || '1',
+		// dekorasi aset lokal (opsional). Dinormalisasi ke katalog agar halaman
+		// tamu tak pernah menerima id asing.
+		decoration_asset: normalizeDecoAsset(settings.decoration_asset),
+		decoration_asset_slot: normalizeDecoSlot(settings.decoration_asset_slot)
 	};
 }
 

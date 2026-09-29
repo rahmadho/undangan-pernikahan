@@ -3,7 +3,8 @@ import type { RequestHandler } from './$types';
 import { run, one, tx } from '$lib/server/db';
 import { requireAccountAdmin, enforceRate } from '$lib/server/auth';
 import { clampStr, clampInt, isSafeUrl, LIMITS } from '$lib/server/util';
-import { getInvitationData, getCustomThemes, publicSettings } from '$lib/server/invitation';
+import { getInvitationData, getCustomThemes, publicSettings, normalizeDecoSlot } from '$lib/server/invitation';
+import { normalizeDecoAsset } from '$lib/decoAssets';
 
 /**
  * Key settings yang boleh dibaca/ditulis oleh panel admin (self-service).
@@ -31,7 +32,9 @@ const ADMIN_SETTING_KEYS = [
 	'background_size_mobile', 'background_repeat_mobile',
 	// foto & dekorasi cover (fitur baru)
 	'cover_mode', 'cover_photo',
-	'decoration', 'decoration_animated'
+	'decoration', 'decoration_animated',
+	// dekorasi aset file lokal (opsional). Nilai divalidasi ke katalog `decoAssets`.
+	'decoration_asset', 'decoration_asset_slot'
 ] as const;
 
 const ADMIN_SETTING_SET = new Set<string>(ADMIN_SETTING_KEYS);
@@ -206,6 +209,9 @@ export const PUT: RequestHandler = async (event) => {
 			if (k === 'cover_mode' && !COVER_MODES.has(val)) val = 'plain';
 			if (k === 'decoration' && !DECORATIONS.has(val)) val = 'floral';
 			if (k === 'decoration_animated') val = val === '1' || val === 'true' ? '1' : '0';
+			// Dekorasi aset lokal: HANYA id dari katalog (path tetap, aman).
+			if (k === 'decoration_asset') val = normalizeDecoAsset(val);
+			if (k === 'decoration_asset_slot') val = normalizeDecoSlot(val);
 			await run(
 				`INSERT INTO settings (account_id, key, value) VALUES ($1,$2,$3)
 				 ON CONFLICT (account_id, key) DO UPDATE SET value = EXCLUDED.value`,

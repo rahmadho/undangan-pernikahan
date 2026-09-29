@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { CustomTheme } from '$lib/types';
+	import { DECO_ASSETS, decoAssetUrl } from '$lib/decoAssets';
 
 	let { data }: { data: { slug: string } } = $props();
 	const slug = $derived(data.slug);
@@ -73,6 +74,12 @@
 		{ v: 'ethnic-jawa', l: 'Batik Jawa' },
 		{ v: 'ethnic-minang', l: 'Songket Minang' },
 		{ v: 'none', l: 'Tanpa dekorasi' }
+	];
+	// Dekorasi aset file lokal (opsional, ADDITIF — tidak mengganti Ornament).
+	const DECO_SLOT_OPTIONS = [
+		{ v: 'both', l: 'Cover & isi' },
+		{ v: 'cover', l: 'Hanya cover' },
+		{ v: 'hero', l: 'Hanya bagian isi' }
 	];
 	const BG_POS = ['center center', 'top center', 'bottom center', 'center left', 'center right', 'top left', 'top right', 'bottom left', 'bottom right'];
 	const BG_SIZE = ['cover', 'contain', 'auto', '100% 100%'];
@@ -640,6 +647,48 @@
 					<input type="checkbox" checked={settings.decoration_animated === '1'} onchange={(e) => (settings.decoration_animated = e.currentTarget.checked ? '1' : '0')} />
 					Aktifkan animasi dekorasi (daun/bunga berayun)
 				</label>
+
+				<!-- Dekorasi aset file lokal (opsional, ADDITIF) -->
+				<div class="deco-asset-block">
+					<h4>Aset Dekorasi Lokal <span class="muted">(opsional)</span></h4>
+					<p class="muted">
+						Lapisan dekorasi tambahan dari file lokal. Tidak mengganti dekorasi di atas;
+						warnanya mengikuti tema.
+					</p>
+					<div class="deco-asset-picker" role="radiogroup" aria-label="Pilih aset dekorasi lokal">
+						<button
+							type="button"
+							class="deco-asset-chip"
+							class:on={(settings.decoration_asset || 'none') === 'none'}
+							role="radio"
+							aria-checked={(settings.decoration_asset || 'none') === 'none'}
+							onclick={() => (settings.decoration_asset = 'none')}
+						>
+							<span class="deco-asset-none" aria-hidden="true">—</span>
+							Tanpa aset
+						</button>
+						{#each DECO_ASSETS as a}
+							<button
+								type="button"
+								class="deco-asset-chip"
+								class:on={settings.decoration_asset === a.id}
+								role="radio"
+								aria-checked={settings.decoration_asset === a.id}
+								title={a.hint}
+								onclick={() => (settings.decoration_asset = a.id)}
+							>
+								<img class="deco-asset-thumb" src={decoAssetUrl(a)} alt={a.label} />
+								{a.label}
+							</button>
+						{/each}
+					</div>
+					{#if (settings.decoration_asset || 'none') !== 'none'}
+						<label for="decoslot">Tampilkan di</label>
+						<select id="decoslot" bind:value={settings.decoration_asset_slot}>
+							{#each DECO_SLOT_OPTIONS as o}<option value={o.v}>{o.l}</option>{/each}
+						</select>
+					{/if}
+				</div>
 			</div>
 
 			<div class="card">
@@ -871,6 +920,22 @@
 	.swatch[data-t='rose-gold'] { background: #b76e79; }
 	.swatch[data-t='dusty-blue'] { background: #5b7c99; }
 	.swatch[data-t='sakura'] { background: #d88aa4; }
+
+	/* Picker Dekorasi Aset Lokal (opsional) */
+	.deco-asset-picker { display: flex; flex-wrap: wrap; gap: .5rem; }
+	.deco-asset-chip {
+		display: flex; flex-direction: column; align-items: center; justify-content: center;
+		gap: .35rem; border: 2px solid #ddd; background: #fff; border-radius: 10px;
+		padding: .5rem; cursor: pointer; font-size: .76rem; color: #555;
+		min-width: 84px; text-align: center; text-transform: none;
+	}
+	.deco-asset-chip.on { border-color: #1f3d2b; color: #1f3d2b; font-weight: 600; }
+	.deco-asset-thumb {
+		width: 100%; height: 48px; object-fit: contain;
+		background: #f3f1ea; border: 1px solid #e5e2da; border-radius: 6px; padding: 4px;
+	}
+	.deco-asset-none { font-size: 1.3rem; line-height: 1; color: #bbb; height: 48px; display: flex; align-items: center; }
+
 	/* Pratinjau foto cover */
 	.cover-preview { margin-top: .8rem; width: 120px; height: 150px; overflow: hidden; background: #efe9db; }
 	.cover-preview img { width: 100%; height: 100%; object-fit: cover; }

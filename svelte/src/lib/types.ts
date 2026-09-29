@@ -130,6 +130,13 @@ export interface Settings {
 	decoration: Decoration;
 	/** '1' = dekorasi bergerak, '0' = diam. */
 	decoration_animated: string;
+	/**
+	 * Dekorasi tambahan dari ASET FILE LOKAL (opsional, di atas Ornament inline).
+	 * Nilai = id dari katalog `decoAssets.ts`, atau 'none' (default).
+	 */
+	decoration_asset: string;
+	/** Di mana aset lokal ditampilkan: 'both' | 'cover' | 'hero'. */
+	decoration_asset_slot: string;
 }
 
 export interface CustomTheme {

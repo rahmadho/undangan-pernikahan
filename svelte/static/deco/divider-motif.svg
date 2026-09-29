@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 24" fill="none" role="img" aria-label="Pembatas garis dengan motif">
+  <line x1="0" y1="12" x2="88" y2="12" stroke="#000" stroke-width="1.4" opacity=".5" />
+  <line x1="152" y1="12" x2="240" y2="12" stroke="#000" stroke-width="1.4" opacity=".5" />
+  <path d="M120 3c6.6 0 11 4 11 9s-4.4 9-11 9-11-4-11-9 4.4-9 11-9Z" fill="#000" />
+  <path d="M103 12c5.5-4.4 9.9-4.4 15.4 0-5.5 4.4-9.9 4.4-15.4 0Z" fill="#000" opacity=".5" />
+  <path d="M137 12c-5.5-4.4-9.9-4.4-15.4 0 5.5 4.4 9.9 4.4 15.4 0Z" fill="#000" opacity=".5" />
+  <circle cx="96" cy="12" r="2.4" fill="#000" opacity=".7" />
+  <circle cx="144" cy="12" r="2.4" fill="#000" opacity=".7" />
+</svg>

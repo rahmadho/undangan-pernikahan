@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="Ubin motif kawung">
+  <g fill="#000" opacity=".5">
+    <path d="M100 14c22 0 40 18 40 40s-18 40-40 40-40-18-40-40 18-40 40-40Z" />
+    <path d="M100 106c22 0 40 18 40 40s-18 40-40 40-40-18-40-40 18-40 40-40Z" />
+    <path d="M54 60c22 0 40 18 40 40s-18 40-40 40-40-18-40-40 18-40 40-40Z" />
+    <path d="M146 60c22 0 40 18 40 40s-18 40-40 40-40-18-40-40 18-40 40-40Z" />
+  </g>
+  <g stroke="#000" stroke-width="1.6" opacity=".85" fill="none">
+    <circle cx="100" cy="54" r="13" />
+    <circle cx="100" cy="146" r="13" />
+    <circle cx="54" cy="100" r="13" />
+    <circle cx="146" cy="100" r="13" />
+    <circle cx="100" cy="100" r="7.5" />
+  </g>
+  <g fill="#000" opacity=".8">
+    <circle cx="100" cy="54" r="3.2" />
+    <circle cx="100" cy="146" r="3.2" />
+    <circle cx="54" cy="100" r="3.2" />
+    <circle cx="146" cy="100" r="3.2" />
+  </g>
+</svg>

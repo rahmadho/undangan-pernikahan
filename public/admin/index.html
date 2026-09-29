@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Undangan Pernikahan</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f5f3ee; --card:#fff; --ink:#2f2d29; --soft:#6f6a61; --line:#e7e1d6;
+  --sage:#6b7a5e; --sage-l:#8a9a7b; --gold:#c9a86a; --red:#c0614a;
+  --shadow:0 6px 24px rgba(60,50,30,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+button{font-family:inherit;cursor:pointer}
+
+/* login */
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login-box{background:var(--card);padding:38px 32px;border-radius:18px;box-shadow:var(--shadow);width:100%;max-width:370px;text-align:center}
+.login-box h1{font-size:1.3rem;margin-bottom:6px}
+.login-box p{color:var(--soft);font-size:.86rem;margin-bottom:22px}
+.login-box input{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:11px;font-size:.95rem;font-family:inherit;margin-bottom:14px}
+.login-box input:focus{outline:none;border-color:var(--sage)}
+.btn{width:100%;padding:13px;border:none;border-radius:11px;background:var(--sage);color:#fff;font-weight:600;font-size:.94rem;transition:background .2s}
+.btn:hover{background:#556349}
+.err{color:var(--red);font-size:.84rem;margin-top:12px;min-height:1.1em}
+
+/* dashboard */
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:15px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.topbar h1{font-size:1.05rem;font-weight:700}
+.topbar .sub{font-size:.76rem;color:var(--soft);font-weight:400}
+.btn-ghost{padding:8px 16px;border:1.5px solid var(--line);background:transparent;border-radius:999px;font-size:.82rem;font-weight:600;color:var(--soft)}
+.btn-ghost:hover{border-color:var(--sage);color:var(--sage)}
+
+.wrap{max-width:1000px;margin:0 auto;padding:26px 20px 60px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:26px}
+.stat{background:var(--card);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.stat .n{font-size:1.9rem;font-weight:700;color:var(--sage)}
+.stat .l{font-size:.78rem;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tab{padding:9px 18px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-size:.85rem;font-weight:600;color:var(--soft)}
+.tab.active{background:var(--sage);color:#fff;border-color:var(--sage)}
+
+.panel{display:none}
+.panel.active{display:block}
+
+.card{background:var(--card);border-radius:14px;padding:22px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{font-size:1rem;margin-bottom:14px}
+
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line)}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);font-weight:600}
+tr:last-child td{border-bottom:none}
+td.wrap-cell{max-width:280px;color:var(--soft)}
+
+.badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:600}
+.badge.hadir{background:rgba(107,122,94,.16);color:var(--sage)}
+.badge.tidak_hadir{background:rgba(192,97,74,.15);color:var(--red)}
+.badge.ragu{background:rgba(201,168,106,.2);color:#9a7a34}
+.badge.none{background:#f0ece4;color:var(--soft)}
+
+.row-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.row-form input,.row-form select{padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem;flex:1;min-width:130px}
+.row-form input:focus,.row-form select:focus{outline:none;border-color:var(--sage)}
+.btn-sm{padding:11px 20px;border:none;border-radius:10px;background:var(--sage);color:#fff;font-weight:600;font-size:.86rem}
+.btn-sm:hover{background:#556349}
+.btn-del{padding:6px 12px;border:1.5px solid var(--line);background:transparent;border-radius:8px;font-size:.76rem;color:var(--red);font-weight:600}
+.btn-del:hover{background:rgba(192,97,74,.08);border-color:var(--red)}
+.btn-copy-sm{padding:6px 12px;border:1.5px solid var(--line);background:transparent;border-radius:8px;font-size:.76rem;color:var(--sage);font-weight:600;margin-left:6px}
+.btn-copy-sm:hover{background:rgba(107,122,94,.08)}
+.link-out{color:var(--sage);text-decoration:none;font-weight:600;font-size:.78rem}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.field label{display:block;font-size:.78rem;font-weight:600;margin-bottom:6px;color:var(--soft)}
+.field input,.field textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.88rem}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--sage)}
+.field.full{grid-column:1/-1}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:.86rem;opacity:0;transition:all .3s;z-index:100}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.empty{text-align:center;color:var(--soft);padding:30px;font-size:.88rem}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap">
+  <div class="login-box">
+    <h1>💍 Admin Undangan</h1>
+    <p>Masukkan password untuk mengelola undangan</p>
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password" />
+    <button class="btn" id="loginBtn">Masuk</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="hidden" style="display:none">
+  <div class="topbar">
+    <div>
+      <h1>Dashboard Undangan</h1>
+      <span class="sub" id="coupleSub"></span>
+    </div>
+    <button class="btn-ghost" id="logoutBtn">Keluar</button>
+  </div>
+
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="rsvp">RSVP</button>
+      <button class="tab" data-tab="guests">Tamu Undangan</button>
+      <button class="tab" data-tab="wishes">Ucapan</button>
+      <button class="tab" data-tab="couple">Mempelai &amp; Setelan</button>
+    </div>
+
+    <!-- RSVP -->
+    <div class="panel active" id="panel-rsvp">
+      <div class="card">
+        <h2>Daftar Konfirmasi Kehadiran</h2>
+        <div id="rsvpTable"></div>
+      </div>
+    </div>
+
+    <!-- GUESTS -->
+    <div class="panel" id="panel-guests">
+      <div class="card">
+        <h2>Tambah Tamu</h2>
+        <div class="row-form">
+          <input id="gName" placeholder="Nama tamu" />
+          <input id="gPhone" placeholder="No. WhatsApp (opsional)" />
+          <select id="gCat">
+            <option>Keluarga</option><option>Kawan</option><option>Kantor</option><option>Tamu</option>
+          </select>
+          <input id="gQuota" type="number" min="1" value="2" placeholder="Kuota" style="max-width:100px" />
+          <button class="btn-sm" id="addGuest">Tambah</button>
+        </div>
+        <div id="guestsTable"></div>
+      </div>
+    </div>
+
+    <!-- WISHES -->
+    <div class="panel" id="panel-wishes">
+      <div class="card">
+        <h2>Ucapan &amp; Doa</h2>
+        <div id="wishesTable"></div>
+      </div>
+    </div>
+
+    <!-- COUPLE -->
+    <div class="panel" id="panel-couple">
+      <div class="card">
+        <h2>Data Mempelai</h2>
+        <div class="form-grid">
+          <div class="field"><label>Nama Panggilan Pria</label><input id="cGroomName" /></div>
+          <div class="field"><label>Nama Lengkap Pria</label><input id="cGroomFull" /></div>
+          <div class="field"><label>Instagram Pria</label><input id="cGroomIg" /></div>
+          <div class="field"><label>URL Foto Pria</label><input id="cGroomPhoto" placeholder="https://..." /></div>
+          <div class="field"><label>Orang Tua Pria</label><input id="cGroomParents" /></div>
+          <div class="field"><label>Nama Panggilan Wanita</label><input id="cBrideName" /></div>
+          <div class="field"><label>Nama Lengkap Wanita</label><input id="cBrideFull" /></div>
+          <div class="field"><label>Instagram Wanita</label><input id="cBrideIg" /></div>
+          <div class="field"><label>URL Foto Wanita</label><input id="cBridePhoto" placeholder="https://..." /></div>
+          <div class="field"><label>Orang Tua Wanita</label><input id="cBrideParents" /></div>
+          <div class="field full"><label>Cerita Cinta</label><textarea id="cStory" rows="3"></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Setelan</h2>
+        <div class="form-grid">
+          <div class="field full"><label>Kalimat Kutipan (quote)</label><textarea id="sQuote" rows="2"></textarea></div>
+          <div class="field full"><label>URL Musik Latar (mp3)</label><input id="sMusic" /></div>
+          <div class="field"><label>Password Admin</label><input id="sPass" type="text" /></div>
+        </div>
+      </div>
+
+      <button class="btn-sm" id="saveAll" style="min-width:200px">Simpan Semua Perubahan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let PW = sessionStorage.getItem('wedding_admin_pw') || '';
+
+const toast = (msg) => {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+};
+
+async function api(url, opts = {}) {
+  opts.headers = Object.assign({ 'Content-Type': 'application/json', 'x-admin-password': PW }, opts.headers);
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(data.error || 'Gagal'); e.status = res.status; throw e; }
+  return data;
+}
+
+const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
+
+/* ---------- LOGIN ---------- */
+async function tryLogin(pw) {
+  const res = await fetch('/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw }),
+  });
+  return res.ok;
+}
+
+$('#loginBtn').addEventListener('click', doLogin);
+$('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  const pw = $('#pw').value;
+  if (!pw) return;
+  const ok = await tryLogin(pw);
+  if (ok) {
+    PW = pw;
+    sessionStorage.setItem('wedding_admin_pw', pw);
+    enterDashboard();
+  } else {
+    $('#loginErr').textContent = 'Password salah.';
+  }
+}
+
+$('#logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('wedding_admin_pw');
+  location.reload();
+});
+
+/* ---------- DASHBOARD ---------- */
+function enterDashboard() {
+  $('#loginView').style.display = 'none';
+  $('#dashView').style.display = '';
+  loadAll();
+}
+
+async function loadAll() {
+  try {
+    await Promise.all([loadSummary(), loadRsvp(), loadGuests(), loadWishes(), loadCouple()]);
+  } catch (e) {
+    if (e.status === 401) { sessionStorage.removeItem('wedding_admin_pw'); location.reload(); }
+    else toast('Error: ' + e.message);
+  }
+}
+
+async function loadSummary() {
+  const { totals, byAttendance } = await api('/api/admin/summary');
+  const map = Object.fromEntries(byAttendance.map(b => [b.attendance, b]));
+  $('#stats').innerHTML = `
+    <div class="stat"><div class="n">${totals.guests}</div><div class="l">Tamu Diundang</div></div>
+    <div class="stat"><div class="n">${totals.rsvp}</div><div class="l">Total RSVP</div></div>
+    <div class="stat"><div class="n">${totals.pax_hadir}</div><div class="l">Perkiraan Hadir</div></div>
+    <div class="stat"><div class="n">${totals.wishes}</div><div class="l">Ucapan</div></div>`;
+}
+
+async function loadRsvp() {
+  const rows = await api('/api/admin/rsvp');
+  $('#rsvpTable').innerHTML = rows.length ? `
+    <table><thead><tr><th>Nama</th><th>Status</th><th>Jml</th><th>Pesan</th><th>Waktu</th></tr></thead><tbody>
+    ${rows.map(r => `<tr>
+      <td><strong>${esc(r.name)}</strong></td>
+      <td><span class="badge ${r.attendance}">${r.attendance==='hadir'?'Hadir':r.attendance==='ragu'?'Ragu':'Tidak Hadir'}</span></td>
+      <td>${r.pax||0}</td>
+      <td class="wrap-cell">${esc(r.message||'-')}</td>
+      <td class="wrap-cell">${fmtDate(r.created_at)}</td>
+    </tr>`).join('')}
+    </tbody></table>` : '<p class="empty">Belum ada konfirmasi.</p>';
+}
+
+async function loadGuests() {
+  const rows = await api('/api/admin/guests');
+  const origin = location.origin;
+  $('#guestsTable').innerHTML = rows.length ? `
+    <table><thead><tr><th>Nama</th><th>Kategori</th><th>Kuota</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>
+    ${rows.map(g => `<tr>
+      <td><strong>${esc(g.name)}</strong><br><span style="font-size:.74rem;color:#9a9285">${esc(g.phone||'')}</span></td>
+      <td>${esc(g.category)}</td>
+      <td>${g.quota}</td>
+      <td>${g.last_attendance ? `<span class="badge ${g.last_attendance}">${g.last_attendance==='hadir'?'Hadir':g.last_attendance==='ragu'?'Ragu':'Tidak Hadir'}</span>` : '<span class="badge none">Belum</span>'}</td>
+      <td>
+        <a class="link-out" href="/?to=${esc(g.slug)}" target="_blank">Buka</a>
+        <button class="btn-copy-sm" data-link="${esc(origin + '/?to=' + g.slug)}">Salin Link</button>
+      </td>
+      <td><button class="btn-del" data-del="${g.id}">Hapus</button></td>
+    </tr>`).join('')}
+    </tbody></table>` : '<p class="empty">Belum ada tamu. Tambahkan di atas.</p>';
+}
+
+async function loadWishes() {
+  const rows = await api('/api/admin/wishes');
+  $('#wishesTable').innerHTML = rows.length ? `
+    <table><thead><tr><th>Nama</th><th>Ucapan</th><th>Waktu</th><th></th></tr></thead><tbody>
+    ${rows.map(w => `<tr>
+      <td><strong>${esc(w.name)}</strong></td>
+      <td class="wrap-cell">${esc(w.message)}</td>
+      <td class="wrap-cell">${fmtDate(w.created_at)}</td>
+      <td><button class="btn-del" data-delwish="${w.id}">Hapus</button></td>
+    </tr>`).join('')}
+    </tbody></table>` : '<p class="empty">Belum ada ucapan.</p>';
+}
+
+async function loadCouple() {
+  const d = await api('/api/invitation');
+  const c = d.couple || {};
+  $('#cGroomName').value = c.groom_name || '';
+  $('#cGroomFull').value = c.groom_full || '';
+  $('#cGroomIg').value = c.groom_ig || '';
+  $('#cGroomPhoto').value = c.groom_photo || '';
+  $('#cGroomParents').value = c.groom_parents || '';
+  $('#cBrideName').value = c.bride_name || '';
+  $('#cBrideFull').value = c.bride_full || '';
+  $('#cBrideIg').value = c.bride_ig || '';
+  $('#cBridePhoto').value = c.bride_photo || '';
+  $('#cBrideParents').value = c.bride_parents || '';
+  $('#cStory').value = c.love_story || '';
+  $('#sQuote').value = d.settings.quote || '';
+  $('#sMusic').value = d.settings.music_url || '';
+  const full = [c.groom_full || c.groom_name, c.bride_full || c.bride_name].filter(Boolean).join(' & ');
+  $('#coupleSub').textContent = full;
+}
+
+/* ---------- ACTIONS ---------- */
+$('#addGuest').addEventListener('click', async () => {
+  const name = $('#gName').value.trim();
+  if (!name) return toast('Nama tamu wajib diisi.');
+  try {
+    await api('/api/admin/guests', { method: 'POST', body: JSON.stringify({
+      name, phone: $('#gPhone').value, category: $('#gCat').value, quota: $('#gQuota').value,
+    })});
+    $('#gName').value = ''; $('#gPhone').value = '';
+    toast('Tamu ditambahkan ✓');
+    loadGuests(); loadSummary();
+  } catch (e) { toast(e.message); }
+});
+
+document.addEventListener('click', async (e) => {
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    if (!confirm('Hapus tamu ini?')) return;
+    await api('/api/admin/guests/' + del.dataset.del, { method: 'DELETE' });
+    toast('Tamu dihapus'); loadGuests(); loadSummary(); return;
+  }
+  const delw = e.target.closest('[data-delwish]');
+  if (delw) {
+    if (!confirm('Hapus ucapan ini?')) return;
+    await api('/api/admin/wishes/' + delw.dataset.delwish, { method: 'DELETE' });
+    toast('Ucapan dihapus'); loadWishes(); loadSummary(); return;
+  }
+  const cp = e.target.closest('[data-link]');
+  if (cp) {
+    try { await navigator.clipboard.writeText(cp.dataset.link); cp.textContent = 'Tersalin ✓';
+      setTimeout(() => cp.textContent = 'Salin Link', 1500);
+    } catch { prompt('Salin link:', cp.dataset.link); }
+  }
+});
+
+$('#saveAll').addEventListener('click', async () => {
+  try {
+    await api('/api/admin/couple', { method: 'PUT', body: JSON.stringify({
+      groom_name: $('#cGroomName').value, groom_full: $('#cGroomFull').value,
+      groom_ig: $('#cGroomIg').value, groom_photo: $('#cGroomPhoto').value,
+      groom_parents: $('#cGroomParents').value,
+      bride_name: $('#cBrideName').value, bride_full: $('#cBrideFull').value,
+      bride_ig: $('#cBrideIg').value, bride_photo: $('#cBridePhoto').value,
+      bride_parents: $('#cBrideParents').value,
+      love_story: $('#cStory').value,
+    })});
+    await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({
+      quote: $('#sQuote').value, music_url: $('#sMusic').value, admin_password: $('#sPass').value || undefined,
+    })});
+    toast('Perubahan disimpan ✓');
+    if ($('#sPass').value) { PW = $('#sPass').value; sessionStorage.setItem('wedding_admin_pw', PW); }
+    loadCouple();
+  } catch (e) { toast(e.message); }
+});
+
+/* tabs */
+document.querySelectorAll('.tab').forEach((t) => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));
+    t.classList.add('active');
+    $('#panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+/* auto login kalau password tersimpan */
+if (PW) tryLogin(PW).then((ok) => { if (ok) enterDashboard(); else sessionStorage.removeItem('wedding_admin_pw'); });
+</script>
+</body>
+</html>

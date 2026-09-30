@@ -129,8 +129,12 @@
 				return;
 			}
 			localStorage.setItem('wedding.admin', JSON.stringify({ slug, password }));
-			authed = true;
+			// Muat SEMUA data dulu, baru tandai authed. Kalau authed diset lebih
+			// dulu, Svelte langsung me-render dashboard saat `content` masih null
+			// → `content.account.theme` melempar TypeError dan panel tak muncul
+			// sampai hard reload. Jadi urutannya penting.
 			await loadAll();
+			authed = true;
 		} catch {
 			if (!silent) loginErr = 'Tidak dapat menghubungi server.';
 		} finally {
@@ -452,6 +456,8 @@
 			<a class="link" href={`/u/${slug}`}>← Lihat undangan</a>
 		</form>
 	</div>
+{:else if !content}
+	<div class="center">Memuat data…</div>
 {:else}
 	<!-- ================= DASHBOARD ================= -->
 	<header class="topbar">

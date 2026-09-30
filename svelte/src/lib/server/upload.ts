@@ -61,3 +61,16 @@ export async function saveUpload(file: File, kind: UploadKind): Promise<UploadRe
 
 	return { url: `${PUBLIC_PREFIX}/${name}`, name, size: file.size };
 }
+
+/**
+ * Simpan byte gambar mentah (hasil unduhan importer) ke disk.
+ * Ekstensi sudah divalidasi pemanggil (whitelist MIME jpg/png/webp/avif/gif).
+ * @returns URL publik `/uploads/img-<uniq><ext>`.
+ */
+export async function saveImageBytes(buf: Buffer, ext: string): Promise<UploadResult> {
+	const safeExt = /^\.(jpg|jpeg|png|webp|avif|gif)$/i.test(ext) ? ext.toLowerCase() : '.jpg';
+	await mkdir(UPLOAD_DIR, { recursive: true });
+	const name = `img-${Date.now()}-${randomBytes(4).toString('hex')}${safeExt}`;
+	await writeFile(join(UPLOAD_DIR, name), buf);
+	return { url: `${PUBLIC_PREFIX}/${name}`, name, size: buf.byteLength };
+}

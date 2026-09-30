@@ -90,6 +90,7 @@
 	const tabs = [
 		{ id: 'dashboard', label: 'Dasbor' },
 		{ id: 'konten', label: 'Konten' },
+		{ id: 'impor', label: 'Impor' },
 		{ id: 'tampilan', label: 'Tampilan' },
 		{ id: 'tema', label: 'Tema' },
 		{ id: 'tamu', label: 'Tamu' },
@@ -427,6 +428,155 @@
 		themes = await getJson('/api/admin/themes');
 		showToast('Tema dihapus');
 	}
+
+	// ---------- Impor JSON (Elementor/Landingstar) ----------
+	// Alur: unggah/tempel → POST /import/preview (tanpa tulis) → koreksi di UI
+	// → POST /import/apply (validasi ulang di server) → muat ulang konten.
+	let importRaw = $state('');            // teks JSON yang ditempel
+	let importFileName = $state('');       // nama berkas yang diunggah (info saja)
+	let importDraft = $state<any>(null);   // ImportDraft hasil pratinjau (bisa dikoreksi)
+	let importMode = $state<'fill-empty' | 'overwrite'>('fill-empty');
+	let importImageMode = $state<'link' | 'download'>('link');
+	let importBusy = $state(false);
+	let importApplied = $state<any>(null); // ringkasan hasil apply (toast besar)
+
+	/** Apakah pratinjau sudah berhasil dimuat. */
+	const hasDraft = $derived(!!importDraft);
+
+	/** Badge status untuk satu entri laporan. */
+	function statusMeta(s: string): { icon: string; cls: string; label: string } {
+		switch (s) {
+			case 'ok': return { icon: '✅', cls: 'st-ok', label: 'OK' };
+			case 'review': return { icon: '⚠️', cls: 'st-review', label: 'Perlu review' };
+			case 'skipped': return { icon: '⏭️', cls: 'st-skip', label: 'Dilewati' };
+			case 'error': return { icon: '⛔', cls: 'st-error', label: 'Gagal' };
+			default: return { icon: '•', cls: '', label: s };
+		}
+	}
+
+	/** Ringkasan jumlah gambar per sumber (untuk pratinjau). */
+	const importImageKinds = $derived.by(() => {
+		const imgs: any[] = importDraft?.images ?? [];
+		return {
+			total: imgs.length,
+			remote: imgs.filter((i) => i.source === 'remote').length,
+			local: imgs.filter((i) => i.source === 'local').length
+		};
+	});
+
+	/** Baca berkas .json yang dipilih lewat <input type=file>. */
+	async function onImportFile(e: Event) {
+		const f = (e.target as HTMLInputElement).files?.[0];
+		if (!f) return;
+		if (f.size > 2 * 1024 * 1024) {
+			showToast('Ukuran berkas melebihi 2 MB.');
+			return;
+		}
+		importFileName = f.name;
+		importRaw = await f.text();
+		// Reset pratinjau lama bila isi sumber berubah.
+		importDraft = null;
+		importApplied = null;
+	}
+
+	/** Kirim JSON ke /import/preview (baca-saja) lalu simpan draf. */
+	async function previewImport() {
+		const text = importRaw.trim();
+		if (!text) {
+			showToast('Tempel atau unggah JSON ekspor Elementor dulu.');
+			return;
+		}
+		// Validasi JSON di klien dulu → pesan ramah sebelum hit server.
+		try {
+			JSON.parse(text);
+		} catch {
+			showToast('JSON tidak valid: periksa tanda kurung/koma.');
+			return;
+		}
+		importBusy = true;
+		importApplied = null;
+		try {
+			const r = await fetch('/api/admin/import/preview', {
+				method: 'POST',
+				headers: headers(),
+				body: JSON.stringify({ json: text })
+			});
+			const j = await r.json().catch(() => ({}));
+			if (!r.ok) throw new Error(j.message || 'Pratinjau gagal.');
+			importDraft = j.draft;
+			showToast(`Pratinjau siap: ${importDraft.report?.templateTitle || 'template'} ✓`);
+		} catch (e) {
+			importDraft = null;
+			showToast((e as Error).message);
+		} finally {
+			importBusy = false;
+		}
+	}
+
+	/** Tambah/hapus item galeri pada draf pratinjau. */
+	function addDraftGallery() {
+		if (!importDraft) return;
+		importDraft.gallery = [...(importDraft.gallery ?? []), { url: '', caption: '' }];
+	}
+	function delDraftGallery(i: number) {
+		if (!importDraft) return;
+		importDraft.gallery = importDraft.gallery.filter((_: any, x: number) => x !== i);
+	}
+	function addDraftEvent() {
+		if (!importDraft) return;
+		importDraft.events = [
+			...(importDraft.events ?? []),
+			{ key: 'acara', title: '', date_iso: '', time_text: '', venue: '', address: '', maps_url: '' }
+		];
+	}
+	function delDraftEvent(i: number) {
+		if (!importDraft) return;
+		importDraft.events = importDraft.events.filter((_: any, x: number) => x !== i);
+	}
+
+	/** Terapkan draf (yang mungkin sudah dikoreksi) ke konten account. */
+	async function applyImport() {
+		if (!importDraft) return;
+		if (
+			importMode === 'overwrite' &&
+			!confirm('Mode TIMPA akan mengganti data konten yang sudah ada. Lanjutkan?')
+		) {
+			return;
+		}
+		importBusy = true;
+		try {
+			const r = await fetch('/api/admin/import/apply', {
+				method: 'POST',
+				headers: headers(),
+				body: JSON.stringify({
+					draft: importDraft,
+					mode: importMode,
+					imageMode: importImageMode,
+					account: { title: accountTitle }
+				})
+			});
+			const j = await r.json().catch(() => ({}));
+			if (!r.ok) throw new Error(j.message || 'Gagal menerapkan impor.');
+			importApplied = j;
+			// Muat ulang konten agar tab Konten/Tampilan menampilkan hasil impor.
+			await loadAll();
+			const skipped = (j.skippedExisting ?? []).length;
+			showToast(`Impor diterapkan: ${j.applied?.written ?? 0} field ditulis${skipped ? `, ${skipped} dilewati` : ''} ✓`);
+		} catch (e) {
+			showToast((e as Error).message);
+		} finally {
+			importBusy = false;
+		}
+	}
+
+	function resetImport() {
+		importRaw = '';
+		importFileName = '';
+		importDraft = null;
+		importApplied = null;
+		importMode = 'fill-empty';
+		importImageMode = 'link';
+	}
 </script>
 
 <svelte:head><title>Admin — {slug}</title></svelte:head>
@@ -605,6 +755,189 @@
 			</div>
 
 			<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>{loading ? 'Menyimpan…' : 'Simpan Semua Perubahan'}</button></div>
+		{:else if tab === 'impor'}
+			<!-- ============ IMPOR JSON (Elementor / Landingstar) ============ -->
+			<div class="card">
+				<h3>Impor dari JSON Elementor / Landingstar</h3>
+				<p class="muted">
+					Unggah berkas <strong>.json</strong> hasil “Export Template” atau tempel isinya.
+					Impor bersifat <strong>draft</strong>: Anda melihat pratinjau &amp; boleh mengoreksi
+					sebelum menekan <em>Terapkan</em>. Tombol <em>Pratinjau</em> tidak mengubah data apa pun.
+				</p>
+				<label for="impFile">Unggah berkas .json</label>
+				<input id="impFile" type="file" accept=".json,application/json" onchange={onImportFile} />
+				{#if importFileName}<p class="muted">Berkas: <strong>{importFileName}</strong></p>{/if}
+				<label for="impText">Atau tempel JSON di sini</label>
+				<textarea
+					id="impText"
+					rows="5"
+					placeholder="Tempel objek JSON ekspor Elementor di sini…"
+					bind:value={importRaw}
+					oninput={() => { importDraft = null; importApplied = null; }}
+				></textarea>
+				<div class="row">
+					<button class="btn" onclick={previewImport} disabled={importBusy || !importRaw.trim()}>
+						{importBusy && !importDraft ? 'Memproses…' : 'Pratinjau'}
+					</button>
+					{#if importRaw || importDraft}
+						<button class="ghost" onclick={resetImport} disabled={importBusy}>Bersihkan</button>
+					{/if}
+				</div>
+			</div>
+
+			{#if hasDraft}
+				<!-- Ringkasan laporan -->
+				<div class="card">
+					<h3>Ringkasan Pratinjau</h3>
+					<div class="imp-summary">
+						<div class="imp-kv"><span>Format</span><strong>{importDraft.report?.format || '-'}</strong></div>
+						<div class="imp-kv"><span>Template</span><strong>{importDraft.report?.templateTitle || '-'}</strong></div>
+						<div class="imp-kv"><span>Section</span><strong>{importDraft.report?.sectionCount ?? 0}</strong></div>
+						<div class="imp-kv"><span>Pasangan</span><strong>{importDraft.couple?.groom_name || '—'} &amp; {importDraft.couple?.bride_name || '—'}</strong></div>
+						<div class="imp-kv"><span>Acara</span><strong>{(importDraft.events ?? []).length}</strong></div>
+						<div class="imp-kv"><span>Galeri</span><strong>{(importDraft.gallery ?? []).length}</strong></div>
+						<div class="imp-kv"><span>Gambar (remote/lokal)</span><strong>{importImageKinds.remote} / {importImageKinds.local}</strong></div>
+						<div class="imp-kv"><span>Kutipan</span><strong>{importDraft.settings?.quote ? 'ada' : '—'}</strong></div>
+					</div>
+
+					<h4>Laporan per Field</h4>
+					<div class="imp-report">
+						{#each importDraft.report?.entries ?? [] as r}
+							<div class="imp-line">
+								<span class="badge-status {statusMeta(r.status).cls}">{statusMeta(r.status).icon} {statusMeta(r.status).label}</span>
+								<code>{r.field}</code>
+								<span class="imp-val">{r.value || ''}</span>
+								{#if r.note}<span class="muted">{r.note}</span>{/if}
+							</div>
+						{/each}
+					</div>
+					{#if (importDraft.report?.skipped ?? []).length}
+						<p class="muted">
+							Widget diabaikan:
+							{#each importDraft.report.skipped as s}
+								<code>{s.widgetType}</code>{' '}
+							{/each}
+						</p>
+					{/if}
+				</div>
+
+				<!-- Form koreksi -->
+				<div class="card">
+					<h3>Koreksi Cepat</h3>
+					<p class="muted">Perbaiki nilai yang bertanda ⚠️ sebelum diterapkan.</p>
+					<label for="impTitle">Judul undangan</label>
+					<input id="impTitle" bind:value={accountTitle} placeholder="Mis. Fajira & Dion" />
+					<div class="grid2">
+						<div>
+							<h4>Mempelai Pria</h4>
+							<label for="ig1">Nama panggilan</label>
+							<input id="ig1" bind:value={importDraft.couple.groom_name} />
+							<label for="ig2">Nama lengkap &amp; gelar</label>
+							<input id="ig2" bind:value={importDraft.couple.groom_full} />
+							<label for="ig3">Foto (URL)</label>
+							<input id="ig3" bind:value={importDraft.couple.groom_photo} placeholder="https://…" />
+							<label for="ig4">Orang tua</label>
+							<textarea id="ig4" rows="2" bind:value={importDraft.couple.groom_parents}></textarea>
+						</div>
+						<div>
+							<h4>Mempelai Wanita</h4>
+							<label for="ib1">Nama panggilan</label>
+							<input id="ib1" bind:value={importDraft.couple.bride_name} />
+							<label for="ib2">Nama lengkap &amp; gelar</label>
+							<input id="ib2" bind:value={importDraft.couple.bride_full} />
+							<label for="ib3">Foto (URL)</label>
+							<input id="ib3" bind:value={importDraft.couple.bride_photo} placeholder="https://…" />
+							<label for="ib4">Orang tua</label>
+							<textarea id="ib4" rows="2" bind:value={importDraft.couple.bride_parents}></textarea>
+						</div>
+					</div>
+
+					<div class="card-head">
+						<h4 style="margin:0">Acara</h4>
+						<button class="ghost sm" onclick={addDraftEvent}>+ Tambah acara</button>
+					</div>
+					{#each importDraft.events as e, i}
+						<div class="item">
+							<div class="grid2">
+								<input bind:value={e.title} placeholder="Judul (Akad/Resepsi)" />
+								<input bind:value={e.key} placeholder="Kunci (akad/resepsi)" />
+							</div>
+							<div class="grid2">
+								<input type="datetime-local" bind:value={e.date_iso} />
+								<input bind:value={e.time_text} placeholder="Pukul 08.00 - 10.00 WIB" />
+							</div>
+							<input bind:value={e.venue} placeholder="Nama tempat" />
+							<input bind:value={e.address} placeholder="Alamat" />
+							<input bind:value={e.maps_url} placeholder="Google Maps URL" />
+							<button class="danger sm" onclick={() => delDraftEvent(i)}>Hapus acara</button>
+						</div>
+					{/each}
+
+					<div class="card-head">
+						<h4 style="margin:0">Galeri</h4>
+						<button class="ghost sm" onclick={addDraftGallery}>+ Tambah foto</button>
+					</div>
+					<div class="gallery-edit">
+						{#each importDraft.gallery as g, i}
+							<div class="g-thumb">
+								{#if g.url}<img src={g.url} alt="" />{:else}<div class="g-none">?</div>{/if}
+								<input bind:value={g.url} placeholder="https://…" />
+								<input bind:value={g.caption} placeholder="Keterangan" />
+								<button class="danger sm" onclick={() => delDraftGallery(i)}>×</button>
+							</div>
+						{/each}
+					</div>
+
+					<label for="impQuote">Kutipan / Doa</label>
+					<textarea id="impQuote" rows="3" bind:value={importDraft.settings.quote}></textarea>
+					<label for="impBg">Latar cover (URL)</label>
+					<input id="impBg" bind:value={importDraft.settings.background_image} placeholder="https://…" />
+				</div>
+
+				<!-- Opsi penerapan -->
+				<div class="card">
+					<h3>Opsi Penerapan</h3>
+					<label for="impMode">Mode tulis</label>
+					<select id="impMode" bind:value={importMode}>
+						<option value="fill-empty">Isi yang kosong saja (aman — data lama tidak ditimpa)</option>
+						<option value="overwrite">Timpa semua (ganti data konten yang ada)</option>
+					</select>
+					<label for="impImg">Penanganan gambar</label>
+					<select id="impImg" bind:value={importImageMode}>
+						<option value="link">Simpan tautan apa adanya (cepat)</option>
+						<option value="download">Unduh &amp; simpan ke lokal (disarankan — tautan pihak ketiga bisa mati)</option>
+					</select>
+					<p class="muted">
+						{importImageKinds.total} gambar terdeteksi
+						({importImageKinds.remote} remote, {importImageKinds.local} lokal).
+						{#if importImageMode === 'download'}Maksimum 30 gambar diunduh ulang.{/if}
+					</p>
+
+					<div class="sticky-save">
+						<button class="btn" onclick={applyImport} disabled={importBusy}>
+							{importBusy ? 'Menerapkan…' : 'Terapkan Impor'}
+						</button>
+					</div>
+				</div>
+
+				{#if importApplied}
+					<div class="card imp-done">
+						<h3>✅ Impor Selesai</h3>
+						<p>
+							<strong>{importApplied.applied?.written ?? 0}</strong> field ditulis ·
+							{importApplied.applied?.events ?? 0} acara ·
+							{importApplied.applied?.gallery ?? 0} galeri ·
+							mode <code>{importApplied.mode}</code>
+						</p>
+						{#if (importApplied.skippedExisting ?? []).length}
+							<p class="muted">
+								Dilewati (sudah terisi): {importApplied.skippedExisting.join(', ')}
+							</p>
+						{/if}
+						<button class="ghost sm" onclick={() => (tab = 'konten')}>Lihat di tab Konten →</button>
+					</div>
+				{/if}
+			{/if}
 		{:else if tab === 'tampilan'}
 			<div class="card">
 				<h3>Latar Belakang — Desktop</h3>
@@ -1028,4 +1361,22 @@
 
 	.sticky-save { position: sticky; bottom: 0; background: rgba(244,242,236,.92); backdrop-filter: blur(8px); padding: .8rem 0; text-align: right; }
 	.toast { position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%); background: #1f3d2b; color: #fff; padding: .7rem 1.4rem; border-radius: 999px; font-size: .85rem; z-index: 100; box-shadow: 0 10px 30px -10px rgba(0,0,0,.4); }
+
+	/* ---------- Tab Impor JSON ---------- */
+	.imp-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .5rem; margin-bottom: .8rem; }
+	.imp-kv { background: #faf9f6; border: 1px solid #eee; border-radius: 8px; padding: .45rem .6rem; display: flex; flex-direction: column; }
+	.imp-kv span { font-size: .68rem; color: #999; text-transform: uppercase; letter-spacing: .04em; }
+	.imp-kv strong { font-size: .86rem; color: #1f3d2b; word-break: break-word; }
+	.imp-report { display: flex; flex-direction: column; gap: .15rem; max-height: 320px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: .4rem; }
+	.imp-line { display: flex; align-items: center; gap: .5rem; padding: .3rem .35rem; border-bottom: 1px solid #f5f3ee; font-size: .78rem; }
+	.imp-line:last-child { border-bottom: 0; }
+	.imp-line code { background: #f3f1ea; border-radius: 4px; padding: 1px 5px; font-size: .72rem; color: #6b5b3e; white-space: nowrap; }
+	.imp-val { color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
+	.badge-status { font-size: .68rem; padding: 2px 7px; border-radius: 999px; white-space: nowrap; background: #eee; color: #555; }
+	.badge-status.st-ok { background: #e3f3e8; color: #1f7a45; }
+	.badge-status.st-review { background: #fdf2d6; color: #9a6b00; }
+	.badge-status.st-skip { background: #eceff1; color: #607d8b; }
+	.badge-status.st-error { background: #fbe3e3; color: #b02a2a; }
+	.g-thumb .g-none { width: 100%; aspect-ratio: 1; display: grid; place-items: center; background: #f3f1ea; border-radius: 8px; color: #bbb; font-size: 1.4rem; }
+	.imp-done { border: 1px solid #bfe0c8; background: #f4fbf6; }
 </style>

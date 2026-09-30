@@ -8,3 +8,7 @@ data/*.backup*
 .DS_Store
 npm-debug.log*
 *.log
+_demo/
+svelte/.svelte-kit/
+svelte/build/
+svelte/node_modules/

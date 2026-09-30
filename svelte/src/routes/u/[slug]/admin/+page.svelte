@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { CustomTheme } from '$lib/types';
 	import { DECO_ASSETS, decoAssetUrl } from '$lib/decoAssets';
+	import { BUNDLE_PRESETS } from '$lib/bundles';
 
 	let { data }: { data: { slug: string } } = $props();
 	const slug = $derived(data.slug);
@@ -205,6 +206,30 @@
 		content.account.theme = t;
 		await send('/api/admin/content', 'PUT', { account: { title: accountTitle, theme: t } });
 		showToast('Tema diterapkan: ' + t);
+	}
+
+	/**
+	 * Terapkan BUNDLE PRESET: tema + ornamen + bingkai foto + dekorasi sekaligus.
+	 * Dilakukan di server (endpoint khusus) agar nilai bundle divalidasi ulang
+	 * dan tersimpan atomik. Setelah sukses, muat ulang konten agar form admin
+	 * (Tampilan) menampilkan nilai baru.
+	 */
+	async function applyBundle(theme: string) {
+		loading = true;
+		try {
+			await send('/api/admin/themes/bundle', 'POST', { theme });
+			content = await getJson('/api/admin/content');
+			couple = { ...(content.couple || {}) };
+			events = (content.events || []).map((e: any) => ({ ...e }));
+			gallery = (content.gallery || []).map((g: any) => ({ ...g }));
+			gifts = (content.gifts || []).map((g: any) => ({ ...g }));
+			settings = { ...(content.settings || {}) };
+			showToast('Bundle diterapkan: ' + theme + ' ✓');
+		} catch (e) {
+			showToast((e as Error).message);
+		} finally {
+			loading = false;
+		}
 	}
 
 	// ---------- Upload ----------
@@ -702,10 +727,36 @@
 		{:else if tab === 'tema'}
 			<div class="card">
 				<h3>Preset Tema</h3>
+				<p class="muted">
+					<strong>Bundle</strong> menerapkan tema + ornamen + bingkai foto + dekorasi
+					sekaligus agar serasi. Tombol tema biasa hanya mengganti warna/font.
+				</p>
 				<div class="theme-picker">
 					{#each THEMES as t}
 						<button class="theme-chip" class:on={content.account.theme === t} onclick={() => setTheme(t)}>
 							<span class="swatch" data-t={t}></span>{THEME_LABELS[t] || t}
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="card">
+				<h3>🎨 Bundle Preset</h3>
+				<p class="muted">Sekali klik — ornamen, bingkai foto &amp; dekorasi ikut menyesuaikan karakter tema.</p>
+				<div class="bundle-grid">
+					{#each BUNDLE_PRESETS as b}
+						<button
+							class="bundle-card"
+							class:on={content.account.theme === b.theme}
+							disabled={loading}
+							onclick={() => applyBundle(b.theme)}
+						>
+							<span class="swatch" data-t={b.theme}></span>
+							<span class="bundle-info">
+								<strong>{b.label}</strong>
+								<span class="muted">{THEME_LABELS[b.theme] || b.theme}</span>
+							</span>
+							<span class="bundle-tick" aria-hidden="true">✓</span>
 						</button>
 					{/each}
 				</div>
@@ -920,6 +971,17 @@
 	.swatch[data-t='rose-gold'] { background: #b76e79; }
 	.swatch[data-t='dusty-blue'] { background: #5b7c99; }
 	.swatch[data-t='sakura'] { background: #d88aa4; }
+
+	/* Bundle preset — kartu grid */
+	.bundle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
+	.bundle-card { position: relative; display: flex; align-items: center; gap: .55rem; border: 2px solid #ddd; background: #fff; border-radius: 12px; padding: .6rem .7rem; cursor: pointer; text-align: left; }
+	.bundle-card.on { border-color: #1f3d2b; background: #f3f7f3; }
+	.bundle-card:disabled { opacity: .55; cursor: default; }
+	.bundle-info { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+	.bundle-info strong { font-size: .84rem; }
+	.bundle-info .muted { font-size: .72rem; }
+	.bundle-tick { margin-left: auto; color: #1f3d2b; font-weight: 700; opacity: 0; }
+	.bundle-card.on .bundle-tick { opacity: 1; }
 
 	/* Picker Dekorasi Aset Lokal (opsional) */
 	.deco-asset-picker { display: flex; flex-wrap: wrap; gap: .5rem; }

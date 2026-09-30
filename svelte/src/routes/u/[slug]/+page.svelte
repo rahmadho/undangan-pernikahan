@@ -34,6 +34,20 @@
 		decoration === 'ethnic-jawa' ? 'batik-kawung' : decoration === 'ethnic-minang' ? 'songket' : 'corner'
 	);
 
+	// Ornamen SUDUT untuk bagian hero (kotak 140×140). Varian 'songket' punya
+	// ukuran tetap 240×60 (untuk pita lebar), jadi di sini adat-minang memakai
+	// 'corner-adat' agar mengisi kotak sudut dengan rapi.
+	const heroVariantTL = $derived(decoration === 'ethnic-minang' ? 'corner-adat' : decoVariantTL);
+	const heroVariantTR = $derived(
+		decoration === 'ethnic-jawa'
+			? 'corner-adat'
+			: decoration === 'ethnic-minang'
+				? 'corner-adat'
+				: decoration === 'leaves-sway'
+					? 'leaf-vine'
+					: 'batik-kawung'
+	);
+
 	// ---------- Dekorasi ASET LOKAL (opsional, ADDITIF) ----------
 	// Berjalan di atas dekorasi `Ornament` di atas — tidak mengganti/menghapusnya.
 	// Kosong/'none' → tidak ada yang dirender. Slot menentukan di mana ia muncul.
@@ -342,8 +356,10 @@
 		<div class="bg-layer"></div>
 		<div class="bg-overlay"></div>
 		<div class="orn-layer">
-			<span class="orn ornament tl"><Ornament variant="corner" /></span>
-			<span class="orn ornament tr"><Ornament variant="corner" /></span>
+			{#if decoration !== 'none'}
+				<span class="orn ornament tl"><Ornament variant={heroVariantTL} animated={decoAnimated} /></span>
+				<span class="orn ornament tr"><Ornament variant={heroVariantTR} animated={decoAnimated} /></span>
+			{/if}
 		</div>
 		<!-- Dekorasi ASET LOKAL (opsional) pada hero — lapisan terpisah. -->
 		{#if decoAssetOnHero}

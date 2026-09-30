@@ -62,6 +62,30 @@ Dockerfile, docker-compose.yml, .dockerignore, .env.example
   `validThemes` di POST & PUT owner + admin settings; frontend: `THEMES` di
   `app.js`; label: `THEME_LABEL`/`THEMES` di `owner/index.html`). **Kalau
   menambah tema preset, ubah SEMUA lokasi itu + swatch di admin & owner.**
+- **BUNDLE PRESET (BARU):** sekali pilih tema → **ornamen + bingkai foto +
+  dekorasi + animasi ikut berubah otomatis** sesuai karakter tema (13 tema).
+  - Katalog = **`svelte/src/lib/bundles.ts`** (`BUNDLE_PRESETS`). Setiap tema preset
+    dipetakan ke satu set: `decoration`, `cover_mode`, `decoration_asset`,
+    `decoration_asset_slot`, `decoration_animated`. `FALLBACK_BUNDLE` dipakai
+    untuk tema tanpa entri (aman, tidak error). **Kalau menambah tema preset,
+    tambahkan entri bundle-nya di sini.**
+  - Endpoint: **`POST /api/admin/themes/bundle`** (auth admin + rate limit).
+    Body `{ theme }`. Efek: `accounts.theme` + 5 setelan di atas ditulis dalam
+    **SATU transaksi** (`tx`). Tema harus ada di `THEMES` (non-preset → 400,
+    tema kustom warna/font tetap jalur terpisah). Semua nilai berasal dari
+    `getBundle()` lalu dinormalisasi lewat helper resmi yang SAMA dengan
+    `PUT /api/admin/content` (`normalizeDecoAsset`/`normalizeDecoSlot` + enum) —
+    jadi tidak ada nilai user yang bocor ke DB/CSS.
+  - Admin (`u/[slug]/admin`): tab **Tema** punya kartu **"🎨 Bundle Preset"**
+    (grid `.bundle-grid`/`.bundle-card`) berisi 13 tombol; klik → `applyBundle()`
+    → endpoint di atas, lalu form admin dimuat ulang. Tombol preset tema lama
+    tetap ada (hanya ganti warna/font).
+  - Halaman tamu (`u/[slug]/+page.svelte`): ornamen sudut **hero** kini ikut
+    `decoration` (`heroVariantTL`/`heroVariantTR`) + animasi, bukan lagi
+    hardcode `corner`. Cover sudah memakai `decoVariantTL/TR`. Karena bundle
+    menyetel `decoration` per tema, ornamen/bingkai/dekorasi serasi otomatis.
+  - **Bundle ≠ tema kustom**: bundle mengisi setelan *tampilan* (ornamen/bingkai/
+    dekorasi), bukan warna/font. Warna/font tetap milik tema preset/kustom.
 - **TEMA KUSTOM (modular, BARU):** client bisa membuat tema sendiri dari admin
   (kartu "✨ Buat Tema Sendiri"). Alur:
   - Tabel `themes` (per-account): `slug`, `name`, `base` (preset dasar),

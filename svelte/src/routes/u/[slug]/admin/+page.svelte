@@ -59,6 +59,28 @@
 		'rustic-terracotta': 'Rustic Terracotta', 'emerald-luxury': 'Emerald Luxury',
 		'rose-gold': 'Rose Gold', 'dusty-blue': 'Dusty Blue', sakura: 'Sakura'
 	};
+	/** Ubah slug internal (mis. 'teal-svelte') jadi label yang enak dibaca. */
+	function humanizeSlug(s: string): string {
+		return s
+			.split(/[-_]+/)
+			.filter(Boolean)
+			.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+			.join(' ');
+	}
+	/**
+	 * Label tampilan untuk sebuah tema. Urutan: label preset → nama tema kustom
+	 * (via `themes`) → slug yang di-humanize. Ini mencegah slug internal seperti
+	 * 'teal-svelte' bocor ke UI saat tema kustom aktif.
+	 */
+	function themeLabel(theme: string): string {
+		if (!theme) return '—';
+		if (THEME_LABELS[theme]) return THEME_LABELS[theme];
+		const custom = themes.find((t) => t.slug === theme);
+		if (custom?.name) return custom.name;
+		return humanizeSlug(theme);
+	}
+	/** Judul ramah untuk account — jatuh ke slug (identitas akun) bila judul belum diisi. */
+	const displayTitle = $derived(accountTitle || slug || 'Undangan');
 	// Opsi foto cover & dekorasi
 	const COVER_MODES = [
 		{ v: 'plain', l: 'Bundar sederhana' },
@@ -579,724 +601,1312 @@
 	}
 </script>
 
-<svelte:head><title>Admin — {slug}</title></svelte:head>
+<svelte:head><title>{displayTitle} — Meja Kerja</title></svelte:head>
 
 {#if toast}
-	<div class="toast">{toast}</div>
+	<div class="toast" role="status" aria-live="polite">{toast}</div>
 {/if}
 
 {#if !ready}
-	<div class="center">Memuat…</div>
+	<div class="boot">
+		<span class="boot-mark" aria-hidden="true"></span>
+		<p>Menyiapkan meja kerja…</p>
+	</div>
 {:else if !authed}
-	<!-- ================= LOGIN ================= -->
-	<div class="login-wrap">
-		<form class="login-card" onsubmit={(e) => { e.preventDefault(); doLogin(); }}>
-			<h1>Admin Undangan</h1>
-			<p class="sub">Masuk untuk mengelola undangan</p>
-			<label for="pw">Password</label>
-			<input
-				id="pw"
-				type="password"
-				bind:value={password}
-				placeholder="Password admin"
-				onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } }}
-			/>
-			{#if loginErr}<p class="err">{loginErr}</p>{/if}
-			<button type="button" class="btn" disabled={loading} onclick={() => doLogin()}>{loading ? 'Memproses…' : 'Masuk'}</button>
-			<a class="link" href={`/u/${slug}`}>← Lihat undangan</a>
+	<!-- ================= GERBANG MASUK ================= -->
+	<div class="gate">
+		<div class="gate-aside" aria-hidden="true">
+			<span class="gate-rule"></span>
+			<p class="gate-word">Meja Kerja</p>
+			<p class="gate-sub">Perakitan Undangan</p>
+		</div>
+		<form class="gate-form" onsubmit={(e) => { e.preventDefault(); doLogin(); }}>
+			<p class="eyebrow">Panel Pengantin</p>
+			<h1>Masuk ke meja kerja</h1>
+			<p class="gate-hint">Kelola isi, tampilan, tamu, dan RSVP undangan <strong>{displayTitle}</strong> dari satu tempat.</p>
+			<label for="pw">Kata sandi admin</label>
+			<div class="pw-row">
+				<input
+					id="pw"
+					type="password"
+					bind:value={password}
+					placeholder="••••••••"
+					autocomplete="current-password"
+					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } }}
+				/>
+				<button type="button" class="btn" disabled={loading} onclick={() => doLogin()}>{loading ? 'Membuka…' : 'Masuk'}</button>
+			</div>
+			{#if loginErr}<p class="err" role="alert">{loginErr}</p>{/if}
+			<a class="quiet-link" href={`/u/${slug}`}>Lihat undangan tamu →</a>
 		</form>
 	</div>
 {:else if !content}
-	<div class="center">Memuat data…</div>
+	<div class="boot">
+		<span class="boot-mark" aria-hidden="true"></span>
+		<p>Memuat data undangan…</p>
+	</div>
 {:else}
-	<!-- ================= DASHBOARD ================= -->
-	<header class="topbar">
-		<div class="brand">
-			<strong>{accountTitle || slug}</strong>
-			<span class="badge">{content.account.theme}</span>
-		</div>
-		<div class="acts">
-			<a class="ghost" href={`/u/${slug}`} target="_blank">Lihat</a>
-			<button class="ghost" onclick={logout}>Keluar</button>
-		</div>
-	</header>
-
-	<nav class="tabs">
-		{#each tabs as t}
-			<button class:on={tab === t.id} onclick={() => (tab = t.id)}>{t.label}</button>
-		{/each}
-	</nav>
-
-	<main class="wrap">
-		{#if tab === 'dashboard'}
-			<div class="stats">
-				<div class="stat"><strong>{rsvp.stats?.total ?? 0}</strong><span>Total RSVP</span></div>
-				<div class="stat"><strong>{rsvp.stats?.hadir ?? 0}</strong><span>Hadir</span></div>
-				<div class="stat"><strong>{rsvp.stats?.total_pax ?? 0}</strong><span>Total Tamu</span></div>
-				<div class="stat"><strong>{guests.length}</strong><span>Daftar Tamu</span></div>
-			</div>
-			<div class="card">
-				<h3>Selamat datang 👋</h3>
-				<p>Kelola konten, tampilan, tema, tamu, dan RSVP dari panel ini. Perubahan langsung tampil di undangan.</p>
-				<button class="btn" onclick={() => (tab = 'konten')}>Mulai Edit Konten</button>
-			</div>
-		{:else if tab === 'konten'}
-			<div class="card">
-				<h3>Judul Undangan</h3>
-				<label for="title">Judul</label>
-				<input id="title" bind:value={accountTitle} placeholder="Mis. Rizky & Amelia" />
-			</div>
-
-			<div class="card">
-				<h3>Mempelai</h3>
-				<div class="grid2">
-					<div>
-						<h4>Mempelai Pria</h4>
-						<label for="gn">Nama panggilan</label>
-						<input id="gn" bind:value={couple.groom_name} />
-						<label for="gf">Nama lengkap & gelar</label>
-						<input id="gf" bind:value={couple.groom_full} />
-						<label for="gi">Instagram (tanpa @)</label>
-						<input id="gi" bind:value={couple.groom_ig} />
-						<label for="gp">Foto (URL)</label>
-						<input id="gp" bind:value={couple.groom_photo} placeholder="https://…" />
-						<label for="gpa">Orang tua</label>
-						<input id="gpa" bind:value={couple.groom_parents} />
-					</div>
-					<div>
-						<h4>Mempelai Wanita</h4>
-						<label for="bn">Nama panggilan</label>
-						<input id="bn" bind:value={couple.bride_name} />
-						<label for="bf">Nama lengkap & gelar</label>
-						<input id="bf" bind:value={couple.bride_full} />
-						<label for="bi">Instagram (tanpa @)</label>
-						<input id="bi" bind:value={couple.bride_ig} />
-						<label for="bp">Foto (URL)</label>
-						<input id="bp" bind:value={couple.bride_photo} placeholder="https://…" />
-						<label for="bpa">Orang tua</label>
-						<input id="bpa" bind:value={couple.bride_parents} />
-					</div>
-				</div>
-				<label for="ls">Cerita Cinta</label>
-				<textarea id="ls" rows="4" bind:value={couple.love_story}></textarea>
-			</div>
-
-			<div class="card">
-				<div class="card-head"><h3>Acara</h3><button class="ghost sm" onclick={addEvent}>+ Tambah</button></div>
-				{#each events as e, i}
-					<div class="item">
-						<div class="grid2">
-							<input bind:value={e.title} placeholder="Judul (Akad/Resepsi)" />
-							<input bind:value={e.key} placeholder="Kunci (akad/resepsi)" />
-						</div>
-						<div class="grid2">
-							<input type="datetime-local" bind:value={e.date_iso} />
-							<input bind:value={e.time_text} placeholder="Pukul 08.00 - 10.00 WIB" />
-						</div>
-						<input bind:value={e.venue} placeholder="Nama tempat" />
-						<input bind:value={e.address} placeholder="Alamat" />
-						<input bind:value={e.maps_url} placeholder="Google Maps URL" />
-						<button class="danger sm" onclick={() => delEvent(i)}>Hapus acara</button>
-					</div>
-				{/each}
-			</div>
-
-			<div class="card">
-				<div class="card-head"><h3>Galeri</h3></div>
-				<input type="file" accept="image/*" multiple onchange={onGalleryUpload} />
-				<div class="gallery-edit">
-					{#each gallery as g, i}
-						<div class="g-thumb">
-							<img src={g.url} alt="" />
-							<input bind:value={g.caption} placeholder="Keterangan" />
-							<button class="danger sm" onclick={() => delGallery(i)}>×</button>
-						</div>
-					{/each}
-				</div>
-				<label for="gurl">Atau tambah via URL</label>
-				<div class="row">
-					<input id="gurl" placeholder="https://…" bind:value={newGalleryUrl} />
-					<button class="ghost sm" onclick={() => { if (newGalleryUrl) { gallery = [...gallery, { url: newGalleryUrl, caption: '' }]; newGalleryUrl = ''; } }}>Tambah</button>
+	<!-- ================= MEJA KERJA ================= -->
+	<div class="bench">
+		<header class="rail">
+			<div class="rail-brand">
+				<span class="rail-mark" aria-hidden="true">M</span>
+				<div>
+					<strong>{displayTitle}</strong>
+					<span class="rail-slug">/{slug}</span>
 				</div>
 			</div>
 
-			<div class="card">
-				<div class="card-head"><h3>Amplop Digital</h3><button class="ghost sm" onclick={addGift}>+ Tambah</button></div>
-				{#each gifts as g, i}
-					<div class="item">
-						<div class="grid2">
-							<select bind:value={g.type}><option value="bank">Bank</option><option value="ewallet">E-Wallet</option></select>
-							<input bind:value={g.bank_name} placeholder="Nama bank / e-wallet" />
-						</div>
-						<div class="grid2">
-							<input bind:value={g.account_no} placeholder="Nomor rekening" />
-							<input bind:value={g.account_name} placeholder="Atas nama" />
-						</div>
-						<button class="danger sm" onclick={() => delGift(i)}>Hapus</button>
-					</div>
-				{/each}
-				<label for="qris">QRIS (upload)</label>
-				<input id="qris" type="file" accept="image/*" onchange={onQrisUpload} />
-				{#if settings.qris_image}<p class="muted">QRIS: {settings.qris_image}</p>{/if}
-				<label for="ga">Alamat kirim hadiah</label>
-				<textarea id="ga" rows="2" bind:value={settings.gift_address}></textarea>
-			</div>
-
-			<div class="card">
-				<h3>Fitur Tambahan</h3>
-				<label for="vid">Video (URL YouTube/Vimeo/MP4)</label>
-				<input id="vid" bind:value={settings.video_url} placeholder="https://youtube.com/watch?v=…" />
-				<label for="live">Live Streaming (URL)</label>
-				<input id="live" bind:value={settings.live_url} placeholder="https://instagram.com/…" />
-				<label for="lt">Keterangan Live</label>
-				<input id="lt" bind:value={settings.live_text} />
-				<label for="quote">Kutipan / Ayat</label>
-				<textarea id="quote" rows="2" bind:value={settings.quote}></textarea>
-			</div>
-
-			<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>{loading ? 'Menyimpan…' : 'Simpan Semua Perubahan'}</button></div>
-		{:else if tab === 'impor'}
-			<!-- ============ IMPOR JSON (Elementor / Landingstar) ============ -->
-			<div class="card">
-				<h3>Impor dari JSON Elementor / Landingstar</h3>
-				<p class="muted">
-					Unggah berkas <strong>.json</strong> hasil “Export Template” atau tempel isinya.
-					Impor bersifat <strong>draft</strong>: Anda melihat pratinjau &amp; boleh mengoreksi
-					sebelum menekan <em>Terapkan</em>. Tombol <em>Pratinjau</em> tidak mengubah data apa pun.
-				</p>
-				<label for="impFile">Unggah berkas .json</label>
-				<input id="impFile" type="file" accept=".json,application/json" onchange={onImportFile} />
-				{#if importFileName}<p class="muted">Berkas: <strong>{importFileName}</strong></p>{/if}
-				<label for="impText">Atau tempel JSON di sini</label>
-				<textarea
-					id="impText"
-					rows="5"
-					placeholder="Tempel objek JSON ekspor Elementor di sini…"
-					bind:value={importRaw}
-					oninput={() => { importDraft = null; importApplied = null; }}
-				></textarea>
-				<div class="row">
-					<button class="btn" onclick={previewImport} disabled={importBusy || !importRaw.trim()}>
-						{importBusy && !importDraft ? 'Memproses…' : 'Pratinjau'}
+			<nav class="rail-tabs" aria-label="Bagian meja kerja">
+				{#each tabs as t, i}
+					<button
+						class:on={tab === t.id}
+						aria-current={tab === t.id ? 'page' : undefined}
+						onclick={() => (tab = t.id)}
+					>
+						<span class="tab-no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+						<span class="tab-label">{t.label}</span>
 					</button>
-					{#if importRaw || importDraft}
-						<button class="ghost" onclick={resetImport} disabled={importBusy}>Bersihkan</button>
-					{/if}
-				</div>
-			</div>
-
-			{#if hasDraft}
-				<!-- Ringkasan laporan -->
-				<div class="card">
-					<h3>Ringkasan Pratinjau</h3>
-					<div class="imp-summary">
-						<div class="imp-kv"><span>Format</span><strong>{importDraft.report?.format || '-'}</strong></div>
-						<div class="imp-kv"><span>Template</span><strong>{importDraft.report?.templateTitle || '-'}</strong></div>
-						<div class="imp-kv"><span>Section</span><strong>{importDraft.report?.sectionCount ?? 0}</strong></div>
-						<div class="imp-kv"><span>Pasangan</span><strong>{importDraft.couple?.groom_name || '—'} &amp; {importDraft.couple?.bride_name || '—'}</strong></div>
-						<div class="imp-kv"><span>Acara</span><strong>{(importDraft.events ?? []).length}</strong></div>
-						<div class="imp-kv"><span>Galeri</span><strong>{(importDraft.gallery ?? []).length}</strong></div>
-						<div class="imp-kv"><span>Gambar (remote/lokal)</span><strong>{importImageKinds.remote} / {importImageKinds.local}</strong></div>
-						<div class="imp-kv"><span>Kutipan</span><strong>{importDraft.settings?.quote ? 'ada' : '—'}</strong></div>
-					</div>
-
-					<h4>Laporan per Field</h4>
-					<div class="imp-report">
-						{#each importDraft.report?.entries ?? [] as r}
-							<div class="imp-line">
-								<span class="badge-status {statusMeta(r.status).cls}">{statusMeta(r.status).icon} {statusMeta(r.status).label}</span>
-								<code>{r.field}</code>
-								<span class="imp-val">{r.value || ''}</span>
-								{#if r.note}<span class="muted">{r.note}</span>{/if}
-							</div>
-						{/each}
-					</div>
-					{#if (importDraft.report?.skipped ?? []).length}
-						<p class="muted">
-							Widget diabaikan:
-							{#each importDraft.report.skipped as s}
-								<code>{s.widgetType}</code>{' '}
-							{/each}
-						</p>
-					{/if}
-				</div>
-
-				<!-- Form koreksi -->
-				<div class="card">
-					<h3>Koreksi Cepat</h3>
-					<p class="muted">Perbaiki nilai yang bertanda ⚠️ sebelum diterapkan.</p>
-					<label for="impTitle">Judul undangan</label>
-					<input id="impTitle" bind:value={accountTitle} placeholder="Mis. Fajira & Dion" />
-					<div class="grid2">
-						<div>
-							<h4>Mempelai Pria</h4>
-							<label for="ig1">Nama panggilan</label>
-							<input id="ig1" bind:value={importDraft.couple.groom_name} />
-							<label for="ig2">Nama lengkap &amp; gelar</label>
-							<input id="ig2" bind:value={importDraft.couple.groom_full} />
-							<label for="ig3">Foto (URL)</label>
-							<input id="ig3" bind:value={importDraft.couple.groom_photo} placeholder="https://…" />
-							<label for="ig4">Orang tua</label>
-							<textarea id="ig4" rows="2" bind:value={importDraft.couple.groom_parents}></textarea>
-						</div>
-						<div>
-							<h4>Mempelai Wanita</h4>
-							<label for="ib1">Nama panggilan</label>
-							<input id="ib1" bind:value={importDraft.couple.bride_name} />
-							<label for="ib2">Nama lengkap &amp; gelar</label>
-							<input id="ib2" bind:value={importDraft.couple.bride_full} />
-							<label for="ib3">Foto (URL)</label>
-							<input id="ib3" bind:value={importDraft.couple.bride_photo} placeholder="https://…" />
-							<label for="ib4">Orang tua</label>
-							<textarea id="ib4" rows="2" bind:value={importDraft.couple.bride_parents}></textarea>
-						</div>
-					</div>
-
-					<div class="card-head">
-						<h4 style="margin:0">Acara</h4>
-						<button class="ghost sm" onclick={addDraftEvent}>+ Tambah acara</button>
-					</div>
-					{#each importDraft.events as e, i}
-						<div class="item">
-							<div class="grid2">
-								<input bind:value={e.title} placeholder="Judul (Akad/Resepsi)" />
-								<input bind:value={e.key} placeholder="Kunci (akad/resepsi)" />
-							</div>
-							<div class="grid2">
-								<input type="datetime-local" bind:value={e.date_iso} />
-								<input bind:value={e.time_text} placeholder="Pukul 08.00 - 10.00 WIB" />
-							</div>
-							<input bind:value={e.venue} placeholder="Nama tempat" />
-							<input bind:value={e.address} placeholder="Alamat" />
-							<input bind:value={e.maps_url} placeholder="Google Maps URL" />
-							<button class="danger sm" onclick={() => delDraftEvent(i)}>Hapus acara</button>
-						</div>
-					{/each}
-
-					<div class="card-head">
-						<h4 style="margin:0">Galeri</h4>
-						<button class="ghost sm" onclick={addDraftGallery}>+ Tambah foto</button>
-					</div>
-					<div class="gallery-edit">
-						{#each importDraft.gallery as g, i}
-							<div class="g-thumb">
-								{#if g.url}<img src={g.url} alt="" />{:else}<div class="g-none">?</div>{/if}
-								<input bind:value={g.url} placeholder="https://…" />
-								<input bind:value={g.caption} placeholder="Keterangan" />
-								<button class="danger sm" onclick={() => delDraftGallery(i)}>×</button>
-							</div>
-						{/each}
-					</div>
-
-					<label for="impQuote">Kutipan / Doa</label>
-					<textarea id="impQuote" rows="3" bind:value={importDraft.settings.quote}></textarea>
-					<label for="impBg">Latar cover (URL)</label>
-					<input id="impBg" bind:value={importDraft.settings.background_image} placeholder="https://…" />
-				</div>
-
-				<!-- Opsi penerapan -->
-				<div class="card">
-					<h3>Opsi Penerapan</h3>
-					<label for="impMode">Mode tulis</label>
-					<select id="impMode" bind:value={importMode}>
-						<option value="fill-empty">Isi yang kosong saja (aman — data lama tidak ditimpa)</option>
-						<option value="overwrite">Timpa semua (ganti data konten yang ada)</option>
-					</select>
-					<label for="impImg">Penanganan gambar</label>
-					<select id="impImg" bind:value={importImageMode}>
-						<option value="link">Simpan tautan apa adanya (cepat)</option>
-						<option value="download">Unduh &amp; simpan ke lokal (disarankan — tautan pihak ketiga bisa mati)</option>
-					</select>
-					<p class="muted">
-						{importImageKinds.total} gambar terdeteksi
-						({importImageKinds.remote} remote, {importImageKinds.local} lokal).
-						{#if importImageMode === 'download'}Maksimum 30 gambar diunduh ulang.{/if}
-					</p>
-
-					<div class="sticky-save">
-						<button class="btn" onclick={applyImport} disabled={importBusy}>
-							{importBusy ? 'Menerapkan…' : 'Terapkan Impor'}
-						</button>
-					</div>
-				</div>
-
-				{#if importApplied}
-					<div class="card imp-done">
-						<h3>✅ Impor Selesai</h3>
-						<p>
-							<strong>{importApplied.applied?.written ?? 0}</strong> field ditulis ·
-							{importApplied.applied?.events ?? 0} acara ·
-							{importApplied.applied?.gallery ?? 0} galeri ·
-							mode <code>{importApplied.mode}</code>
-						</p>
-						{#if (importApplied.skippedExisting ?? []).length}
-							<p class="muted">
-								Dilewati (sudah terisi): {importApplied.skippedExisting.join(', ')}
-							</p>
-						{/if}
-						<button class="ghost sm" onclick={() => (tab = 'konten')}>Lihat di tab Konten →</button>
-					</div>
-				{/if}
-			{/if}
-		{:else if tab === 'tampilan'}
-			<div class="card">
-				<h3>Latar Belakang — Desktop</h3>
-				<input type="file" accept="image/*" onchange={(e) => onBgUpload(e, 'background_image')} />
-				<label for="bi2">Atau URL gambar</label>
-				<input id="bi2" bind:value={settings.background_image} placeholder="https://…" />
-				<div class="grid2">
-					<div><label for="bp2">Posisi</label><select id="bp2" bind:value={settings.background_position}>{#each BG_POS as p}<option>{p}</option>{/each}</select></div>
-					<div><label for="bs2">Ukuran</label><select id="bs2" bind:value={settings.background_size}>{#each BG_SIZE as p}<option>{p}</option>{/each}</select></div>
-				</div>
-				<div class="grid2">
-					<div><label for="br2">Ulang</label><select id="br2" bind:value={settings.background_repeat}>{#each BG_REPEAT as p}<option>{p}</option>{/each}</select></div>
-					<div><label for="ba2">Lampiran</label><select id="ba2" bind:value={settings.background_attachment}>{#each BG_ATTACH as p}<option>{p}</option>{/each}</select></div>
-				</div>
-			</div>
-
-			<div class="card">
-				<h3>Latar Belakang — Mobile</h3>
-				<input type="file" accept="image/*" onchange={(e) => onBgUpload(e, 'background_image_mobile')} />
-				<label for="bim">Atau URL gambar</label>
-				<input id="bim" bind:value={settings.background_image_mobile} placeholder="https://…" />
-				<div class="grid2">
-					<div><label for="bpm">Posisi</label><select id="bpm" bind:value={settings.background_position_mobile}>{#each BG_POS as p}<option>{p}</option>{/each}</select></div>
-					<div><label for="bsm">Ukuran</label><select id="bsm" bind:value={settings.background_size_mobile}>{#each BG_SIZE as p}<option>{p}</option>{/each}</select></div>
-				</div>
-			</div>
-
-			<div class="card">
-				<h3>Overlay & Warna Latar</h3>
-				<div class="grid2">
-					<div><label for="ovc">Warna overlay</label><input type="color" id="ovc" bind:value={settings.background_overlay} /></div>
-					<div><label for="ovo">Opasitas ({settings.background_overlay_opacity})</label><input type="range" id="ovo" min="0" max="1" step="0.05" bind:value={settings.background_overlay_opacity} /></div>
-				</div>
-			</div>
-
-			<div class="card">
-				<h3>Musik Latar</h3>
-				<input type="file" accept="audio/*" onchange={onMusicUpload} />
-				<label for="mu">Atau URL musik</label>
-				<input id="mu" bind:value={settings.music_url} placeholder="https://….mp3" />
-				{#if settings.music_url}<audio src={settings.music_url} controls style="margin-top:.6rem;width:100%"></audio>{/if}
-			</div>
-
-			<div class="card">
-				<h3>📸 Foto &amp; Bingkai Cover</h3>
-				<p class="muted">Pilih cara menampilkan foto di halaman pembuka undangan.</p>
-				<label for="cmode">Gaya bingkai foto</label>
-				<select id="cmode" bind:value={settings.cover_mode}>
-					{#each COVER_MODES as m}<option value={m.v}>{m.l}</option>{/each}
-				</select>
-				<label for="cphoto">URL foto cover {settings.cover_mode === 'none' ? '(nonaktif)' : ''}</label>
-				<input id="cphoto" bind:value={settings.cover_photo} placeholder="https://…/foto.jpg" disabled={settings.cover_mode === 'none'} />
-				<div class="acts">
-					<button class="ghost sm" disabled={settings.cover_mode === 'none'} onclick={() => pickCoverUpload()}>⬆ Unggah foto cover</button>
-				</div>
-				{#if settings.cover_photo}
-					<div class="cover-preview cp-{settings.cover_mode}">
-						<img src={settings.cover_photo} alt="Pratinjau foto cover" />
-					</div>
-				{/if}
-			</div>
-
-			<div class="card">
-				<h3>🌸 Dekorasi &amp; Animasi</h3>
-				<p class="muted">Dekorasi bergerak membuat undangan lebih hidup.</p>
-				<label for="deco">Jenis dekorasi</label>
-				<select id="deco" bind:value={settings.decoration}>
-					{#each DECORATIONS as d}<option value={d.v}>{d.l}</option>{/each}
-				</select>
-				<label class="check">
-					<input type="checkbox" checked={settings.decoration_animated === '1'} onchange={(e) => (settings.decoration_animated = e.currentTarget.checked ? '1' : '0')} />
-					Aktifkan animasi dekorasi (daun/bunga berayun)
-				</label>
-
-				<!-- Dekorasi aset file lokal (opsional, ADDITIF) -->
-				<div class="deco-asset-block">
-					<h4>Aset Dekorasi Lokal <span class="muted">(opsional)</span></h4>
-					<p class="muted">
-						Lapisan dekorasi tambahan dari file lokal. Tidak mengganti dekorasi di atas;
-						warnanya mengikuti tema.
-					</p>
-					<div class="deco-asset-picker" role="radiogroup" aria-label="Pilih aset dekorasi lokal">
-						<button
-							type="button"
-							class="deco-asset-chip"
-							class:on={(settings.decoration_asset || 'none') === 'none'}
-							role="radio"
-							aria-checked={(settings.decoration_asset || 'none') === 'none'}
-							onclick={() => (settings.decoration_asset = 'none')}
-						>
-							<span class="deco-asset-none" aria-hidden="true">—</span>
-							Tanpa aset
-						</button>
-						{#each DECO_ASSETS as a}
-							<button
-								type="button"
-								class="deco-asset-chip"
-								class:on={settings.decoration_asset === a.id}
-								role="radio"
-								aria-checked={settings.decoration_asset === a.id}
-								title={a.hint}
-								onclick={() => (settings.decoration_asset = a.id)}
-							>
-								<img class="deco-asset-thumb" src={decoAssetUrl(a)} alt={a.label} />
-								{a.label}
-							</button>
-						{/each}
-					</div>
-					{#if (settings.decoration_asset || 'none') !== 'none'}
-						<label for="decoslot">Tampilkan di</label>
-						<select id="decoslot" bind:value={settings.decoration_asset_slot}>
-							{#each DECO_SLOT_OPTIONS as o}<option value={o.v}>{o.l}</option>{/each}
-						</select>
-					{/if}
-				</div>
-			</div>
-
-			<div class="card">
-				<h3>Watermark</h3>
-				<label class="check"><input type="checkbox" checked={settings.watermark_enabled === '1'} onchange={(e) => (settings.watermark_enabled = e.currentTarget.checked ? '1' : '')} /> Tampilkan watermark</label>
-				<label for="wt">Teks watermark</label>
-				<input id="wt" bind:value={settings.watermark_text} placeholder="Undangan Digital" />
-			</div>
-
-			<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>Simpan Tampilan</button></div>
-		{:else if tab === 'tema'}
-			<div class="card">
-				<h3>Preset Tema</h3>
-				<p class="muted">
-					<strong>Bundle</strong> menerapkan tema + ornamen + bingkai foto + dekorasi
-					sekaligus agar serasi. Tombol tema biasa hanya mengganti warna/font.
-				</p>
-				<div class="theme-picker">
-					{#each THEMES as t}
-						<button class="theme-chip" class:on={content.account.theme === t} onclick={() => setTheme(t)}>
-							<span class="swatch" data-t={t}></span>{THEME_LABELS[t] || t}
-						</button>
-					{/each}
-				</div>
-			</div>
-
-			<div class="card">
-				<h3>🎨 Bundle Preset</h3>
-				<p class="muted">Sekali klik — ornamen, bingkai foto &amp; dekorasi ikut menyesuaikan karakter tema.</p>
-				<div class="bundle-grid">
-					{#each BUNDLE_PRESETS as b}
-						<button
-							class="bundle-card"
-							class:on={content.account.theme === b.theme}
-							disabled={loading}
-							onclick={() => applyBundle(b.theme)}
-						>
-							<span class="swatch" data-t={b.theme}></span>
-							<span class="bundle-info">
-								<strong>{b.label}</strong>
-								<span class="muted">{THEME_LABELS[b.theme] || b.theme}</span>
-							</span>
-							<span class="bundle-tick" aria-hidden="true">✓</span>
-						</button>
-					{/each}
-				</div>
-			</div>
-
-			<div class="card">
-				<h3>✨ Buat Tema Sendiri</h3>
-				<label for="czn">Nama tema</label>
-				<input id="czn" bind:value={czName} />
-				<label for="czb">Basis preset</label>
-				<select id="czb" bind:value={czBase}>{#each THEMES as t}<option>{t}</option>{/each}</select>
-
-				<h4>Warna</h4>
-				<div class="cz-grid">
-					{#each TOKENS as tk}
-						<label>{tk.l}
-							<input type="color" bind:value={czTokens[tk.k]} oninput={() => { if (!czTokens[tk.k]) czTokens[tk.k] = '#000000'; }} />
-						</label>
-					{/each}
-				</div>
-
-				<h4>Font</h4>
-				<div class="grid2">
-					<div><label for="fs">Judul (serif)</label><select id="fs" bind:value={czTokens['--serif']}>{#each FONTS_SERIF as f}<option value={f}>{f}</option>{/each}</select></div>
-					<div><label for="fsc">Skrip</label><select id="fsc" bind:value={czTokens['--script']}>{#each FONTS_SCRIPT as f}<option value={f}>{f}</option>{/each}</select></div>
-				</div>
-
-				<div class="cz-preview" style:background={czTokens['--cream'] || '#f7f4ec'} style:color={czTokens['--ink'] || '#33352e'}>
-					<span style:color={czTokens['--gold'] || '#b08d47'}>Contoh Warna Emas</span>
-					<h2 style:color={czTokens['--sage-dark'] || '#57684a'} style:font-family={czTokens['--serif'] || 'Cormorant Garamond'}>
-						Rizky & Amelia
-					</h2>
-					<p style:font-family={czTokens['--script'] || 'Great Vibes'}>Undangan Pernikahan</p>
-				</div>
-
-				<button class="btn" onclick={saveTheme}>{editingThemeId ? 'Perbarui Tema' : 'Simpan Sebagai Tema'}</button>
-				{#if editingThemeId}<button class="ghost" onclick={() => fillCustomizer()}>Batal</button>{/if}
-			</div>
-
-			{#if themes.length}
-				<div class="card">
-					<h3>Tema Tersimpan</h3>
-					{#each themes as t}
-						<div class="theme-row">
-							<div><strong>{t.name}</strong><span class="muted"> (basis: {t.base})</span></div>
-							<div class="acts">
-								<button class="ghost sm" onclick={() => useTheme(t.slug)}>Pakai</button>
-								<button class="ghost sm" onclick={() => fillCustomizer(t)}>Edit</button>
-								<button class="danger sm" onclick={() => delTheme(t.id)}>Hapus</button>
-							</div>
-						</div>
-					{/each}
-				</div>
-			{/if}
-		{:else if tab === 'tamu'}
-			<div class="card">
-				<h3>Tambah Tamu</h3>
-				<div class="grid2">
-					<input bind:value={gName} placeholder="Nama tamu" />
-					<input bind:value={gPhone} placeholder="No. HP (opsional)" />
-				</div>
-				<div class="grid2">
-					<input bind:value={gCat} placeholder="Kategori (Keluarga/Teman)" />
-					<input type="number" bind:value={gQuota} min="1" max="50" placeholder="Kuota" />
-				</div>
-				<button class="btn" onclick={addGuest}>Tambah Tamu</button>
-			</div>
-			<div class="card">
-				<h3>Daftar Tamu ({guests.length})</h3>
-				<table>
-					<thead><tr><th>Nama</th><th>Kategori</th><th>Kuota</th><th>RSVP</th><th></th></tr></thead>
-					<tbody>
-						{#each guests as g}
-							<tr>
-								<td>{g.name}<br /><span class="muted">/{g.slug}</span></td>
-								<td>{g.category || '-'}</td>
-								<td>{g.quota}</td>
-								<td>{g.rsvp_count}</td>
-								<td class="acts">
-									<button class="ghost sm" onclick={() => copyLink(g)}>Link</button>
-									<button class="danger sm" onclick={() => delGuest(g.id)}>Hapus</button>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else if tab === 'rsvp'}
-			<div class="stats">
-				<div class="stat"><strong>{rsvp.stats?.hadir ?? 0}</strong><span>Hadir</span></div>
-				<div class="stat"><strong>{rsvp.stats?.tidak_hadir ?? 0}</strong><span>Tidak Hadir</span></div>
-				<div class="stat"><strong>{rsvp.stats?.ragu ?? 0}</strong><span>Ragu</span></div>
-				<div class="stat"><strong>{rsvp.stats?.total_pax ?? 0}</strong><span>Total Orang</span></div>
-			</div>
-			<div class="card">
-				<h3>Daftar Konfirmasi</h3>
-				<table>
-					<thead><tr><th>Nama</th><th>Status</th><th>Jml</th><th>Pesan</th></tr></thead>
-					<tbody>
-						{#each rsvp.rows as r}
-							<tr><td>{r.name}</td><td>{r.attendance}</td><td>{r.pax}</td><td>{r.message || '-'}</td></tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else if tab === 'ucapan'}
-			<div class="card">
-				<div class="card-head">
-					<h3>Ucapan &amp; Doa ({wishes.length})</h3>
-					<button class="ghost sm" onclick={() => exportCsv('wishes')}>Ekspor CSV</button>
-				</div>
-				{#each wishes as w}
-					<div class="wish-row">
-						<div><strong>{w.name}</strong> <span class="muted">· {new Date(w.created_at).toLocaleDateString('id-ID')}</span><p>{w.message}</p></div>
-						<button class="danger sm" onclick={() => delWish(w.id)}>Hapus</button>
-					</div>
 				{/each}
-			</div>
-		{:else if tab === 'pengaturan'}
-			<div class="card">
-				<h3>Ekspor Data</h3>
-				<p class="muted">Unduh data dalam format CSV (bisa dibuka di Excel).</p>
-				<div class="acts">
-					<button class="ghost sm" onclick={() => exportCsv('rsvp')}>RSVP (.csv)</button>
-					<button class="ghost sm" onclick={() => exportCsv('guests')}>Tamu (.csv)</button>
-					<button class="ghost sm" onclick={() => exportCsv('wishes')}>Ucapan (.csv)</button>
+			</nav>
+
+			<div class="rail-foot">
+				<div class="rail-theme">
+					<span class="swatch" data-t={content.account.theme}></span>
+					<span class="rail-theme-txt">{themeLabel(content.account.theme)}</span>
+				</div>
+				<div class="rail-acts">
+					<a class="ghost" href={`/u/${slug}`} target="_blank">Pratinjau undangan</a>
+					<button class="ghost" onclick={logout}>Keluar</button>
 				</div>
 			</div>
-			<div class="card">
-				<h3>Ganti Password Admin</h3>
-				<label for="nap">Password baru</label>
-				<input id="nap" type="password" bind:value={newAdminPw} placeholder="Minimal 5 karakter" />
-				<button class="btn" onclick={changeAdminPw}>Ganti Password</button>
+		</header>
+
+		<div class="surface">
+			<div class="surface-head">
+				<div class="surface-title">
+					<p class="eyebrow">{tabs.find((x) => x.id === tab)?.label}</p>
+					<h1>{displayTitle}</h1>
+				</div>
+				<button class="ghost compact" onclick={logout}>Keluar</button>
 			</div>
-			<div class="card">
-				<h3>Info Akun</h3>
-				<p class="muted">Slug: <strong>{slug}</strong></p>
-				<p class="muted">Tema aktif: <strong>{content.account.theme}</strong></p>
-				<p class="muted">Status: <strong>{content.account.status}</strong></p>
-				<p class="muted">Masa aktif s/d: <strong>{content.account.expires_at ? new Date(content.account.expires_at).toLocaleDateString('id-ID') : 'tanpa batas'}</strong></p>
-			</div>
-		{/if}
-	</main>
+
+			<main class="board">
+				{#if tab === 'dashboard'}
+					<div class="stats">
+						<div class="stat"><strong>{rsvp.stats?.total ?? 0}</strong><span>Total RSVP</span></div>
+						<div class="stat"><strong>{rsvp.stats?.hadir ?? 0}</strong><span>Konfirmasi hadir</span></div>
+						<div class="stat"><strong>{rsvp.stats?.total_pax ?? 0}</strong><span>Perkiraan orang</span></div>
+						<div class="stat"><strong>{guests.length}</strong><span>Nama di daftar tamu</span></div>
+					</div>
+					<section class="card intro">
+						<div class="card-body">
+							<h2>Rakit undangan Anda</h2>
+							<p class="lede">Isi yang tertulis di sini langsung tampil di undangan tamu. Mulai dari isi, atur tampilan, lalu bagikan tautan ke daftar tamu.</p>
+							<div class="acts">
+								<button class="btn" onclick={() => (tab = 'konten')}>Edit isi undangan</button>
+								<button class="ghost" onclick={() => (tab = 'tampilan')}>Atur tampilan</button>
+							</div>
+						</div>
+					</section>
+				{:else if tab === 'konten'}
+					<section class="card">
+						<div class="card-head"><h2>Judul undangan</h2></div>
+						<div class="card-body">
+							<p class="hint">Tampil sebagai nama utama di halaman pembuka.</p>
+							<label for="title">Judul</label>
+							<input id="title" bind:value={accountTitle} placeholder="Mis. Rizky & Amelia" />
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Mempelai</h2></div>
+						<div class="card-body">
+							<div class="grid2">
+								<fieldset class="panel">
+									<legend>Mempelai pria</legend>
+									<label for="gn">Nama panggilan</label>
+									<input id="gn" bind:value={couple.groom_name} />
+									<label for="gf">Nama lengkap & gelar</label>
+									<input id="gf" bind:value={couple.groom_full} />
+									<label for="gi">Instagram (tanpa @)</label>
+									<input id="gi" bind:value={couple.groom_ig} />
+									<label for="gp">Foto (URL)</label>
+									<input id="gp" bind:value={couple.groom_photo} placeholder="https://…" />
+									<label for="gpa">Orang tua</label>
+									<input id="gpa" bind:value={couple.groom_parents} />
+								</fieldset>
+								<fieldset class="panel">
+									<legend>Mempelai wanita</legend>
+									<label for="bn">Nama panggilan</label>
+									<input id="bn" bind:value={couple.bride_name} />
+									<label for="bf">Nama lengkap & gelar</label>
+									<input id="bf" bind:value={couple.bride_full} />
+									<label for="bi">Instagram (tanpa @)</label>
+									<input id="bi" bind:value={couple.bride_ig} />
+									<label for="bp">Foto (URL)</label>
+									<input id="bp" bind:value={couple.bride_photo} placeholder="https://…" />
+									<label for="bpa">Orang tua</label>
+									<input id="bpa" bind:value={couple.bride_parents} />
+								</fieldset>
+							</div>
+							<label for="ls">Cerita cinta</label>
+							<textarea id="ls" rows="4" bind:value={couple.love_story}></textarea>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head">
+							<h2>Acara</h2>
+							<button class="ghost sm" onclick={addEvent}>+ Tambah acara</button>
+						</div>
+						<div class="card-body">
+							{#each events as e, i}
+								<div class="item">
+									<span class="item-no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+									<div class="item-fields">
+										<div class="grid2">
+											<input bind:value={e.title} placeholder="Judul (Akad/Resepsi)" />
+											<input bind:value={e.key} placeholder="Kunci (akad/resepsi)" />
+										</div>
+										<div class="grid2">
+											<input type="datetime-local" bind:value={e.date_iso} />
+											<input bind:value={e.time_text} placeholder="Pukul 08.00 - 10.00 WIB" />
+										</div>
+										<input bind:value={e.venue} placeholder="Nama tempat" />
+										<input bind:value={e.address} placeholder="Alamat" />
+										<input bind:value={e.maps_url} placeholder="Google Maps URL" />
+										<div class="row end">
+											<button class="danger sm" onclick={() => delEvent(i)}>Hapus acara</button>
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Galeri</h2></div>
+						<div class="card-body">
+							<label for="gfile">Unggah foto</label>
+							<input id="gfile" type="file" accept="image/*" multiple onchange={onGalleryUpload} />
+							<div class="gallery-edit">
+								{#each gallery as g, i}
+									<div class="g-thumb">
+										<img src={g.url} alt="" />
+										<input bind:value={g.caption} placeholder="Keterangan" />
+										<button class="danger sm" onclick={() => delGallery(i)}>×</button>
+									</div>
+								{/each}
+							</div>
+							<label for="gurl">Atau tambah via URL</label>
+							<div class="row">
+								<input id="gurl" placeholder="https://…" bind:value={newGalleryUrl} />
+								<button class="ghost sm" onclick={() => { if (newGalleryUrl) { gallery = [...gallery, { url: newGalleryUrl, caption: '' }]; newGalleryUrl = ''; } }}>Tambah</button>
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head">
+							<h2>Amplop digital</h2>
+							<button class="ghost sm" onclick={addGift}>+ Tambah</button>
+						</div>
+						<div class="card-body">
+							{#each gifts as g, i}
+								<div class="item">
+									<span class="item-no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+									<div class="item-fields">
+										<div class="grid2">
+											<select bind:value={g.type}><option value="bank">Bank</option><option value="ewallet">E-Wallet</option></select>
+											<input bind:value={g.bank_name} placeholder="Nama bank / e-wallet" />
+										</div>
+										<div class="grid2">
+											<input bind:value={g.account_no} placeholder="Nomor rekening" />
+											<input bind:value={g.account_name} placeholder="Atas nama" />
+										</div>
+										<div class="row end"><button class="danger sm" onclick={() => delGift(i)}>Hapus</button></div>
+									</div>
+								</div>
+							{/each}
+							<label for="qris">QRIS (unggah gambar)</label>
+							<input id="qris" type="file" accept="image/*" onchange={onQrisUpload} />
+							{#if settings.qris_image}<p class="muted">Tersimpan: {settings.qris_image}</p>{/if}
+							<label for="ga">Alamat kirim hadiah</label>
+							<textarea id="ga" rows="2" bind:value={settings.gift_address}></textarea>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Fitur tambahan</h2></div>
+						<div class="card-body">
+							<label for="vid">Video (URL YouTube/Vimeo/MP4)</label>
+							<input id="vid" bind:value={settings.video_url} placeholder="https://youtube.com/watch?v=…" />
+							<label for="live">Live streaming (URL)</label>
+							<input id="live" bind:value={settings.live_url} placeholder="https://instagram.com/…" />
+							<label for="lt">Keterangan live</label>
+							<input id="lt" bind:value={settings.live_text} />
+							<label for="quote">Kutipan / ayat</label>
+							<textarea id="quote" rows="2" bind:value={settings.quote}></textarea>
+						</div>
+					</section>
+
+					<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>{loading ? 'Menyimpan…' : 'Simpan semua perubahan'}</button></div>
+				{:else if tab === 'impor'}
+					<!-- ============ IMPOR JSON (Elementor / Landingstar) ============ -->
+					<section class="card">
+						<div class="card-head"><h2>Impor dari JSON Elementor / Landingstar</h2></div>
+						<div class="card-body">
+							<p class="lede">
+								Unggah berkas <strong>.json</strong> hasil “Export Template”, atau tempel isinya.
+								Pratinjau tidak mengubah data apa pun — Anda meninjau dan mengoreksi dulu sebelum menekan Terapkan.
+							</p>
+							<label for="impFile">Unggah berkas .json</label>
+							<input id="impFile" type="file" accept=".json,application/json" onchange={onImportFile} />
+							{#if importFileName}<p class="muted">Berkas: <strong>{importFileName}</strong></p>{/if}
+							<label for="impText">Atau tempel JSON di sini</label>
+							<textarea
+								id="impText"
+								rows="5"
+								placeholder="Tempel objek JSON ekspor Elementor di sini…"
+								bind:value={importRaw}
+								oninput={() => { importDraft = null; importApplied = null; }}
+							></textarea>
+							<div class="row">
+								<button class="btn" onclick={previewImport} disabled={importBusy || !importRaw.trim()}>
+									{importBusy && !importDraft ? 'Memproses…' : 'Pratinjau'}
+								</button>
+								{#if importRaw || importDraft}
+									<button class="ghost" onclick={resetImport} disabled={importBusy}>Bersihkan</button>
+								{/if}
+							</div>
+						</div>
+					</section>
+
+					{#if hasDraft}
+						<!-- Ringkasan laporan -->
+						<section class="card">
+							<div class="card-head"><h2>Ringkasan pratinjau</h2></div>
+							<div class="card-body">
+								<div class="imp-summary">
+									<div class="imp-kv"><span>Format</span><strong>{importDraft.report?.format || '-'}</strong></div>
+									<div class="imp-kv"><span>Template</span><strong>{importDraft.report?.templateTitle || '-'}</strong></div>
+									<div class="imp-kv"><span>Section</span><strong>{importDraft.report?.sectionCount ?? 0}</strong></div>
+									<div class="imp-kv"><span>Pasangan</span><strong>{importDraft.couple?.groom_name || '—'} &amp; {importDraft.couple?.bride_name || '—'}</strong></div>
+									<div class="imp-kv"><span>Acara</span><strong>{(importDraft.events ?? []).length}</strong></div>
+									<div class="imp-kv"><span>Galeri</span><strong>{(importDraft.gallery ?? []).length}</strong></div>
+									<div class="imp-kv"><span>Gambar (remote/lokal)</span><strong>{importImageKinds.remote} / {importImageKinds.local}</strong></div>
+									<div class="imp-kv"><span>Kutipan</span><strong>{importDraft.settings?.quote ? 'ada' : '—'}</strong></div>
+								</div>
+
+								<h3>Laporan per field</h3>
+								<div class="imp-report">
+									{#each importDraft.report?.entries ?? [] as r}
+										<div class="imp-line">
+											<span class="badge-status {statusMeta(r.status).cls}">{statusMeta(r.status).icon} {statusMeta(r.status).label}</span>
+											<code>{r.field}</code>
+											<span class="imp-val">{r.value || ''}</span>
+											{#if r.note}<span class="muted">{r.note}</span>{/if}
+										</div>
+									{/each}
+								</div>
+								{#if (importDraft.report?.skipped ?? []).length}
+									<p class="muted">
+										Widget diabaikan:
+										{#each importDraft.report.skipped as s}
+											<code>{s.widgetType}</code>{' '}
+										{/each}
+									</p>
+								{/if}
+							</div>
+						</section>
+
+						<!-- Form koreksi -->
+						<section class="card">
+							<div class="card-head"><h2>Koreksi cepat</h2></div>
+							<div class="card-body">
+								<p class="hint">Perbaiki nilai yang bertanda ⚠️ sebelum diterapkan.</p>
+								<label for="impTitle">Judul undangan</label>
+								<input id="impTitle" bind:value={accountTitle} placeholder="Mis. Fajira & Dion" />
+								<div class="grid2">
+									<fieldset class="panel">
+										<legend>Mempelai pria</legend>
+										<label for="ig1">Nama panggilan</label>
+										<input id="ig1" bind:value={importDraft.couple.groom_name} />
+										<label for="ig2">Nama lengkap &amp; gelar</label>
+										<input id="ig2" bind:value={importDraft.couple.groom_full} />
+										<label for="ig3">Foto (URL)</label>
+										<input id="ig3" bind:value={importDraft.couple.groom_photo} placeholder="https://…" />
+										<label for="ig4">Orang tua</label>
+										<textarea id="ig4" rows="2" bind:value={importDraft.couple.groom_parents}></textarea>
+									</fieldset>
+									<fieldset class="panel">
+										<legend>Mempelai wanita</legend>
+										<label for="ib1">Nama panggilan</label>
+										<input id="ib1" bind:value={importDraft.couple.bride_name} />
+										<label for="ib2">Nama lengkap &amp; gelar</label>
+										<input id="ib2" bind:value={importDraft.couple.bride_full} />
+										<label for="ib3">Foto (URL)</label>
+										<input id="ib3" bind:value={importDraft.couple.bride_photo} placeholder="https://…" />
+										<label for="ib4">Orang tua</label>
+										<textarea id="ib4" rows="2" bind:value={importDraft.couple.bride_parents}></textarea>
+									</fieldset>
+								</div>
+
+								<div class="sub-head">
+									<h3>Acara</h3>
+									<button class="ghost sm" onclick={addDraftEvent}>+ Tambah acara</button>
+								</div>
+								{#each importDraft.events as e, i}
+									<div class="item">
+										<span class="item-no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+										<div class="item-fields">
+											<div class="grid2">
+												<input bind:value={e.title} placeholder="Judul (Akad/Resepsi)" />
+												<input bind:value={e.key} placeholder="Kunci (akad/resepsi)" />
+											</div>
+											<div class="grid2">
+												<input type="datetime-local" bind:value={e.date_iso} />
+												<input bind:value={e.time_text} placeholder="Pukul 08.00 - 10.00 WIB" />
+											</div>
+											<input bind:value={e.venue} placeholder="Nama tempat" />
+											<input bind:value={e.address} placeholder="Alamat" />
+											<input bind:value={e.maps_url} placeholder="Google Maps URL" />
+											<div class="row end"><button class="danger sm" onclick={() => delDraftEvent(i)}>Hapus acara</button></div>
+										</div>
+									</div>
+								{/each}
+
+								<div class="sub-head">
+									<h3>Galeri</h3>
+									<button class="ghost sm" onclick={addDraftGallery}>+ Tambah foto</button>
+								</div>
+								<div class="gallery-edit">
+									{#each importDraft.gallery as g, i}
+										<div class="g-thumb">
+											{#if g.url}<img src={g.url} alt="" />{:else}<div class="g-none">?</div>{/if}
+											<input bind:value={g.url} placeholder="https://…" />
+											<input bind:value={g.caption} placeholder="Keterangan" />
+											<button class="danger sm" onclick={() => delDraftGallery(i)}>×</button>
+										</div>
+									{/each}
+								</div>
+
+								<label for="impQuote">Kutipan / doa</label>
+								<textarea id="impQuote" rows="3" bind:value={importDraft.settings.quote}></textarea>
+								<label for="impBg">Latar cover (URL)</label>
+								<input id="impBg" bind:value={importDraft.settings.background_image} placeholder="https://…" />
+							</div>
+						</section>
+
+						<!-- Opsi penerapan -->
+						<section class="card">
+							<div class="card-head"><h2>Opsi penerapan</h2></div>
+							<div class="card-body">
+								<label for="impMode">Mode tulis</label>
+								<select id="impMode" bind:value={importMode}>
+									<option value="fill-empty">Isi yang kosong saja (aman — data lama tidak ditimpa)</option>
+									<option value="overwrite">Timpa semua (ganti data konten yang ada)</option>
+								</select>
+								<label for="impImg">Penanganan gambar</label>
+								<select id="impImg" bind:value={importImageMode}>
+									<option value="link">Simpan tautan apa adanya (cepat)</option>
+									<option value="download">Unduh &amp; simpan ke lokal (disarankan — tautan pihak ketiga bisa mati)</option>
+								</select>
+								<p class="muted">
+									{importImageKinds.total} gambar terdeteksi
+									({importImageKinds.remote} remote, {importImageKinds.local} lokal).
+									{#if importImageMode === 'download'}Maksimum 30 gambar diunduh ulang.{/if}
+								</p>
+
+								<div class="row end">
+									<button class="btn" onclick={applyImport} disabled={importBusy}>
+										{importBusy ? 'Menerapkan…' : 'Terapkan impor'}
+									</button>
+								</div>
+							</div>
+						</section>
+
+						{#if importApplied}
+							<section class="card imp-done">
+								<div class="card-head"><h2>Impor selesai</h2></div>
+								<div class="card-body">
+									<p>
+										<strong>{importApplied.applied?.written ?? 0}</strong> field ditulis ·
+										{importApplied.applied?.events ?? 0} acara ·
+										{importApplied.applied?.gallery ?? 0} galeri ·
+										mode <code>{importApplied.mode}</code>
+									</p>
+									{#if (importApplied.skippedExisting ?? []).length}
+										<p class="muted">
+											Dilewati (sudah terisi): {importApplied.skippedExisting.join(', ')}
+										</p>
+									{/if}
+									<div class="row"><button class="ghost sm" onclick={() => (tab = 'konten')}>Lihat di tab Konten →</button></div>
+								</div>
+							</section>
+						{/if}
+					{/if}
+				{:else if tab === 'tampilan'}
+					<section class="card">
+						<div class="card-head"><h2>Latar belakang — desktop</h2></div>
+						<div class="card-body">
+							<label for="bgd">Unggah gambar</label>
+							<input id="bgd" type="file" accept="image/*" onchange={(e) => onBgUpload(e, 'background_image')} />
+							<label for="bi2">Atau URL gambar</label>
+							<input id="bi2" bind:value={settings.background_image} placeholder="https://…" />
+							<div class="grid2">
+								<div><label for="bp2">Posisi</label><select id="bp2" bind:value={settings.background_position}>{#each BG_POS as p}<option>{p}</option>{/each}</select></div>
+								<div><label for="bs2">Ukuran</label><select id="bs2" bind:value={settings.background_size}>{#each BG_SIZE as p}<option>{p}</option>{/each}</select></div>
+							</div>
+							<div class="grid2">
+								<div><label for="br2">Ulang</label><select id="br2" bind:value={settings.background_repeat}>{#each BG_REPEAT as p}<option>{p}</option>{/each}</select></div>
+								<div><label for="ba2">Lampiran</label><select id="ba2" bind:value={settings.background_attachment}>{#each BG_ATTACH as p}<option>{p}</option>{/each}</select></div>
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Latar belakang — mobile</h2></div>
+						<div class="card-body">
+							<label for="bgm">Unggah gambar</label>
+							<input id="bgm" type="file" accept="image/*" onchange={(e) => onBgUpload(e, 'background_image_mobile')} />
+							<label for="bim">Atau URL gambar</label>
+							<input id="bim" bind:value={settings.background_image_mobile} placeholder="https://…" />
+							<div class="grid2">
+								<div><label for="bpm">Posisi</label><select id="bpm" bind:value={settings.background_position_mobile}>{#each BG_POS as p}<option>{p}</option>{/each}</select></div>
+								<div><label for="bsm">Ukuran</label><select id="bsm" bind:value={settings.background_size_mobile}>{#each BG_SIZE as p}<option>{p}</option>{/each}</select></div>
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Overlay &amp; warna latar</h2></div>
+						<div class="card-body">
+							<div class="grid2">
+								<div><label for="ovc">Warna overlay</label><input type="color" id="ovc" bind:value={settings.background_overlay} /></div>
+								<div><label for="ovo">Opasitas ({settings.background_overlay_opacity})</label><input type="range" id="ovo" min="0" max="1" step="0.05" bind:value={settings.background_overlay_opacity} /></div>
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Musik latar</h2></div>
+						<div class="card-body">
+							<label for="mus">Unggah audio</label>
+							<input id="mus" type="file" accept="audio/*" onchange={onMusicUpload} />
+							<label for="mu">Atau URL musik</label>
+							<input id="mu" bind:value={settings.music_url} placeholder="https://….mp3" />
+							{#if settings.music_url}<audio src={settings.music_url} controls style="margin-top:.6rem;width:100%"></audio>{/if}
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Foto &amp; bingkai cover</h2></div>
+						<div class="card-body">
+							<p class="hint">Pilih cara menampilkan foto di halaman pembuka undangan.</p>
+							<label for="cmode">Gaya bingkai foto</label>
+							<select id="cmode" bind:value={settings.cover_mode}>
+								{#each COVER_MODES as m}<option value={m.v}>{m.l}</option>{/each}
+							</select>
+							<label for="cphoto">URL foto cover {settings.cover_mode === 'none' ? '(nonaktif)' : ''}</label>
+							<input id="cphoto" bind:value={settings.cover_photo} placeholder="https://…/foto.jpg" disabled={settings.cover_mode === 'none'} />
+							<div class="acts">
+								<button class="ghost sm" disabled={settings.cover_mode === 'none'} onclick={() => pickCoverUpload()}>Unggah foto cover</button>
+							</div>
+							{#if settings.cover_photo}
+								<div class="cover-preview cp-{settings.cover_mode}">
+									<img src={settings.cover_photo} alt="Pratinjau foto cover" />
+								</div>
+							{/if}
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Dekorasi &amp; animasi</h2></div>
+						<div class="card-body">
+							<p class="hint">Dekorasi bergerak membuat undangan terasa lebih hidup.</p>
+							<label for="deco">Jenis dekorasi</label>
+							<select id="deco" bind:value={settings.decoration}>
+								{#each DECORATIONS as d}<option value={d.v}>{d.l}</option>{/each}
+							</select>
+							<label class="check">
+								<input type="checkbox" checked={settings.decoration_animated === '1'} onchange={(e) => (settings.decoration_animated = e.currentTarget.checked ? '1' : '0')} />
+								Aktifkan animasi dekorasi (daun/bunga berayun)
+							</label>
+
+							<!-- Dekorasi aset file lokal (opsional, ADDITIF) -->
+							<div class="deco-asset-block">
+								<div class="sub-head">
+									<h3>Aset dekorasi lokal <span class="muted">(opsional)</span></h3>
+								</div>
+								<p class="hint">
+									Lapisan dekorasi tambahan dari file lokal. Tidak mengganti dekorasi di atas;
+									warnanya mengikuti tema.
+								</p>
+								<div class="deco-asset-picker" role="radiogroup" aria-label="Pilih aset dekorasi lokal">
+									<button
+										type="button"
+										class="deco-asset-chip"
+										class:on={(settings.decoration_asset || 'none') === 'none'}
+										role="radio"
+										aria-checked={(settings.decoration_asset || 'none') === 'none'}
+										onclick={() => (settings.decoration_asset = 'none')}
+									>
+										<span class="deco-asset-none" aria-hidden="true">—</span>
+										Tanpa aset
+									</button>
+									{#each DECO_ASSETS as a}
+										<button
+											type="button"
+											class="deco-asset-chip"
+											class:on={settings.decoration_asset === a.id}
+											role="radio"
+											aria-checked={settings.decoration_asset === a.id}
+											title={a.hint}
+											onclick={() => (settings.decoration_asset = a.id)}
+										>
+											<img class="deco-asset-thumb" src={decoAssetUrl(a)} alt={a.label} />
+											{a.label}
+										</button>
+									{/each}
+								</div>
+								{#if (settings.decoration_asset || 'none') !== 'none'}
+									<label for="decoslot">Tampilkan di</label>
+									<select id="decoslot" bind:value={settings.decoration_asset_slot}>
+										{#each DECO_SLOT_OPTIONS as o}<option value={o.v}>{o.l}</option>{/each}
+									</select>
+								{/if}
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Watermark</h2></div>
+						<div class="card-body">
+							<label class="check"><input type="checkbox" checked={settings.watermark_enabled === '1'} onchange={(e) => (settings.watermark_enabled = e.currentTarget.checked ? '1' : '')} /> Tampilkan watermark</label>
+							<label for="wt">Teks watermark</label>
+							<input id="wt" bind:value={settings.watermark_text} placeholder="Undangan Digital" />
+						</div>
+					</section>
+
+					<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>{loading ? 'Menyimpan…' : 'Simpan tampilan'}</button></div>
+				{:else if tab === 'tema'}
+					<section class="card">
+						<div class="card-head"><h2>Preset tema</h2></div>
+						<div class="card-body">
+							<p class="lede">
+								<strong>Bundle</strong> menerapkan tema + ornamen + bingkai foto + dekorasi
+								sekaligus agar serasi. Tombol tema biasa hanya mengganti warna dan font.
+							</p>
+							<div class="theme-picker">
+								{#each THEMES as t}
+									<button class="theme-chip" class:on={content.account.theme === t} onclick={() => setTheme(t)}>
+										<span class="swatch" data-t={t}></span>{themeLabel(t)}
+									</button>
+								{/each}
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Bundle preset</h2></div>
+						<div class="card-body">
+							<p class="hint">Sekali klik — ornamen, bingkai foto &amp; dekorasi ikut menyesuaikan karakter tema.</p>
+							<div class="bundle-grid">
+								{#each BUNDLE_PRESETS as b}
+									<button
+										class="bundle-card"
+										class:on={content.account.theme === b.theme}
+										disabled={loading}
+										onclick={() => applyBundle(b.theme)}
+									>
+										<span class="swatch" data-t={b.theme}></span>
+										<span class="bundle-info">
+											<strong>{b.label}</strong>
+											<span class="muted">{themeLabel(b.theme)}</span>
+										</span>
+										<span class="bundle-tick" aria-hidden="true">✓</span>
+									</button>
+								{/each}
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<div class="card-head"><h2>Buat tema sendiri</h2></div>
+						<div class="card-body">
+							<div class="grid2">
+								<div><label for="czn">Nama tema</label><input id="czn" bind:value={czName} /></div>
+								<div><label for="czb">Basis preset</label><select id="czb" bind:value={czBase}>{#each THEMES as t}<option value={t}>{themeLabel(t)}</option>{/each}</select></div>
+							</div>
+
+							<h3>Warna</h3>
+							<div class="cz-grid">
+								{#each TOKENS as tk}
+									<label class="cz-token">{tk.l}
+										<input type="color" bind:value={czTokens[tk.k]} oninput={() => { if (!czTokens[tk.k]) czTokens[tk.k] = '#000000'; }} />
+									</label>
+								{/each}
+							</div>
+
+							<h3>Font</h3>
+							<div class="grid2">
+								<div><label for="fs">Judul (serif)</label><select id="fs" bind:value={czTokens['--serif']}>{#each FONTS_SERIF as f}<option value={f}>{f}</option>{/each}</select></div>
+								<div><label for="fsc">Skrip</label><select id="fsc" bind:value={czTokens['--script']}>{#each FONTS_SCRIPT as f}<option value={f}>{f}</option>{/each}</select></div>
+							</div>
+
+							<div class="cz-preview" style:background={czTokens['--cream'] || '#f7f4ec'} style:color={czTokens['--ink'] || '#33352e'}>
+								<span style:color={czTokens['--gold'] || '#b08d47'}>Contoh warna emas</span>
+								<h2 style:color={czTokens['--sage-dark'] || '#57684a'} style:font-family={czTokens['--serif'] || 'Cormorant Garamond'}>
+									Rizky & Amelia
+								</h2>
+								<p style:font-family={czTokens['--script'] || 'Great Vibes'}>Undangan Pernikahan</p>
+							</div>
+
+							<div class="row">
+								<button class="btn" onclick={saveTheme}>{editingThemeId ? 'Perbarui tema' : 'Simpan sebagai tema'}</button>
+								{#if editingThemeId}<button class="ghost" onclick={() => fillCustomizer()}>Batal</button>{/if}
+							</div>
+						</div>
+					</section>
+
+					{#if themes.length}
+						<section class="card">
+							<div class="card-head"><h2>Tema tersimpan</h2></div>
+							<div class="card-body">
+								{#each themes as t}
+									<div class="list-row">
+										<div><strong>{t.name}</strong><span class="muted"> · basis {themeLabel(t.base)}</span></div>
+										<div class="acts">
+											<button class="ghost sm" onclick={() => useTheme(t.slug)}>Pakai</button>
+											<button class="ghost sm" onclick={() => fillCustomizer(t)}>Edit</button>
+											<button class="danger sm" onclick={() => delTheme(t.id)}>Hapus</button>
+										</div>
+									</div>
+								{/each}
+							</div>
+						</section>
+					{/if}
+				{:else if tab === 'tamu'}
+					<section class="card">
+						<div class="card-head"><h2>Tambah tamu</h2></div>
+						<div class="card-body">
+							<div class="grid2">
+								<div><label for="gn2">Nama tamu</label><input id="gn2" bind:value={gName} placeholder="Nama tamu" /></div>
+								<div><label for="gp2">No. HP (opsional)</label><input id="gp2" bind:value={gPhone} placeholder="08xxxxxxxxxx" /></div>
+							</div>
+							<div class="grid2">
+								<div><label for="gc2">Kategori</label><input id="gc2" bind:value={gCat} placeholder="Keluarga / Teman" /></div>
+								<div><label for="gq2">Kuota orang</label><input id="gq2" type="number" bind:value={gQuota} min="1" max="50" placeholder="Kuota" /></div>
+							</div>
+							<div class="row end"><button class="btn" onclick={addGuest}>Tambah tamu</button></div>
+						</div>
+					</section>
+					<section class="card">
+						<div class="card-head"><h2>Daftar tamu <span class="count">{guests.length}</span></h2></div>
+						<div class="card-body">
+							<div class="table-wrap">
+								<table>
+									<thead><tr><th>Nama</th><th>Kategori</th><th>Kuota</th><th>RSVP</th><th></th></tr></thead>
+									<tbody>
+										{#each guests as g}
+											<tr>
+												<td>{g.name}<br /><span class="muted slug">/{g.slug}</span></td>
+												<td>{g.category || '-'}</td>
+												<td>{g.quota}</td>
+												<td>{g.rsvp_count}</td>
+												<td class="acts">
+													<button class="ghost sm" onclick={() => copyLink(g)}>Link</button>
+													<button class="danger sm" onclick={() => delGuest(g.id)}>Hapus</button>
+												</td>
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</section>
+				{:else if tab === 'rsvp'}
+					<div class="stats">
+						<div class="stat"><strong>{rsvp.stats?.hadir ?? 0}</strong><span>Hadir</span></div>
+						<div class="stat"><strong>{rsvp.stats?.tidak_hadir ?? 0}</strong><span>Tidak hadir</span></div>
+						<div class="stat"><strong>{rsvp.stats?.ragu ?? 0}</strong><span>Masih ragu</span></div>
+						<div class="stat"><strong>{rsvp.stats?.total_pax ?? 0}</strong><span>Total orang</span></div>
+					</div>
+					<section class="card">
+						<div class="card-head"><h2>Daftar konfirmasi</h2></div>
+						<div class="card-body">
+							<div class="table-wrap">
+								<table>
+									<thead><tr><th>Nama</th><th>Status</th><th>Jml</th><th>Pesan</th></tr></thead>
+									<tbody>
+										{#each rsvp.rows as r}
+											<tr><td>{r.name}</td><td><span class="pill">{r.attendance}</span></td><td>{r.pax}</td><td>{r.message || '-'}</td></tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</section>
+				{:else if tab === 'ucapan'}
+					<section class="card">
+						<div class="card-head">
+							<h2>Ucapan &amp; doa <span class="count">{wishes.length}</span></h2>
+							<button class="ghost sm" onclick={() => exportCsv('wishes')}>Ekspor CSV</button>
+						</div>
+						<div class="card-body">
+							{#each wishes as w}
+								<div class="list-row wish">
+									<div><strong>{w.name}</strong> <span class="muted">· {new Date(w.created_at).toLocaleDateString('id-ID')}</span><p>{w.message}</p></div>
+									<button class="danger sm" onclick={() => delWish(w.id)}>Hapus</button>
+								</div>
+							{/each}
+						</div>
+					</section>
+				{:else if tab === 'pengaturan'}
+					<section class="card">
+						<div class="card-head"><h2>Ekspor data</h2></div>
+						<div class="card-body">
+							<p class="hint">Unduh data dalam format CSV untuk dibuka di Excel.</p>
+							<div class="acts">
+								<button class="ghost sm" onclick={() => exportCsv('rsvp')}>RSVP (.csv)</button>
+								<button class="ghost sm" onclick={() => exportCsv('guests')}>Tamu (.csv)</button>
+								<button class="ghost sm" onclick={() => exportCsv('wishes')}>Ucapan (.csv)</button>
+							</div>
+						</div>
+					</section>
+					<section class="card">
+						<div class="card-head"><h2>Ganti password admin</h2></div>
+						<div class="card-body">
+							<label for="nap">Password baru</label>
+							<input id="nap" type="password" bind:value={newAdminPw} placeholder="Minimal 5 karakter" autocomplete="new-password" />
+							<div class="row end"><button class="btn" onclick={changeAdminPw}>Ganti password</button></div>
+						</div>
+					</section>
+					<section class="card">
+						<div class="card-head"><h2>Info akun</h2></div>
+						<div class="card-body">
+							<dl class="facts">
+								<div><dt>Slug undangan</dt><dd>{slug}</dd></div>
+								<div><dt>Tema aktif</dt><dd>{content.account.theme}</dd></div>
+								<div><dt>Status</dt><dd>{content.account.status}</dd></div>
+								<div><dt>Masa aktif s/d</dt><dd>{content.account.expires_at ? new Date(content.account.expires_at).toLocaleDateString('id-ID') : 'tanpa batas'}</dd></div>
+							</dl>
+						</div>
+					</section>
+				{/if}
+			</main>
+		</div>
+	</div>
 {/if}
 
 <style>
-	:global(body) { background: #f4f2ec; }
-	.wrap { max-width: 900px; margin: 0 auto; padding: 1.2rem; }
-	.center { display: grid; place-items: center; min-height: 100vh; color: #666; }
-	.login-wrap { display: grid; place-items: center; min-height: 100vh; padding: 1rem; }
-	.login-card { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 380px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.3); display: flex; flex-direction: column; gap: .4rem; }
-	.login-card h1 { font-size: 1.5rem; margin: 0; }
-	.sub { color: #777; font-size: .85rem; margin: 0 0 .6rem; }
-	.err { color: #c0392b; font-size: .82rem; }
-	.link { font-size: .82rem; color: #888; margin-top: .5rem; text-align: center; }
+	/* ============================================================
+	   MEJA KERJA PERAKITAN UNDANGAN
+	   Panel admin sebagai bangku kerja: rel alat gelap di kiri,
+	   permukaan kertas terang di kanan tempat komponen dirakit.
+	   ============================================================ */
+	:global(body) {
+		margin: 0;
+		background: #fbf8f1;
+		color: #2b2118;
+		font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+		-webkit-font-smoothing: antialiased;
+	}
 
-	.topbar { display: flex; justify-content: space-between; align-items: center; background: #1f3d2b; color: #fff; padding: .9rem 1.2rem; position: sticky; top: 0; z-index: 20; }
-	.brand { display: flex; align-items: center; gap: .6rem; }
-	.badge { background: rgba(255,255,255,.18); border-radius: 999px; padding: 2px 10px; font-size: .7rem; }
-	.acts { display: flex; gap: .4rem; align-items: center; }
-	.ghost { background: transparent; border: 1px solid currentColor; border-radius: 8px; padding: .35rem .8rem; font-size: .78rem; cursor: pointer; color: inherit; }
-	.ghost.sm, .danger.sm { padding: .25rem .6rem; font-size: .72rem; }
-	.danger { background: #c0392b; color: #fff; border: 0; border-radius: 8px; padding: .4rem .8rem; cursor: pointer; }
-	.btn { background: #1f3d2b; color: #fff; border: 0; border-radius: 10px; padding: .7rem 1.3rem; font-size: .88rem; cursor: pointer; }
-	.btn:disabled { opacity: .6; }
+	/* ---- Token bangku kerja ---- */
+	:global(:root) {
+		--bench: #141210;
+		--bench-2: #201c16;
+		/* Batas kontrol di rel dinaikkan agar terlihat (WCAG 1.4.11 butuh ≥3:1
+		   untuk batas komponen UI). Nilai lama rgba(255,255,255,0.08) ≈1.25:1. */
+		--bench-line: rgba(255, 255, 255, 0.34);
+		--board: #fbf8f1;
+		--card: #ffffff;
+		--rule: #e6ded0;
+		--rule-soft: #efe8dc;
+		--ink: #2b2118;
+		--ink-2: #6a5c4c;
+		--ink-3: #9a8b78;
+		--brass: #a9762b;
+		--brass-lite: #c79a4e;
+		--sage: #4a5d3e;
+		--clay: #b4553a;
+		--field: #fdfcf9;
+	}
 
-	.tabs { display: flex; gap: .3rem; overflow-x: auto; padding: .6rem 1.2rem; background: #fff; border-bottom: 1px solid #e5e2da; position: sticky; top: 58px; z-index: 15; }
-	.tabs button { background: transparent; border: 0; padding: .5rem .9rem; border-radius: 8px; cursor: pointer; font-size: .82rem; color: #666; white-space: nowrap; }
-	.tabs button.on { background: #1f3d2b; color: #fff; }
+	/* ---------- Primitif tipe ---------- */
+	.eyebrow {
+		margin: 0;
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--brass);
+	}
+	h1,
+	h2,
+	h3 {
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		color: var(--bench);
+		line-height: 1.08;
+		margin: 0;
+	}
+	h1 { font-size: 2rem; font-weight: 600; }
+	h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.005em; }
+	h3 { font-size: 1.05rem; font-weight: 600; }
+	.lede { color: var(--ink-2); font-size: 0.95rem; line-height: 1.6; margin: 0; max-width: 62ch; }
+	.hint { color: var(--ink-3); font-size: 0.86rem; line-height: 1.5; margin: 0; max-width: 62ch; }
+	.muted { color: var(--ink-3); font-size: 0.8rem; }
+	code {
+		font-family: 'SFMono-Regular', ui-monospace, 'Cascadia Code', Menlo, monospace;
+		font-size: 0.75rem;
+		background: #f4efe5;
+		border-radius: 4px;
+		padding: 1px 5px;
+		color: #7a5a2a;
+	}
 
-	.card { background: #fff; border-radius: 14px; padding: 1.3rem; margin-bottom: 1rem; box-shadow: 0 4px 20px -12px rgba(0,0,0,.2); display: flex; flex-direction: column; gap: .4rem; }
-	.card h3 { margin: 0 0 .3rem; font-size: 1.1rem; }
-	.card h4 { margin: .6rem 0 .2rem; font-size: .9rem; color: #444; }
-	.card-head { display: flex; justify-content: space-between; align-items: center; }
-	label { font-size: .76rem; color: #666; margin-top: .3rem; text-transform: uppercase; letter-spacing: .04em; }
-	input, select, textarea { width: 100%; padding: .55rem .7rem; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: .88rem; background: #fbfaf7; }
-	input[type='color'] { height: 40px; padding: 2px; }
-	input[type='range'] { padding: 0; }
-	.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
-	@media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
-	.row { display: flex; gap: .5rem; }
-	.item { border: 1px solid #eee; border-radius: 10px; padding: .8rem; margin: .4rem 0; display: flex; flex-direction: column; gap: .5rem; background: #faf9f6; }
-	.check { flex-direction: row; display: flex; gap: .5rem; align-items: center; text-transform: none; }
-	.check input { width: auto; }
+	/* ---------- Tombol ---------- */
+	button { font: inherit; }
+	.btn {
+		background: var(--bench);
+		color: #fdfaf3;
+		border: 0;
+		border-radius: 9px;
+		padding: 0.66rem 1.25rem;
+		font-size: 0.86rem;
+		font-weight: 600;
+		letter-spacing: 0.01em;
+		cursor: pointer;
+		transition: transform 0.14s ease, box-shadow 0.14s ease;
+		box-shadow: 0 2px 0 0 #000;
+	}
+	.btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px -4px rgba(20, 18, 16, 0.6), 0 2px 0 0 #000; }
+	.btn:active:not(:disabled) { transform: translateY(0); box-shadow: 0 1px 0 0 #000; }
+	.btn:disabled { opacity: 0.55; cursor: default; }
 
-	.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; margin-bottom: 1rem; }
-	@media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-	.stat { background: #fff; border-radius: 12px; padding: 1rem; text-align: center; box-shadow: 0 4px 16px -12px rgba(0,0,0,.2); }
-	.stat strong { display: block; font-size: 1.7rem; color: #1f3d2b; }
-	.stat span { font-size: .72rem; color: #888; }
+	.ghost {
+		background: transparent;
+		border: 1px solid var(--rule);
+		border-radius: 9px;
+		padding: 0.5rem 0.95rem;
+		font-size: 0.82rem;
+		font-weight: 500;
+		cursor: pointer;
+		color: var(--ink-2);
+		transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
+	}
+	.ghost:hover:not(:disabled) { border-color: var(--brass); color: var(--brass); background: #fffdf7; }
+	.ghost:disabled { opacity: 0.45; cursor: default; }
+	.ghost.sm,
+	.danger.sm { padding: 0.32rem 0.68rem; font-size: 0.75rem; }
+	.danger {
+		background: var(--clay);
+		color: #fff;
+		border: 0;
+		border-radius: 9px;
+		padding: 0.5rem 0.95rem;
+		font-size: 0.82rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: filter 0.14s ease;
+	}
+	.danger:hover:not(:disabled) { filter: brightness(1.08); }
+	:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
-	.gallery-edit { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .6rem; }
-	.g-thumb { position: relative; }
-	.g-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
-	.g-thumb input { font-size: .72rem; padding: .3rem; }
-	.g-thumb .danger { position: absolute; top: 2px; right: 2px; padding: 0 .4rem; }
+	/* ---------- Boot / memuat ---------- */
+	.boot { display: grid; place-items: center; min-height: 100vh; gap: 1rem; color: var(--ink-3); }
+	.boot p { font-size: 0.86rem; letter-spacing: 0.03em; }
+	.boot-mark {
+		width: 34px; height: 34px; border-radius: 50%;
+		border: 2px solid var(--rule); border-top-color: var(--brass);
+		animation: spin 0.9s linear infinite;
+	}
+	@keyframes spin { to { transform: rotate(360deg); } }
 
-	.theme-picker { display: flex; flex-wrap: wrap; gap: .5rem; }
-	.theme-chip { display: flex; align-items: center; gap: .5rem; border: 2px solid #ddd; background: #fff; border-radius: 10px; padding: .5rem .9rem; cursor: pointer; text-transform: capitalize; font-size: .82rem; }
-	.theme-chip.on { border-color: #1f3d2b; }
-	.swatch { width: 18px; height: 18px; border-radius: 50%; }
+	/* ============================================================
+	   GERBANG MASUK
+	   ============================================================ */
+	.gate {
+		min-height: 100vh;
+		display: grid;
+		grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+		background: var(--board);
+	}
+	.gate-aside {
+		background:
+			radial-gradient(120% 90% at 88% 6%, rgba(199, 154, 78, 0.16), transparent 55%),
+			linear-gradient(160deg, var(--bench) 0%, #241d14 100%);
+		color: #f4ecdd;
+		padding: 3.5rem;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		position: relative;
+		overflow: hidden;
+	}
+	.gate-aside::before {
+		content: '';
+		position: absolute;
+		inset: 2rem;
+		border: 1px solid rgba(199, 154, 78, 0.28);
+		border-radius: 2px;
+		pointer-events: none;
+	}
+	.gate-rule { width: 46px; height: 2px; background: var(--brass-lite); margin-bottom: 1.1rem; }
+	.gate-word {
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		font-size: clamp(2.6rem, 5vw, 4rem);
+		line-height: 0.98;
+		margin: 0;
+		letter-spacing: -0.01em;
+	}
+	.gate-sub {
+		margin: 0.3rem 0 0;
+		font-size: 0.82rem;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: rgba(244, 236, 221, 0.6);
+	}
+	.gate-form {
+		align-self: center;
+		width: 100%;
+		max-width: 430px;
+		margin: 0 auto;
+		padding: 2rem 2.4rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.gate-form h1 { font-size: 2.1rem; margin: 0.55rem 0 0.4rem; }
+	.gate-hint { color: var(--ink-2); font-size: 0.92rem; line-height: 1.6; margin: 0 0 0.9rem; }
+	.gate-hint strong { color: var(--ink); }
+	.pw-row { display: flex; gap: 0.5rem; align-items: stretch; }
+	.pw-row input { flex: 1; }
+	.gate-form .btn { white-space: nowrap; box-shadow: 0 2px 0 0 #000; }
+	.err { color: var(--clay); font-size: 0.83rem; margin: 0.15rem 0 0; }
+	.quiet-link { font-size: 0.83rem; color: var(--ink-3); margin-top: 0.9rem; text-decoration: none; width: fit-content; }
+	.quiet-link:hover { color: var(--brass); }
+
+	/* ============================================================
+	   BANGKU KERJA — shell dua kolom
+	   ============================================================ */
+	.bench { display: grid; grid-template-columns: 268px minmax(0, 1fr); min-height: 100vh; }
+
+	/* ---- Rel alat ---- */
+	.rail {
+		background: linear-gradient(180deg, var(--bench) 0%, #1b1712 100%);
+		color: #efe7da;
+		padding: 1.35rem 1.05rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1.4rem;
+		position: sticky;
+		top: 0;
+		height: 100vh;
+	}
+	.rail-brand { display: flex; gap: 0.7rem; align-items: center; }
+	.rail-mark {
+		width: 38px; height: 38px; flex: none;
+		display: grid; place-items: center;
+		border-radius: 10px;
+		background: linear-gradient(150deg, var(--brass-lite), var(--brass));
+		color: #1a1409;
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		font-size: 1.5rem;
+		font-weight: 700;
+		line-height: 1;
+	}
+	.rail-brand strong {
+		display: block;
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		font-size: 1.22rem;
+		font-weight: 600;
+		line-height: 1.15;
+		color: #fbf6ec;
+	}
+	/* Kontras sidebar: label & kontrol dinaikkan ke WCAG AA (teks normal ≥4.5:1).
+	   Sebelumnya tab-no (brass @opacity .75 ≈4.4:1) dan rail-slug (rgba .5 ≈4.5:1)
+	   berada di batas/gagal. Nilai di bawah terukur ≥5.4:1 pada latar rel gelap. */
+	.rail-slug { font-size: 0.72rem; color: rgba(239, 231, 218, 0.72); letter-spacing: 0.03em; }
+
+	.rail-tabs { display: flex; flex-direction: column; gap: 0.1rem; }
+	.rail-tabs button {
+		display: flex;
+		align-items: baseline;
+		gap: 0.7rem;
+		background: transparent;
+		border: 0;
+		border-radius: 9px;
+		padding: 0.56rem 0.7rem;
+		cursor: pointer;
+		color: rgba(239, 231, 218, 0.84);
+		text-align: left;
+		transition: background 0.14s ease, color 0.14s ease;
+		position: relative;
+	}
+	.rail-tabs button:hover { background: rgba(255, 255, 255, 0.05); color: #fbf6ec; }
+	.rail-tabs button.on { background: rgba(199, 154, 78, 0.14); color: #fff; }
+	.rail-tabs button.on::before {
+		content: '';
+		position: absolute;
+		left: 0; top: 20%; bottom: 20%;
+		width: 3px;
+		border-radius: 3px;
+		background: var(--brass-lite);
+	}
+	.tab-no {
+		font-size: 0.66rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		color: var(--brass-lite);
+		font-variant-numeric: tabular-nums;
+	}
+	.rail-tabs button.on .tab-no { color: #e0bd7f; }
+	.tab-label { font-size: 0.86rem; font-weight: 500; }
+
+	.rail-foot { margin-top: auto; display: flex; flex-direction: column; gap: 0.85rem; }
+	.rail-theme {
+		display: flex; align-items: center; gap: 0.5rem;
+		padding: 0.6rem 0.7rem;
+		border: 1px solid var(--bench-line);
+		border-radius: 9px;
+		background: rgba(255, 255, 255, 0.03);
+	}
+	.rail-theme-txt { font-size: 0.8rem; color: rgba(239, 231, 218, 0.8); }
+	.rail-acts { display: flex; flex-direction: column; gap: 0.4rem; }
+	.rail .ghost { color: rgba(239, 231, 218, 0.88); border-color: var(--bench-line); text-align: left; text-decoration: none; }
+	.rail .ghost:hover { color: #fbf6ec; border-color: var(--brass-lite); background: rgba(199, 154, 78, 0.08); }
+
+	/* ---- Permukaan kertas ---- */
+	.surface { min-width: 0; display: flex; flex-direction: column; }
+	.surface-head {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1.7rem 2.2rem 1.1rem;
+		border-bottom: 1px solid var(--rule-soft);
+		background: linear-gradient(180deg, #fffdf8, var(--board));
+	}
+	.surface-title h1 { font-size: 1.9rem; margin-top: 0.15rem; }
+	.surface-head .compact { display: none; }
+
+	.board {
+		max-width: 940px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 1.6rem 2.2rem 4rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	/* ---- Kartu material ---- */
+	.card {
+		background: var(--card);
+		border: 1px solid var(--rule-soft);
+		border-radius: 14px;
+		box-shadow: 0 1px 0 0 rgba(20, 18, 16, 0.03), 0 12px 30px -26px rgba(20, 18, 16, 0.5);
+		overflow: hidden;
+	}
+	.card-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.8rem;
+		padding: 1.05rem 1.4rem 0.85rem;
+		border-bottom: 1px solid var(--rule-soft);
+	}
+	.card-body { padding: 1.2rem 1.4rem 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
+	.card-body > .hint + label,
+	.card-body > .lede + label { margin-top: 0.5rem; }
+	.sub-head {
+		display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+		margin: 1.1rem 0 0.35rem;
+		padding-top: 0.9rem;
+		border-top: 1px dashed var(--rule);
+	}
+	.sub-head:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+	.count {
+		display: inline-grid; place-items: center;
+		min-width: 1.5em; height: 1.5em; padding: 0 0.4em;
+		margin-left: 0.35rem;
+		border-radius: 999px;
+		background: #f1ead9;
+		color: var(--brass);
+		font-family: 'Plus Jakarta Sans', sans-serif;
+		font-size: 0.72rem;
+		font-weight: 700;
+		vertical-align: middle;
+	}
+
+	/* ---- Formulir ---- */
+	label {
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: var(--ink-2);
+		margin-top: 0.55rem;
+		letter-spacing: 0.01em;
+	}
+	input,
+	select,
+	textarea {
+		width: 100%;
+		padding: 0.58rem 0.72rem;
+		border: 1px solid var(--rule);
+		border-radius: 9px;
+		font-family: inherit;
+		font-size: 0.88rem;
+		color: var(--ink);
+		background: var(--field);
+		transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+	}
+	input::placeholder,
+	textarea::placeholder { color: #b6a892; }
+	input:hover:not(:disabled),
+	select:hover:not(:disabled),
+	textarea:hover:not(:disabled) { border-color: #d6c9b2; }
+	input:focus,
+	select:focus,
+	textarea:focus {
+		outline: none;
+		border-color: var(--brass);
+		background: #fff;
+		box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.13);
+	}
+	input:disabled { background: #f6f2ea; color: var(--ink-3); }
+	input[type='color'] { height: 42px; padding: 3px; cursor: pointer; }
+	input[type='range'] { padding: 0; accent-color: var(--brass); }
+	input[type='file'] { padding: 0.42rem 0.5rem; font-size: 0.82rem; background: #fff; }
+	input[type='file']::file-selector-button {
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 600;
+		margin-right: 0.6rem;
+		padding: 0.32rem 0.7rem;
+		border: 1px solid var(--rule);
+		border-radius: 7px;
+		background: #f7f2e7;
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	textarea { resize: vertical; line-height: 1.5; }
+	.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+	.row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+	.row.end { justify-content: flex-end; }
+
+	fieldset.panel {
+		border: 1px solid var(--rule-soft);
+		border-radius: 11px;
+		padding: 0.4rem 1rem 1rem;
+		margin: 0;
+		background: #fdfbf6;
+	}
+	fieldset.panel legend {
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		font-size: 1.05rem;
+		font-weight: 600;
+		color: var(--bench);
+		padding: 0 0.5rem;
+	}
+
+	.check {
+		flex-direction: row;
+		display: flex;
+		gap: 0.55rem;
+		align-items: center;
+		margin-top: 0.8rem;
+		font-size: 0.86rem;
+		font-weight: 500;
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.check input { width: auto; accent-color: var(--sage); }
+
+	/* Blok item berulang (acara, amplop) */
+	.item {
+		display: flex;
+		gap: 0.85rem;
+		border: 1px solid var(--rule-soft);
+		border-left: 3px solid var(--brass);
+		border-radius: 11px;
+		padding: 0.9rem 1rem;
+		margin: 0.45rem 0;
+		background: #fdfbf6;
+	}
+	.item-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+	.item-no {
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		font-size: 1.4rem;
+		font-weight: 600;
+		color: var(--brass);
+		line-height: 1;
+		flex: none;
+	}
+
+	/* ---- Statistik ---- */
+	.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; }
+	.stat {
+		background: var(--card);
+		border: 1px solid var(--rule-soft);
+		border-radius: 13px;
+		padding: 1.1rem 1.2rem;
+		position: relative;
+		overflow: hidden;
+	}
+	.stat::after {
+		content: '';
+		position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+		background: linear-gradient(180deg, var(--brass-lite), var(--brass));
+	}
+	.stat strong {
+		display: block;
+		/* Angka statistik memakai sans (bukan Cormorant): pada Cormorant digit "1"
+		   tergambar seperti huruf "I" tanpa kaki serif. Tabular-nums menstabilkan
+		   lebar digit agar angka tidak "melompat" saat nilainya berubah. */
+		font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: 'tnum' 1;
+		font-size: 2.3rem;
+		font-weight: 700;
+		line-height: 1;
+		letter-spacing: -0.01em;
+		color: var(--bench);
+	}
+	.stat span { display: block; margin-top: 0.3rem; font-size: 0.78rem; color: var(--ink-2); }
+
+	/* Kartu pembuka / intro */
+	.card.intro .card-body { padding: 1.6rem 1.6rem 1.7rem; }
+	.card.intro h2 { font-size: 1.7rem; margin-bottom: 0.4rem; }
+	.card.intro .acts { display: flex; gap: 0.6rem; margin-top: 1.1rem; flex-wrap: wrap; }
+
+	/* ---- Galeri ---- */
+	.gallery-edit { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.7rem; margin-top: 0.5rem; }
+	.g-thumb { position: relative; display: flex; flex-direction: column; gap: 0.3rem; }
+	.g-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 9px; border: 1px solid var(--rule-soft); }
+	.g-thumb input { font-size: 0.74rem; padding: 0.34rem 0.45rem; }
+	.g-thumb .danger { position: absolute; top: 5px; right: 5px; padding: 0.05rem 0.42rem; line-height: 1.5; border-radius: 7px; }
+	.g-none { width: 100%; aspect-ratio: 1; display: grid; place-items: center; background: #f4efe5; border-radius: 9px; color: var(--ink-3); font-size: 1.4rem; }
+
+	/* ---- Tema ---- */
+	.theme-picker { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+	.theme-chip {
+		display: flex; align-items: center; gap: 0.5rem;
+		border: 1px solid var(--rule);
+		background: #fff;
+		border-radius: 999px;
+		padding: 0.42rem 0.9rem 0.42rem 0.55rem;
+		cursor: pointer;
+		font-size: 0.82rem;
+		color: var(--ink-2);
+		transition: border-color 0.14s ease, box-shadow 0.14s ease, color 0.14s ease;
+	}
+	.theme-chip:hover { border-color: var(--brass-lite); }
+	.theme-chip.on { border-color: var(--brass); color: var(--bench); font-weight: 600; box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.12); }
+	.swatch { width: 18px; height: 18px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
 	.swatch[data-t='botanical'] { background: #7d8f6d; }
 	.swatch[data-t='midnight'] { background: #14131a; }
 	.swatch[data-t='blush'] { background: #c98a86; }
@@ -1311,72 +1921,233 @@
 	.swatch[data-t='dusty-blue'] { background: #5b7c99; }
 	.swatch[data-t='sakura'] { background: #d88aa4; }
 
-	/* Bundle preset — kartu grid */
-	.bundle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
-	.bundle-card { position: relative; display: flex; align-items: center; gap: .55rem; border: 2px solid #ddd; background: #fff; border-radius: 12px; padding: .6rem .7rem; cursor: pointer; text-align: left; }
-	.bundle-card.on { border-color: #1f3d2b; background: #f3f7f3; }
-	.bundle-card:disabled { opacity: .55; cursor: default; }
+	.bundle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 0.65rem; margin-top: 0.4rem; }
+	.bundle-card {
+		position: relative;
+		display: flex; align-items: center; gap: 0.6rem;
+		border: 1px solid var(--rule);
+		background: #fff;
+		border-radius: 11px;
+		padding: 0.7rem 0.8rem;
+		cursor: pointer;
+		text-align: left;
+		transition: border-color 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
+	}
+	.bundle-card:hover:not(:disabled) { border-color: var(--brass-lite); transform: translateY(-1px); }
+	.bundle-card.on { border-color: var(--brass); background: #fffdf6; box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.1); }
+	.bundle-card:disabled { opacity: 0.55; cursor: default; }
 	.bundle-info { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
-	.bundle-info strong { font-size: .84rem; }
-	.bundle-info .muted { font-size: .72rem; }
-	.bundle-tick { margin-left: auto; color: #1f3d2b; font-weight: 700; opacity: 0; }
+	.bundle-info strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.05rem; font-weight: 600; color: var(--bench); }
+	.bundle-info .muted { font-size: 0.72rem; }
+	.bundle-tick { margin-left: auto; color: var(--brass); font-weight: 700; opacity: 0; transition: opacity 0.15s ease; }
 	.bundle-card.on .bundle-tick { opacity: 1; }
 
-	/* Picker Dekorasi Aset Lokal (opsional) */
-	.deco-asset-picker { display: flex; flex-wrap: wrap; gap: .5rem; }
+	.cz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 0.6rem; margin-top: 0.4rem; }
+	.cz-token { display: flex; flex-direction: column; gap: 0.3rem; margin: 0; font-size: 0.74rem; }
+	.cz-preview {
+		border-radius: 12px;
+		padding: 1.3rem;
+		margin-top: 0.9rem;
+		border: 1px dashed var(--rule);
+		text-align: center;
+	}
+	.cz-preview h2 { margin: 0.25rem 0; font-size: 1.9rem; }
+	.cz-preview p { margin: 0; font-size: 1.4rem; }
+	.cz-preview span { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+	/* ---- Dekorasi aset lokal ---- */
+	.deco-asset-block {
+		margin-top: 1.1rem;
+		padding-top: 1rem;
+		border-top: 1px dashed var(--rule);
+	}
+	.deco-asset-picker { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.4rem; }
 	.deco-asset-chip {
 		display: flex; flex-direction: column; align-items: center; justify-content: center;
-		gap: .35rem; border: 2px solid #ddd; background: #fff; border-radius: 10px;
-		padding: .5rem; cursor: pointer; font-size: .76rem; color: #555;
-		min-width: 84px; text-align: center; text-transform: none;
+		gap: 0.35rem; border: 1px solid var(--rule); background: #fff; border-radius: 11px;
+		padding: 0.5rem; cursor: pointer; font-size: 0.74rem; color: var(--ink-2);
+		min-width: 88px; text-align: center;
+		transition: border-color 0.14s ease, box-shadow 0.14s ease;
 	}
-	.deco-asset-chip.on { border-color: #1f3d2b; color: #1f3d2b; font-weight: 600; }
+	.deco-asset-chip:hover { border-color: var(--brass-lite); }
+	.deco-asset-chip.on { border-color: var(--brass); color: var(--bench); font-weight: 600; box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.1); }
 	.deco-asset-thumb {
-		width: 100%; height: 48px; object-fit: contain;
-		background: #f3f1ea; border: 1px solid #e5e2da; border-radius: 6px; padding: 4px;
+		width: 100%; height: 50px; object-fit: contain;
+		background: #f6f1e6; border: 1px solid var(--rule-soft); border-radius: 7px; padding: 4px;
 	}
-	.deco-asset-none { font-size: 1.3rem; line-height: 1; color: #bbb; height: 48px; display: flex; align-items: center; }
+	.deco-asset-none { font-size: 1.3rem; line-height: 1; color: var(--ink-3); height: 50px; display: flex; align-items: center; }
 
-	/* Pratinjau foto cover */
-	.cover-preview { margin-top: .8rem; width: 120px; height: 150px; overflow: hidden; background: #efe9db; }
+	/* ---- Pratinjau foto cover ---- */
+	.cover-preview { margin-top: 0.9rem; width: 128px; height: 158px; overflow: hidden; background: #efe9db; }
 	.cover-preview img { width: 100%; height: 100%; object-fit: cover; }
-	.cover-preview.cp-plain, .cover-preview.cp-circle { border-radius: 50%; width: 120px; height: 120px; }
-	.cover-preview.cp-frame { border-radius: 10px; border: 3px solid #fff; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
-	.cover-preview.cp-shadow { border-radius: 6px; box-shadow: 0 10px 24px rgba(0,0,0,.3); }
+	.cover-preview.cp-plain,
+	.cover-preview.cp-circle { border-radius: 50%; width: 128px; height: 128px; }
+	.cover-preview.cp-frame { border-radius: 10px; border: 3px solid #fff; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18); }
+	.cover-preview.cp-shadow { border-radius: 6px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); }
 	.cover-preview.cp-polaroid { padding: 6px 6px 22px; background: #fff; border-radius: 2px; }
-	.cover-preview.cp-arch { border-radius: 50% 50% 8px 8px / 34% 34% 8px 8px; border: 3px solid #b08d47; }
-	.cover-preview.cp-circle { border: 3px solid #b08d47; }
+	.cover-preview.cp-arch { border-radius: 50% 50% 8px 8px / 34% 34% 8px 8px; border: 3px solid var(--brass); }
+	.cover-preview.cp-circle { border: 3px solid var(--brass); }
 
-	.cz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: .6rem; }
-	.cz-preview { border-radius: 12px; padding: 1rem; margin-top: .8rem; border: 1px dashed #ccc; text-align: center; }
-	.cz-preview h2 { margin: .2rem 0; font-size: 1.8rem; }
-	.theme-row { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid #f0eee8; }
-	.muted { color: #999; font-size: .78rem; }
-	.wish-row { display: flex; justify-content: space-between; gap: .6rem; padding: .6rem 0; border-bottom: 1px solid #f0eee8; align-items: start; }
-	.wish-row p { margin: .2rem 0 0; font-size: .85rem; color: #444; }
+	/* ---- Daftar & tabel ---- */
+	.list-row {
+		display: flex; justify-content: space-between; align-items: center; gap: 0.8rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--rule-soft);
+	}
+	.list-row:last-child { border-bottom: 0; }
+	.list-row.wish { align-items: flex-start; }
+	.list-row p { margin: 0.25rem 0 0; font-size: 0.87rem; color: var(--ink-2); line-height: 1.5; }
+	.acts { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
-	table { width: 100%; border-collapse: collapse; font-size: .82rem; }
-	th, td { text-align: left; padding: .5rem .4rem; border-bottom: 1px solid #f0eee8; }
-	th { color: #888; font-weight: 600; font-size: .72rem; text-transform: uppercase; }
+	.table-wrap { overflow-x: auto; }
+	table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+	th,
+	td { text-align: left; padding: 0.6rem 0.55rem; border-bottom: 1px solid var(--rule-soft); }
+	th {
+		color: var(--ink-3);
+		font-weight: 600;
+		font-size: 0.7rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		border-bottom: 1px solid var(--rule);
+	}
+	tbody tr:hover { background: #fdfbf6; }
+	td .slug { font-size: 0.74rem; }
+	.pill {
+		display: inline-block;
+		padding: 0.1rem 0.55rem;
+		border-radius: 999px;
+		background: #f1ead9;
+		color: #7a5a2a;
+		font-size: 0.75rem;
+		font-weight: 600;
+	}
 
-	.sticky-save { position: sticky; bottom: 0; background: rgba(244,242,236,.92); backdrop-filter: blur(8px); padding: .8rem 0; text-align: right; }
-	.toast { position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%); background: #1f3d2b; color: #fff; padding: .7rem 1.4rem; border-radius: 999px; font-size: .85rem; z-index: 100; box-shadow: 0 10px 30px -10px rgba(0,0,0,.4); }
+	/* Info akun sebagai daftar definisi */
+	.facts { margin: 0; display: flex; flex-direction: column; }
+	.facts > div {
+		display: flex; justify-content: space-between; gap: 1rem;
+		padding: 0.6rem 0; border-bottom: 1px solid var(--rule-soft);
+	}
+	.facts > div:last-child { border-bottom: 0; }
+	.facts dt { color: var(--ink-3); font-size: 0.82rem; }
+	.facts dd { margin: 0; font-weight: 600; color: var(--ink); font-size: 0.86rem; }
+
+	/* ---- Simpan lengket: pil mengambang, tidak menutupi kolom form ---- */
+	.sticky-save {
+		position: sticky;
+		bottom: 1rem;
+		margin-top: 0.4rem;
+		display: flex;
+		justify-content: flex-end;
+		pointer-events: none;
+		z-index: 5;
+	}
+	.sticky-save .btn {
+		pointer-events: auto;
+		border-radius: 999px;
+		padding: 0.72rem 1.6rem;
+		box-shadow: 0 2px 0 0 #000, 0 16px 34px -14px rgba(20, 18, 16, 0.75);
+	}
+
+	/* ---- Toast ---- */
+	.toast {
+		position: fixed;
+		bottom: 1.4rem;
+		left: 50%;
+		transform: translateX(-50%);
+		background: var(--bench);
+		color: #fdf7ea;
+		padding: 0.75rem 1.4rem;
+		border-radius: 999px;
+		font-size: 0.85rem;
+		font-weight: 500;
+		z-index: 100;
+		border: 1px solid var(--brass);
+		box-shadow: 0 16px 40px -14px rgba(20, 18, 16, 0.6);
+		animation: toast-in 0.22s ease;
+	}
+	@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
 
 	/* ---------- Tab Impor JSON ---------- */
-	.imp-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .5rem; margin-bottom: .8rem; }
-	.imp-kv { background: #faf9f6; border: 1px solid #eee; border-radius: 8px; padding: .45rem .6rem; display: flex; flex-direction: column; }
-	.imp-kv span { font-size: .68rem; color: #999; text-transform: uppercase; letter-spacing: .04em; }
-	.imp-kv strong { font-size: .86rem; color: #1f3d2b; word-break: break-word; }
-	.imp-report { display: flex; flex-direction: column; gap: .15rem; max-height: 320px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: .4rem; }
-	.imp-line { display: flex; align-items: center; gap: .5rem; padding: .3rem .35rem; border-bottom: 1px solid #f5f3ee; font-size: .78rem; }
+	.imp-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.55rem; margin-bottom: 1rem; }
+	.imp-kv {
+		background: #fdfbf6;
+		border: 1px solid var(--rule-soft);
+		border-radius: 9px;
+		padding: 0.5rem 0.7rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+	.imp-kv span { font-size: 0.68rem; color: var(--ink-3); letter-spacing: 0.05em; text-transform: uppercase; }
+	.imp-kv strong { font-size: 0.88rem; color: var(--bench); word-break: break-word; }
+	.imp-report {
+		display: flex; flex-direction: column; gap: 0.12rem;
+		max-height: 340px; overflow-y: auto;
+		border: 1px solid var(--rule-soft); border-radius: 10px; padding: 0.5rem;
+		background: #fdfbf6;
+	}
+	.imp-line { display: flex; align-items: center; gap: 0.5rem; padding: 0.32rem 0.4rem; border-bottom: 1px solid var(--rule-soft); font-size: 0.79rem; }
 	.imp-line:last-child { border-bottom: 0; }
-	.imp-line code { background: #f3f1ea; border-radius: 4px; padding: 1px 5px; font-size: .72rem; color: #6b5b3e; white-space: nowrap; }
-	.imp-val { color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
-	.badge-status { font-size: .68rem; padding: 2px 7px; border-radius: 999px; white-space: nowrap; background: #eee; color: #555; }
+	.imp-val { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
+	.badge-status { font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; background: #eee; color: #555; }
 	.badge-status.st-ok { background: #e3f3e8; color: #1f7a45; }
 	.badge-status.st-review { background: #fdf2d6; color: #9a6b00; }
 	.badge-status.st-skip { background: #eceff1; color: #607d8b; }
 	.badge-status.st-error { background: #fbe3e3; color: #b02a2a; }
-	.g-thumb .g-none { width: 100%; aspect-ratio: 1; display: grid; place-items: center; background: #f3f1ea; border-radius: 8px; color: #bbb; font-size: 1.4rem; }
-	.imp-done { border: 1px solid #bfe0c8; background: #f4fbf6; }
+	.imp-done { border-color: #bfe0c8; background: #f4fbf6; }
+	.imp-done .card-head { border-bottom-color: #d5eddd; }
+	.imp-done h2 { color: #1f7a45; }
+
+	/* ============================================================
+	   RESPONSIVE — rel menjadi bar atas, tab jadi gulir mendatar
+	   ============================================================ */
+	@media (max-width: 900px) {
+		.bench { grid-template-columns: 1fr; }
+		.rail {
+			position: static;
+			height: auto;
+			flex-direction: column;
+			gap: 0.85rem;
+			padding: 0.95rem 1rem 0.85rem;
+		}
+		.rail-tabs {
+			flex-direction: row;
+			overflow-x: auto;
+			gap: 0.25rem;
+			padding-bottom: 0.2rem;
+			scrollbar-width: thin;
+		}
+		.rail-tabs button { white-space: nowrap; padding: 0.45rem 0.7rem; }
+		.rail-tabs button.on::before { left: 12%; right: 12%; top: auto; bottom: 0; width: auto; height: 2px; }
+		.rail-brand strong { font-size: 1.1rem; }
+		.rail-foot { margin-top: 0; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; border-top: 1px solid var(--bench-line); padding-top: 0.75rem; }
+		.rail-acts { flex-direction: row; }
+		.rail .ghost { text-align: center; }
+		.rail-theme { padding: 0.4rem 0.55rem; }
+		.surface-head { display: none; }
+		.board { padding: 1.2rem 1rem 3rem; }
+		.stats { grid-template-columns: repeat(2, 1fr); }
+		.gate { grid-template-columns: 1fr; }
+		.gate-aside { min-height: 34vh; padding: 2.2rem 1.6rem; justify-content: flex-end; }
+		.gate-aside::before { inset: 1rem; }
+		.gate-form { padding: 1.8rem 1.4rem; }
+	}
+	@media (max-width: 600px) {
+		.grid2 { grid-template-columns: 1fr; }
+		.board { padding: 1rem 0.8rem 3rem; }
+		.card-head { padding: 0.9rem 1rem 0.75rem; flex-wrap: wrap; }
+		.card-body { padding: 1rem 1rem 1.2rem; }
+		.stats { gap: 0.6rem; }
+		.stat { padding: 0.9rem 1rem; }
+		.stat strong { font-size: 2rem; }
+		.item { padding: 0.8rem; gap: 0.6rem; }
+		.sticky-save { justify-content: stretch; bottom: 0.7rem; }
+		.sticky-save .btn { width: 100%; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+	}
 </style>

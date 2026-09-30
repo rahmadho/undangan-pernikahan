@@ -52,7 +52,13 @@ export const ADMIN_SETTING_KEYS = [
 	'cover_mode', 'cover_photo',
 	'decoration', 'decoration_animated',
 	// dekorasi aset file lokal (opsional). Nilai divalidasi ke katalog `decoAssets`.
-	'decoration_asset', 'decoration_asset_slot'
+	'decoration_asset', 'decoration_asset_slot',
+	// efek premium (animasi/parallax/ken-burns/transisi/filter foto).
+	// Saklar memakai string '1'/'0' (konsisten dgn `decoration_animated`).
+	'effects_enabled', 'effects_parallax', 'effects_kenburns',
+	'effects_transition_enabled', 'effects_photo_filter_enabled',
+	// pilihan efek (enum, divalidasi ketat di `normalizeSettingValue`).
+	'effects_transition', 'effects_reveal', 'effects_intensity', 'effects_photo_filter'
 ] as const;
 
 export const ADMIN_SETTING_SET = new Set<string>(ADMIN_SETTING_KEYS);
@@ -60,6 +66,19 @@ export const ADMIN_SETTING_SET = new Set<string>(ADMIN_SETTING_KEYS);
 /** Nilai enum yang divalidasi ketat (cegah nilai sampah ke DB/CSS). */
 const COVER_MODES = new Set(['plain', 'frame', 'shadow', 'polaroid', 'arch', 'circle', 'none']);
 const DECORATIONS = new Set(['floral', 'leaves-sway', 'ethnic-jawa', 'ethnic-minang', 'none']);
+// Efek premium — harus sinkron dgn tipe di `$lib/types` (PHOTO_FILTERS dll).
+const EFFECT_TRANSITIONS = new Set(['none', 'wave', 'fade', 'curve']);
+const EFFECT_REVEALS = new Set(['fade-up', 'fade', 'zoom', 'flip', 'slide', 'blur']);
+const EFFECT_INTENSITIES = new Set(['subtle', 'medium', 'bold']);
+const PHOTO_FILTERS = new Set(['none', 'warm', 'cool', 'mono', 'vintage', 'vivid', 'soft']);
+/** Saklar efek premium (on/off). Key-nya di-whitelist di `ADMIN_SETTING_KEYS`. */
+const EFFECT_TOGGLES = new Set([
+	'effects_enabled',
+	'effects_parallax',
+	'effects_kenburns',
+	'effects_transition_enabled',
+	'effects_photo_filter_enabled'
+]);
 
 /** Bentuk payload tulis konten (subset longgar dari body PUT). */
 export interface ContentPayload {
@@ -107,6 +126,14 @@ export function normalizeSettingValue(key: string, raw: unknown): string | null 
 	// Dekorasi aset lokal: HANYA id dari katalog (path tetap, aman).
 	if (key === 'decoration_asset') val = normalizeDecoAsset(val);
 	if (key === 'decoration_asset_slot') val = normalizeDecoSlot(val);
+	// Efek premium — saklar on/off: simpan '1' bila aktif, jika tidak '0'.
+	if (EFFECT_TOGGLES.has(key)) val = val === '1' || val === 'true' ? '1' : '0';
+	// Efek premium — pilihan enum: nilai asing → kosong (halaman tamu memakai
+	// default aman via `publicSettings`).
+	if (key === 'effects_transition' && !EFFECT_TRANSITIONS.has(val)) val = '';
+	if (key === 'effects_reveal' && !EFFECT_REVEALS.has(val)) val = '';
+	if (key === 'effects_intensity' && !EFFECT_INTENSITIES.has(val)) val = '';
+	if (key === 'effects_photo_filter' && !PHOTO_FILTERS.has(val)) val = '';
 	return val;
 }
 

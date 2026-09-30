@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" role="img" aria-label="Pola titik berlian">
+  <g fill="#000">
+    <path d="M40 30l10 10-10 10-10-10z" opacity=".3" />
+    <circle cx="40" cy="40" r="4" opacity=".7" />
+    <circle cx="0" cy="0" r="3.4" opacity=".8" />
+    <circle cx="80" cy="0" r="3.4" opacity=".8" />
+    <circle cx="0" cy="80" r="3.4" opacity=".8" />
+    <circle cx="80" cy="80" r="3.4" opacity=".8" />
+    <circle cx="0" cy="40" r="2" opacity=".5" />
+    <circle cx="80" cy="40" r="2" opacity=".5" />
+    <circle cx="40" cy="0" r="2" opacity=".5" />
+    <circle cx="40" cy="80" r="2" opacity=".5" />
+  </g>
+  <g stroke="#000" stroke-width="1.2" fill="none" opacity=".3">
+    <path d="M40 30 0 0M40 30 80 0M40 50 0 80M40 50 80 80" />
+  </g>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="Ornamen sudut geometris">
+  <g stroke="#000" stroke-width="1.8" fill="none" stroke-linejoin="round">
+    <path d="M18 18h58v58H18z" opacity=".45" />
+    <path d="M18 76 47 47l29 29-29 29z" opacity=".7" />
+    <path d="M76 18 105 47 76 76 47 47z" opacity=".7" />
+    <path d="M105 47h48v48h-48z" opacity=".4" />
+    <path d="M47 105h48v48H47z" opacity=".4" />
+  </g>
+  <g fill="#000">
+    <circle cx="18" cy="18" r="4" />
+    <circle cx="76" cy="76" r="5.4" />
+    <circle cx="153" cy="47" r="3" opacity=".8" />
+    <circle cx="47" cy="153" r="3" opacity=".8" />
+    <circle cx="105" cy="105" r="3.4" opacity=".7" />
+    <path d="M124 70l6 6-6 6-6-6z" opacity=".7" />
+    <path d="M70 124l6 6-6 6-6-6z" opacity=".7" />
+  </g>
+</svg>

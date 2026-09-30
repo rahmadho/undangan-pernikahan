@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="Ornamen sudut bunga mekar">
+  <g stroke="#000" stroke-width="2" stroke-linecap="round" fill="none">
+    <path d="M14 14c38 0 66 14 84 42" opacity=".75" />
+    <path d="M14 14c0 38 14 66 42 84" opacity=".75" />
+    <path d="M78 34c14 4 22 14 24 30" opacity=".5" />
+    <path d="M34 78c4 14 14 22 30 24" opacity=".5" />
+  </g>
+  <g fill="#000">
+    <circle cx="82" cy="82" r="10" />
+    <circle cx="82" cy="82" r="4" fill="#fff" />
+    <path d="M82 82c-10-2-18-8-24-18 12-2 22 2 30 12Z" opacity=".6" />
+    <path d="M82 82c-2-10-8-18-18-24-2 12 2 22 12 30Z" opacity=".6" />
+    <path d="M82 82c10 2 18 8 24 18-12 2-22-2-30-12Z" opacity=".6" />
+    <path d="M82 82c2 10 8 18 18 24 2-12-2-22-12-30Z" opacity=".6" />
+    <circle cx="126" cy="48" r="4" opacity=".7" />
+    <circle cx="48" cy="126" r="4" opacity=".7" />
+    <circle cx="152" cy="30" r="2.6" opacity=".5" />
+    <circle cx="30" cy="152" r="2.6" opacity=".5" />
+  </g>
+</svg>

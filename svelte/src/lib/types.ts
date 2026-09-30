@@ -98,6 +98,99 @@ export const DECORATION_OPTIONS: { value: Decoration; label: string }[] = [
 	{ value: 'none', label: 'Tanpa Dekorasi' }
 ];
 
+/**
+ * Mode efek foto (filter CSS) untuk foto galeri, mempelai, & cover.
+ * - none    : tanpa efek (foto apa adanya)
+ * - warm    : hangat keemasan (sepia halus)
+ * - cool    : sejuk kebiruan
+ * - mono    : hitam-putih elegan
+ * - vintage : pudar klasik ala film
+ * - vivid   : kontras & saturasi dinaikkan
+ * - soft    : lembut, sedikit buram & cerah
+ */
+export type PhotoFilter = 'none' | 'warm' | 'cool' | 'mono' | 'vintage' | 'vivid' | 'soft';
+
+/** Intensitas efek premium (mengatur besar/kecepatan). */
+export type EffectIntensity = 'subtle' | 'medium' | 'bold';
+
+/**
+ * Gaya animasi reveal saat scroll (X-axis masuk + varian lain).
+ * Nilai lama `[data-reveal]` tetap dipakai sebagai default (`fade-up`).
+ */
+export type RevealStyle = 'fade-up' | 'fade' | 'zoom' | 'flip' | 'slide' | 'blur';
+
+/**
+ * Gaya transisi antar-section.
+ * - none  : potongan keras (default, hemat daya)
+ * - wave  : pembatas gelombang
+ * - fade  : gradasi lembut antar latar
+ * - curve : lengkung halus
+ */
+export type SectionTransition = 'none' | 'wave' | 'fade' | 'curve';
+
+/** Nilai default efek premium (semua NONAKTIF kecuali transisi minimal). */
+export const DEFAULT_PHOTO_FILTER: PhotoFilter = 'none';
+export const DEFAULT_EFFECT_INTENSITY: EffectIntensity = 'medium';
+export const DEFAULT_REVEAL_STYLE: RevealStyle = 'fade-up';
+export const DEFAULT_SECTION_TRANSITION: SectionTransition = 'none';
+
+/**
+ * Deskriptor opsi efek premium untuk dirender jadi kartu/chip di panel admin.
+ * SUMBER KEBENARAN TUNGGAL untuk label UI (halaman tamu hanya membaca nilai).
+ */
+export interface EffectOption<T extends string> {
+	value: T;
+	label: string;
+	hint: string;
+	icon: string;
+}
+
+export const PHOTO_FILTER_OPTIONS: EffectOption<PhotoFilter>[] = [
+	{ value: 'none', label: 'Asli', hint: 'Tanpa filter', icon: '🚫' },
+	{ value: 'warm', label: 'Hangat', hint: 'Keemasan lembut', icon: '🌅' },
+	{ value: 'cool', label: 'Sejuk', hint: 'Nuansa kebiruan', icon: '❄️' },
+	{ value: 'mono', label: 'Monokrom', hint: 'Hitam-putih', icon: '⚫' },
+	{ value: 'vintage', label: 'Vintage', hint: 'Pudar klasik', icon: '📼' },
+	{ value: 'vivid', label: 'Vivid', hint: 'Kontras & tajam', icon: '🌈' },
+	{ value: 'soft', label: 'Lembut', hint: 'Cerah & buram', icon: '☁️' }
+];
+
+export const EFFECT_INTENSITY_OPTIONS: EffectOption<EffectIntensity>[] = [
+	{ value: 'subtle', label: 'Halus', hint: 'Efek minimal', icon: '🪶' },
+	{ value: 'medium', label: 'Sedang', hint: 'Seimbang', icon: '⚖️' },
+	{ value: 'bold', label: 'Kuat', hint: 'Efek mencolok', icon: '💥' }
+];
+
+export const REVEAL_STYLE_OPTIONS: EffectOption<RevealStyle>[] = [
+	{ value: 'fade-up', label: 'Naik', hint: 'Muncul dari bawah', icon: '⬆️' },
+	{ value: 'fade', label: 'Pudar', hint: 'Hanya memudar', icon: '🌫️' },
+	{ value: 'zoom', label: 'Zoom', hint: 'Membesar lembut', icon: '🔍' },
+	{ value: 'flip', label: 'Balik', hint: 'Putar 3D halus', icon: '🔄' },
+	{ value: 'slide', label: 'Geser', hint: 'Masuk dari samping', icon: '➡️' },
+	{ value: 'blur', label: 'Blur', hint: 'Kabur lalu tajam', icon: '💨' }
+];
+
+export const SECTION_TRANSITION_OPTIONS: EffectOption<SectionTransition>[] = [
+	{ value: 'none', label: 'Tanpa', hint: 'Potongan keras', icon: '⬜' },
+	{ value: 'wave', label: 'Gelombang', hint: 'Pembatas ombak', icon: '🌊' },
+	{ value: 'fade', label: 'Gradasi', hint: 'Memudar lembut', icon: '🌁' },
+	{ value: 'curve', label: 'Lengkung', hint: 'Sudut membulat', icon: '◠' }
+];
+
+/** Nilai filter foto yang valid (untuk pemakaian runtime aman). */
+export const PHOTO_FILTERS: readonly PhotoFilter[] = [
+	'none', 'warm', 'cool', 'mono', 'vintage', 'vivid', 'soft'
+];
+
+/** Nilai intensitas yang valid. */
+export const EFFECT_INTENSITIES: readonly EffectIntensity[] = ['subtle', 'medium', 'bold'];
+
+/** Nilai gaya reveal yang valid. */
+export const REVEAL_STYLES: readonly RevealStyle[] = ['fade-up', 'fade', 'zoom', 'flip', 'slide', 'blur'];
+
+/** Nilai transisi section yang valid. */
+export const SECTION_TRANSITIONS: readonly SectionTransition[] = ['none', 'wave', 'fade', 'curve'];
+
 export interface Settings {
 	music_url: string;
 	quote: string;
@@ -137,6 +230,29 @@ export interface Settings {
 	decoration_asset: string;
 	/** Di mana aset lokal ditampilkan: 'both' | 'cover' | 'hero'. */
 	decoration_asset_slot: string;
+
+	// ---------- EFEK PREMIUM (nonaktif secara default) ----------
+	// Semua saklar memakai '1' (aktif) / '0' atau '' (nonaktif). Halaman tamu
+	// hanya mengaktifkan efek bila nilainya '1' DAN pengguna tidak meminta
+	// reduced-motion (lihat theme.ts: applyPremiumEffects).
+	/** '1' = aktifkan animasi reveal saat scroll (IntersectionObserver). */
+	effects_enabled: string;
+	/** '1' = gerakkan latar hero saat scroll (parallax halus). */
+	effects_parallax: string;
+	/** '1' = efek ken-burns (zoom lambat) pada foto hero/cover. */
+	effects_kenburns: string;
+	/** '1' = tampilkan pembatas/transisi antar-section. */
+	effects_transition_enabled: string;
+	/** '1' = terapkan filter foto pada foto mempelai/galeri/cover. */
+	effects_photo_filter_enabled: string;
+	/** Gaya transisi antar-section: lihat `SectionTransition`. */
+	effects_transition: SectionTransition;
+	/** Gaya animasi reveal: lihat `RevealStyle`. */
+	effects_reveal: RevealStyle;
+	/** Intensitas efek: lihat `EffectIntensity`. */
+	effects_intensity: EffectIntensity;
+	/** Filter foto: lihat `PhotoFilter`. */
+	effects_photo_filter: PhotoFilter;
 }
 
 export interface CustomTheme {

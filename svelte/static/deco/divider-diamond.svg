@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 24" fill="none" role="img" aria-label="Pembatas wajik">
+  <line x1="0" y1="12" x2="88" y2="12" stroke="#000" stroke-width="1.4" opacity=".45" />
+  <line x1="152" y1="12" x2="240" y2="12" stroke="#000" stroke-width="1.4" opacity=".45" />
+  <g fill="#000">
+    <path d="M120 2l10 10-10 10-10-10z" />
+    <path d="M120 8l4 4-4 4-4-4z" fill="#fff" />
+    <path d="M99 12l5-5 5 5-5 5z" opacity=".7" />
+    <path d="M141 12l-5-5-5 5 5 5z" opacity=".7" />
+    <path d="M90 12l4-4 4 4-4 4z" opacity=".5" />
+    <path d="M150 12l-4-4-4 4 4 4z" opacity=".5" />
+    <circle cx="80" cy="12" r="2" opacity=".7" />
+    <circle cx="160" cy="12" r="2" opacity=".7" />
+  </g>
+</svg>

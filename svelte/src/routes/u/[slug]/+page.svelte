@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { InvitationData } from '$lib/types';
-	import { applyTheme, applyBackground, initReveal } from '$lib/theme';
+	import { applyTheme, applyBackground, applyPremiumEffects } from '$lib/theme';
 	import Ornament from '$lib/components/Ornament.svelte';
 	import DecoAsset from '$lib/components/DecoAsset.svelte';
 	import CoverPhoto from '$lib/components/CoverPhoto.svelte';
@@ -56,6 +56,20 @@
 	const decoAssetSlot = $derived(s.decoration_asset_slot || 'both');
 	const decoAssetOnCover = $derived(decoAssetOn && decoAssetSlot !== 'hero');
 	const decoAssetOnHero = $derived(decoAssetOn && decoAssetSlot !== 'cover');
+
+	// ---------- EFEK PREMIUM (OPT-IN, nonaktif secara default) ----------
+	// Nilai sudah dinormalisasi di server (`publicSettings`); di sini hanya
+	// membaca. `effects_enabled` = gerbang utama. Efek gerak juga dimatikan
+	// saat `prefers-reduced-motion` (ditangani di `applyPremiumEffects`).
+	const fxEnabled = $derived(s.effects_enabled === '1');
+	const fxParallax = $derived(fxEnabled && s.effects_parallax === '1');
+	const fxKenburns = $derived(fxEnabled && s.effects_kenburns === '1');
+	const fxTransition = $derived(
+		fxEnabled && s.effects_transition_enabled === '1' ? s.effects_transition || 'none' : 'none'
+	);
+	const fxPhotoFilter = $derived(
+		fxEnabled && s.effects_photo_filter_enabled === '1' ? s.effects_photo_filter || 'none' : 'none'
+	);
 
 	// ---------- State ----------
 	let opened = $state(false); // cover sudah dibuka?
@@ -254,7 +268,9 @@
 
 		tickCountdown();
 		const iv = setInterval(tickCountdown, 1000);
-		const stopReveal = initReveal();
+		// Efek premium (reveal/parallax/ken-burns/transisi/filter) — semuanya
+		// nonaktif kecuali diaktifkan via settings; reduced-motion dihormati.
+		const stopEffects = applyPremiumEffects(s as unknown as Record<string, string>);
 
 		// scroll-spy nav
 		const io = new IntersectionObserver(
@@ -272,7 +288,7 @@
 
 		return () => {
 			clearInterval(iv);
-			stopReveal();
+			stopEffects();
 			io.disconnect();
 		};
 	});
@@ -307,8 +323,15 @@
 {/if}
 
 <!-- ================= COVER ================= -->
-<div class="cover" class:opened class:deco-animated={decoAnimated} data-deco={decoration}>
-	<div class="cover-bg"></div>
+<div
+	class="cover"
+	class:opened
+	class:deco-animated={decoAnimated}
+	class:fx-kenburns={fxKenburns}
+	class:fx-filter={fxPhotoFilter !== 'none'}
+	data-deco={decoration}
+>
+	<div class="cover-bg fx-parallax-layer"></div>
 	<!-- Dekorasi sudut: bisa beranimasi (daun/bunga berayun) -->
 	{#if decoration !== 'none'}
 		<span class="cover-deco cd-tl"><Ornament variant={decoVariantTL} animated={decoAnimated} /></span>
@@ -350,12 +373,18 @@
 </div>
 
 <!-- ================= ISI UNDANGAN ================= -->
-<main class:locked={!opened}>
+<main
+	class:locked={!opened}
+	class:fx-parallax={fxParallax}
+	class:fx-kenburns={fxKenburns}
+	class:fx-filter={fxPhotoFilter !== 'none'}
+	data-fx-transition={fxTransition}
+>
 	<!-- HERO -->
 	<section id="home" class="hero">
-		<div class="bg-layer"></div>
+		<div class="bg-layer fx-parallax-layer"></div>
 		<div class="bg-overlay"></div>
-		<div class="orn-layer">
+		<div class="orn-layer fx-parallax-layer-soft">
 			{#if decoration !== 'none'}
 				<span class="orn ornament tl"><Ornament variant={heroVariantTL} animated={decoAnimated} /></span>
 				<span class="orn ornament tr"><Ornament variant={heroVariantTR} animated={decoAnimated} /></span>
@@ -394,6 +423,13 @@
 		</div>
 	</section>
 
+	<!-- Pembatas transisi antar-section (opsional; hanya bila efek aktif). -->
+	{#if fxTransition !== 'none'}
+		<div class="fx-transition fx-transition-{fxTransition}" aria-hidden="true">
+			<span></span>
+		</div>
+	{/if}
+
 	<!-- QUOTE -->
 	{#if s.quote}
 		<section class="quote-sec">
@@ -413,7 +449,7 @@
 
 			<div class="couple-grid">
 				{#each [{ role: 'Mempelai Pria', p: couple?.groom_photo, n: couple?.groom_full || couple?.groom_name, ig: couple?.groom_ig, par: couple?.groom_parents }, { role: 'Mempelai Wanita', p: couple?.bride_photo, n: couple?.bride_full || couple?.bride_name, ig: couple?.bride_ig, par: couple?.bride_parents }] as m}
-					<div class="person" data-reveal="up">
+					<div class="person fx-hoverable" data-reveal="up">
 						<div class="photo-ring float">
 							{#if m.p}<img src={m.p} alt={m.n || ''} loading="lazy" />{/if}
 						</div>
@@ -476,7 +512,7 @@
 				<div class="gallery-grid">
 					{#each gallery as g, i}
 						<button
-							class="g-item"
+							class="g-item fx-hoverable"
 							data-reveal="zoom"
 							data-reveal-delay={(i % 3) * 80}
 							onclick={() => (lbSrc = g.url)}
@@ -1596,4 +1632,92 @@
 			scroll-behavior: auto;
 		}
 	}
+
+	/* =================== EFEK PREMIUM (OPT-IN) ===================
+	 * Kelas `fx-*` hanya dipasang saat setelan efek diaktifkan (lihat
+	 * `applyPremiumEffects` di theme.ts). Detail gaya/filter ada di
+	 * `style.css` global (kelas `premium-*` di <body>); di sini hanya
+	 * penyesuaian yang perlu menjangkau elemen ber-scope Svelte.
+	 */
+
+	/* Ken-Burns pada latar hero/cover: hanya saat efek aktif. Tanpa efek,
+	   latar tetap diam seperti semula. */
+	:global(main.fx-kenburns) .bg-layer,
+	:global(.cover.fx-kenburns) .cover-bg {
+		animation: kenburnsZoom 26s ease-in-out infinite;
+		transform-origin: center center;
+	}
+	@keyframes kenburnsZoom {
+		0% {
+			transform: scale(1.02);
+		}
+		50% {
+			transform: scale(1.12) translate3d(-1%, -1%, 0);
+		}
+		100% {
+			transform: scale(1.02);
+		}
+	}
+
+	/* Parallax: `--parallax-y` di-set JS pada <body>. Kita pakai var itu
+	   untuk menggeser latar hero. Hanya aktif bila `fx-parallax`. */
+	:global(main.fx-parallax) .bg-layer.fx-parallax-layer {
+		transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.06);
+		will-change: transform;
+	}
+	:global(main.fx-parallax) .orn-layer.fx-parallax-layer-soft {
+		transform: translate3d(0, calc(var(--parallax-y, 0px) * 0.4), 0);
+		will-change: transform;
+	}
+	/* Bila parallax & ken-burns sama-sama aktif, ken-burns menang atas parallax
+	   pada elemen latar yang sama (hindari konflik transform). */
+	:global(main.fx-parallax.fx-kenburns) .bg-layer.fx-parallax-layer {
+		transform: none;
+	}
+
+	/* Hover halus pada foto (mempelai & galeri) — hanya bila gerak diizinkan. */
+	@media (prefers-reduced-motion: no-preference) {
+		.fx-hoverable .photo-ring {
+			transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+		}
+		.fx-hoverable:hover .photo-ring {
+			transform: translateY(-4px) scale(1.02);
+		}
+	}
+
+	/* Pembatas transisi antar-section (hanya dirender saat efek aktif). */
+	.fx-transition {
+		position: relative;
+		height: 64px;
+		margin: -32px 0;
+		pointer-events: none;
+		z-index: 1;
+	}
+	.fx-transition span {
+		position: absolute;
+		inset: 0;
+		display: block;
+	}
+	/* Gelombang: dua lengkung bertumpuk dengan warna aksen. */
+	.fx-transition-wave span {
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: 100% 100%;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 64' preserveAspectRatio='none'%3E%3Cpath d='M0 32 C 200 0, 400 64, 600 32 S 1000 0, 1200 32' fill='none' stroke='%23b08d47' stroke-opacity='0.35' stroke-width='2'/%3E%3C/svg%3E");
+	}
+	/* Gradasi: pita memudar lembut antara dua latar. */
+	.fx-transition-fade span {
+		background: linear-gradient(180deg, transparent, var(--cream-2) 45%, transparent);
+		opacity: 0.7;
+	}
+	/* Lengkung: satu garis emas melengkung halus. */
+	.fx-transition-curve span {
+		background: radial-gradient(
+			120% 100% at 50% 0%,
+			transparent 60%,
+			color-mix(in srgb, var(--gold) 22%, transparent) 61%,
+			transparent 63%
+		);
+	}
+	/* Tanpa gerak: transisi tetap tampil (murni dekoratif, bukan animasi). */
 </style>

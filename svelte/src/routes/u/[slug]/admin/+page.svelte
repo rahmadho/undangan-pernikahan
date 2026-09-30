@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { CustomTheme } from '$lib/types';
+	import {
+		EFFECT_INTENSITY_OPTIONS,
+		REVEAL_STYLE_OPTIONS,
+		SECTION_TRANSITION_OPTIONS,
+		PHOTO_FILTER_OPTIONS
+	} from '$lib/types';
 	import { DECO_ASSETS, decoAssetUrl } from '$lib/decoAssets';
 	import { BUNDLE_PRESETS } from '$lib/bundles';
 
@@ -111,8 +117,8 @@
 
 	const tabs = [
 		{ id: 'dashboard', label: 'Dasbor' },
-		{ id: 'konten', label: 'Konten' },
 		{ id: 'impor', label: 'Impor' },
+		{ id: 'konten', label: 'Konten' },
 		{ id: 'tampilan', label: 'Tampilan' },
 		{ id: 'tema', label: 'Tema' },
 		{ id: 'tamu', label: 'Tamu' },
@@ -348,6 +354,34 @@
 	}
 	function delGallery(i: number) {
 		gallery = gallery.filter((_, x) => x !== i);
+	}
+
+	// ---------- Efek premium ----------
+	// Sumber nilai = `$lib/types` (label/hint/icon), agar panel admin dan
+	// halaman tamu tidak pernah berbeda. Kunci settings mengikuti whitelist
+	// server (`server/content.ts` + `server/invitation.ts`):
+	//   effects_enabled / effects_parallax / effects_kenburns            → '1'|'0'
+	//   effects_transition_enabled + effects_transition                  → none|wave|fade|curve
+	//   effects_photo_filter_enabled + effects_photo_filter              → none|warm|…
+	//   effects_reveal → fade-up|fade|zoom|flip|slide|blur
+	//   effects_intensity → subtle|medium|bold
+	const FX_INTENSITY = EFFECT_INTENSITY_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
+	const FX_REVEAL = REVEAL_STYLE_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
+	const FX_TRANSITION = SECTION_TRANSITION_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
+	const FX_FILTERS = PHOTO_FILTER_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
+
+	/** Setel ulang seluruh efek premium ke nilai default aman (nonaktif). */
+	function resetEffects() {
+		settings.effects_enabled = '0';
+		settings.effects_parallax = '0';
+		settings.effects_kenburns = '0';
+		settings.effects_transition_enabled = '0';
+		settings.effects_photo_filter_enabled = '0';
+		settings.effects_transition = 'none';
+		settings.effects_reveal = 'fade-up';
+		settings.effects_intensity = 'medium';
+		settings.effects_photo_filter = 'none';
+		showToast('Efek premium disetel ulang');
 	}
 
 	// ---------- Tutu tamu ----------
@@ -1190,6 +1224,166 @@
 						</div>
 					</section>
 
+					<!-- ============ EFEK PREMIUM ============ -->
+					<section class="card fx-card">
+						<div class="card-head">
+							<h2>Efek Premium</h2>
+							<span class="fx-badge">Premium</span>
+						</div>
+						<div class="card-body">
+							<p class="hint">
+								Efek gerak dan olah foto untuk kesan lebih mewah. Semua nonaktif secara
+								bawaan — tamu yang mengaktifkan "kurangi gerakan" di perangkatnya tetap
+								aman karena animasi dihormati.
+							</p>
+
+							<!-- Saklar utama -->
+							<label class="check fx-master">
+								<input
+									type="checkbox"
+									checked={settings.effects_enabled === '1'}
+									onchange={(e) => (settings.effects_enabled = e.currentTarget.checked ? '1' : '0')}
+								/>
+								Aktifkan Efek Premium
+							</label>
+
+							{#if settings.effects_enabled === '1'}
+								<!-- Intensitas -->
+								<div class="fx-row">
+									<div class="fx-row-head">
+										<span class="fx-label">Intensitas efek</span>
+										<span class="fx-pill">
+											{FX_INTENSITY.find((x) => x.v === (settings.effects_intensity || 'medium'))?.l || 'Sedang'}
+										</span>
+									</div>
+									<div class="fx-scale" role="radiogroup" aria-label="Intensitas efek">
+										{#each FX_INTENSITY as o}
+											<button
+												type="button"
+												class="fx-seg"
+												class:on={(settings.effects_intensity || 'medium') === o.v}
+												role="radio"
+												aria-checked={(settings.effects_intensity || 'medium') === o.v}
+												title={o.hint}
+												onclick={() => (settings.effects_intensity = o.v)}
+											>{o.l}</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Saklar efek gerak -->
+								<div class="fx-toggles">
+									<label class="check">
+										<input
+											type="checkbox"
+											checked={settings.effects_parallax === '1'}
+											onchange={(e) => (settings.effects_parallax = e.currentTarget.checked ? '1' : '0')}
+										/>
+										<span><strong>Parallax</strong> — latar bergerak halus saat digulir</span>
+									</label>
+									<label class="check">
+										<input
+											type="checkbox"
+											checked={settings.effects_kenburns === '1'}
+											onchange={(e) => (settings.effects_kenburns = e.currentTarget.checked ? '1' : '0')}
+										/>
+										<span><strong>Ken Burns</strong> — zoom perlahan pada foto cover</span>
+									</label>
+								</div>
+
+								<!-- Gaya reveal -->
+								<div class="fx-row">
+									<div class="fx-row-head">
+										<span class="fx-label">Gaya reveal (kemunculan bagian)</span>
+										<span class="fx-pill">
+											{FX_REVEAL.find((x) => x.v === (settings.effects_reveal || 'fade-up'))?.l || 'Naik'}
+										</span>
+									</div>
+									<div class="fx-scale" role="radiogroup" aria-label="Gaya reveal">
+										{#each FX_REVEAL as o}
+											<button
+												type="button"
+												class="fx-seg"
+												class:on={(settings.effects_reveal || 'fade-up') === o.v}
+												role="radio"
+												aria-checked={(settings.effects_reveal || 'fade-up') === o.v}
+												title={o.hint}
+												onclick={() => (settings.effects_reveal = o.v)}
+											>{o.l}</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Transisi antar-bagian -->
+								<label class="check">
+									<input
+										type="checkbox"
+										checked={settings.effects_transition_enabled === '1'}
+										onchange={(e) => (settings.effects_transition_enabled = e.currentTarget.checked ? '1' : '0')}
+									/>
+									<span><strong>Transisi antar-bagian</strong> — pembatas/gradasi antar seksi</span>
+								</label>
+								{#if settings.effects_transition_enabled === '1'}
+									<div class="fx-sub">
+										<div class="fx-scale" role="radiogroup" aria-label="Gaya transisi">
+											{#each FX_TRANSITION as o}
+												<button
+													type="button"
+													class="fx-seg"
+													class:on={(settings.effects_transition || 'none') === o.v}
+													role="radio"
+													aria-checked={(settings.effects_transition || 'none') === o.v}
+													title={o.hint}
+													onclick={() => (settings.effects_transition = o.v)}
+												>{o.l}</button>
+											{/each}
+										</div>
+									</div>
+								{/if}
+
+								<!-- Filter foto -->
+								<label class="check">
+									<input
+										type="checkbox"
+										checked={settings.effects_photo_filter_enabled === '1'}
+										onchange={(e) => (settings.effects_photo_filter_enabled = e.currentTarget.checked ? '1' : '0')}
+									/>
+									<span><strong>Filter foto</strong> — samakan nuansa foto mempelai, galeri &amp; cover</span>
+								</label>
+								{#if settings.effects_photo_filter_enabled === '1'}
+									<div class="fx-sub">
+										<div class="fx-filter-grid" role="radiogroup" aria-label="Filter foto">
+											{#each FX_FILTERS as f}
+												<button
+													type="button"
+													class="fx-filter"
+													class:on={(settings.effects_photo_filter || 'none') === f.v}
+													role="radio"
+													aria-checked={(settings.effects_photo_filter || 'none') === f.v}
+													title={f.hint}
+													onclick={() => (settings.effects_photo_filter = f.v)}
+												>
+													<span class="fx-filter-thumb" data-filter={f.v}>
+														{#if settings.cover_photo}
+															<img src={settings.cover_photo} alt="" />
+														{:else}
+															<span class="fx-filter-demo" aria-hidden="true"></span>
+														{/if}
+													</span>
+													<span class="fx-filter-name">{f.l}</span>
+												</button>
+											{/each}
+										</div>
+									</div>
+								{/if}
+
+								<div class="row end fx-reset">
+									<button class="ghost sm" type="button" onclick={resetEffects}>Setel ulang efek</button>
+								</div>
+							{/if}
+						</div>
+					</section>
+
 					<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>{loading ? 'Menyimpan…' : 'Simpan tampilan'}</button></div>
 				{:else if tab === 'tema'}
 					<section class="card">
@@ -1606,8 +1800,9 @@
 		position: sticky;
 		top: 0;
 		height: 100vh;
+		overflow: hidden;
 	}
-	.rail-brand { display: flex; gap: 0.7rem; align-items: center; }
+	.rail-brand { display: flex; gap: 0.7rem; align-items: center; flex: none; }
 	.rail-mark {
 		width: 38px; height: 38px; flex: none;
 		display: grid; place-items: center;
@@ -1632,7 +1827,9 @@
 	   berada di batas/gagal. Nilai di bawah terukur ≥5.4:1 pada latar rel gelap. */
 	.rail-slug { font-size: 0.72rem; color: rgba(239, 231, 218, 0.72); letter-spacing: 0.03em; }
 
-	.rail-tabs { display: flex; flex-direction: column; gap: 0.1rem; }
+	/* Tab bisa digulir: brand & footer tetap terlihat, daftar menu menggulir
+	   di layar pendek sehingga semua item + kontrol footer tetap terjangkau. */
+	.rail-tabs { display: flex; flex-direction: column; gap: 0.1rem; flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 	.rail-tabs button {
 		display: flex;
 		align-items: baseline;
@@ -1667,7 +1864,7 @@
 	.rail-tabs button.on .tab-no { color: #e0bd7f; }
 	.tab-label { font-size: 0.86rem; font-weight: 500; }
 
-	.rail-foot { margin-top: auto; display: flex; flex-direction: column; gap: 0.85rem; }
+	.rail-foot { margin-top: auto; display: flex; flex-direction: column; gap: 0.85rem; flex: none; }
 	.rail-theme {
 		display: flex; align-items: center; gap: 0.5rem;
 		padding: 0.6rem 0.7rem;
@@ -1988,6 +2185,98 @@
 	.cover-preview.cp-arch { border-radius: 50% 50% 8px 8px / 34% 34% 8px 8px; border: 3px solid var(--brass); }
 	.cover-preview.cp-circle { border: 3px solid var(--brass); }
 
+	/* ---- Efek premium ---- */
+	.fx-card .card-head { background: linear-gradient(180deg, #fffdf8, #fbf7ee); }
+	.fx-badge {
+		font-size: 0.68rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #7a5a2a;
+		background: linear-gradient(150deg, #f6e7c4, #efd9a6);
+		border: 1px solid #e5cf9c;
+		border-radius: 999px;
+		padding: 0.2rem 0.6rem;
+	}
+	.fx-master { margin-top: 0.2rem; font-weight: 600; color: var(--ink); }
+	.fx-master input { accent-color: var(--brass); }
+	.fx-row { margin-top: 0.9rem; }
+	.fx-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; margin-bottom: 0.4rem; }
+	.fx-label { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); letter-spacing: 0.01em; }
+	.fx-pill {
+		font-size: 0.72rem;
+		font-weight: 600;
+		color: var(--brass);
+		background: #f6efe0;
+		border-radius: 999px;
+		padding: 0.12rem 0.55rem;
+	}
+	.fx-scale { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+	.fx-seg {
+		border: 1px solid var(--rule);
+		background: #fff;
+		border-radius: 999px;
+		padding: 0.36rem 0.9rem;
+		font-size: 0.8rem;
+		color: var(--ink-2);
+		cursor: pointer;
+		transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+	}
+	.fx-seg:hover { border-color: var(--brass-lite); }
+	.fx-seg.on {
+		border-color: var(--brass);
+		background: #fffdf6;
+		color: var(--bench);
+		font-weight: 600;
+		box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.12);
+	}
+	.fx-toggles { display: flex; flex-direction: column; }
+	.fx-toggles .check { align-items: flex-start; }
+	.fx-toggles .check span { line-height: 1.45; }
+	.fx-toggles .check strong { color: var(--ink); }
+	.fx-sub {
+		margin: 0.4rem 0 0 1.7rem;
+		padding: 0.6rem 0.75rem;
+		border-left: 2px solid var(--rule);
+		background: #fdfbf6;
+		border-radius: 0 9px 9px 0;
+	}
+	.fx-filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 0.5rem; }
+	.fx-filter {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		border: 1px solid var(--rule);
+		background: #fff;
+		border-radius: 10px;
+		padding: 0.4rem;
+		cursor: pointer;
+		transition: border-color 0.14s ease, box-shadow 0.14s ease;
+	}
+	.fx-filter:hover { border-color: var(--brass-lite); }
+	.fx-filter.on { border-color: var(--brass); box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.12); }
+	.fx-filter-thumb {
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		border-radius: 7px;
+		background: linear-gradient(135deg, #c9b18a, #8f9c7f 55%, #7b6a56);
+		position: relative;
+	}
+	.fx-filter-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+	.fx-filter-demo { position: absolute; inset: 0; }
+	.fx-filter-name { font-size: 0.72rem; font-weight: 500; color: var(--ink-2); }
+	.fx-filter.on .fx-filter-name { color: var(--bench); font-weight: 600; }
+	/* Pratinjau filter (thumbnail) — cermin dari style.css halaman tamu. */
+	.fx-filter-thumb[data-filter='warm'] { filter: sepia(0.25) saturate(1.15) brightness(1.05); }
+	.fx-filter-thumb[data-filter='cool'] { filter: saturate(1.05) hue-rotate(180deg) brightness(1.02); }
+	.fx-filter-thumb[data-filter='mono'] { filter: grayscale(1) contrast(1.05); }
+	.fx-filter-thumb[data-filter='vintage'] { filter: sepia(0.45) contrast(0.95) brightness(1.02) saturate(0.85); }
+	.fx-filter-thumb[data-filter='vivid'] { filter: saturate(1.4) contrast(1.1); }
+	.fx-filter-thumb[data-filter='soft'] { filter: brightness(1.08) contrast(0.92) saturate(0.95) blur(0.4px); }
+	.fx-reset { margin-top: 1rem; }
+
 	/* ---- Daftar & tabel ---- */
 	.list-row {
 		display: flex; justify-content: space-between; align-items: center; gap: 0.8rem;
@@ -2111,10 +2400,14 @@
 			flex-direction: column;
 			gap: 0.85rem;
 			padding: 0.95rem 1rem 0.85rem;
+			overflow: visible;
 		}
 		.rail-tabs {
 			flex-direction: row;
+			flex: none;
+			min-height: 0;
 			overflow-x: auto;
+			overflow-y: hidden;
 			gap: 0.25rem;
 			padding-bottom: 0.2rem;
 			scrollbar-width: thin;

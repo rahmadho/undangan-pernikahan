@@ -35,7 +35,11 @@ export const SETTING_KEYS = [
 	// foto & dekorasi cover
 	'cover_mode', 'cover_photo', 'decoration', 'decoration_animated',
 	// dekorasi dari aset file lokal (opsional; lihat decoAssets.ts)
-	'decoration_asset', 'decoration_asset_slot'
+	'decoration_asset', 'decoration_asset_slot',
+	// efek premium (animasi/parallax/ken-burns/transisi/filter foto)
+	'effects_enabled', 'effects_parallax', 'effects_kenburns',
+	'effects_transition_enabled', 'effects_photo_filter_enabled',
+	'effects_transition', 'effects_reveal', 'effects_intensity', 'effects_photo_filter'
 ] as const;
 
 /** Ambil semua settings account sebagai objek key->value. */
@@ -100,8 +104,40 @@ export function publicSettings(account: Account, settings: Record<string, string
 		// dekorasi aset lokal (opsional). Dinormalisasi ke katalog agar halaman
 		// tamu tak pernah menerima id asing.
 		decoration_asset: normalizeDecoAsset(settings.decoration_asset),
-		decoration_asset_slot: normalizeDecoSlot(settings.decoration_asset_slot)
+		decoration_asset_slot: normalizeDecoSlot(settings.decoration_asset_slot),
+		// ---------- efek premium ----------
+		// Halaman tamu TIDAK pernah diaktifkan efek secara default: saklar
+		// mengembalikan '1' hanya bila DB benar-benar berisi '1'.
+		effects_enabled: settings.effects_enabled === '1' ? '1' : '0',
+		effects_parallax: settings.effects_parallax === '1' ? '1' : '0',
+		effects_kenburns: settings.effects_kenburns === '1' ? '1' : '0',
+		effects_transition_enabled: settings.effects_transition_enabled === '1' ? '1' : '0',
+		effects_photo_filter_enabled: settings.effects_photo_filter_enabled === '1' ? '1' : '0',
+		// Pilihan enum: nilai asing/kosong → default aman (tak berefek).
+		effects_transition: normalizeEffectEnum(settings.effects_transition, 'none'),
+		effects_reveal: normalizeEffectEnum(settings.effects_reveal, 'fade-up'),
+		effects_intensity: normalizeEffectEnum(settings.effects_intensity, 'medium'),
+		effects_photo_filter: normalizeEffectEnum(settings.effects_photo_filter, 'none')
 	};
+}
+
+/** Kumpulan nilai yang dianggap sah untuk opsi efek premium (enum). */
+const EFFECT_ENUMS: Record<string, readonly string[]> = {
+	effects_transition: ['none', 'wave', 'fade', 'curve'],
+	effects_reveal: ['fade-up', 'fade', 'zoom', 'flip', 'slide', 'blur'],
+	effects_intensity: ['subtle', 'medium', 'bold'],
+	effects_photo_filter: ['none', 'warm', 'cool', 'mono', 'vintage', 'vivid', 'soft']
+};
+
+/**
+ * Kembalikan nilai enum efek yang sah, atau `fallback` bila kosong/asing.
+ * Lapisan pengaman terakhir sebelum data dikirim ke halaman tamu publik.
+ * `fallback` sekaligus menjadi kunci grup enum yang dipakai.
+ */
+function normalizeEffectEnum(v: unknown, fallback: string): string {
+	const list = Object.values(EFFECT_ENUMS).find((l) => l.includes(fallback));
+	const val = typeof v === 'string' ? v.trim() : '';
+	return list && list.includes(val) ? val : fallback;
 }
 
 /** Tema kustom milik account. */

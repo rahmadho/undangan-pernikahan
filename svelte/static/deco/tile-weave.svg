@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Pola anyaman rotan">
+  <g stroke="#000" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7">
+    <path d="M0 32c8-12 24-12 32 0s24 12 32 0" />
+    <path d="M0 0c8 12 24 12 32 0s24-12 32 0" opacity=".5" />
+    <path d="M32 0c8 12 24 12 32 0" opacity="0" />
+    <path d="M0 64c8-12 24-12 32 0s24 12 32 0" opacity=".5" />
+  </g>
+  <g fill="#000" opacity=".85">
+    <path d="M0 32c8-12 24-12 32 0" opacity=".5" />
+    <path d="M32 32c8-12 24-12 32 0" opacity=".5" />
+    <circle cx="32" cy="32" r="6" />
+    <circle cx="0" cy="0" r="4" opacity=".7" />
+    <circle cx="64" cy="0" r="4" opacity=".7" />
+    <circle cx="0" cy="64" r="4" opacity=".7" />
+    <circle cx="64" cy="64" r="4" opacity=".7" />
+  </g>
+</svg>

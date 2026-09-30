@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 24" fill="none" role="img" aria-label="Pembatas garis bergelombang">
+  <path d="M0 12c10-7 20-7 30 0s20 7 30 0 20-7 30 0 20 7 30 0 20-7 30 0 20 7 30 0 20-7 30 0 20 7 30 0" stroke="#000" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".65" />
+  <g fill="#000" opacity=".9">
+    <circle cx="120" cy="12" r="4.6" />
+    <circle cx="120" cy="12" r="1.8" fill="#fff" />
+    <path d="M100 12c5.5-4.4 9.9-4.4 15.4 0-5.5 4.4-9.9 4.4-15.4 0Z" opacity=".55" />
+    <path d="M140 12c-5.5-4.4-9.9-4.4-15.4 0 5.5 4.4 9.9 4.4 15.4 0Z" opacity=".55" />
+  </g>
+</svg>

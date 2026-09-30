@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 120" fill="none" role="img" aria-label="Ornamen medali bintang">
+  <g stroke="#000" stroke-width="1.8" fill="none">
+    <circle cx="110" cy="60" r="34" opacity=".55" />
+    <circle cx="110" cy="60" r="27" opacity=".35" />
+    <path d="M110 26v-16M110 94v16M76 60H60M144 60h16" stroke-linecap="round" opacity=".6" />
+  </g>
+  <g fill="#000">
+    <path d="M110 32l7.6 15.4L134 50l-12 11.7 2.8 16.6L110 70.9 95.2 78.3 98 61.7 86 50l16.4-2.6z" />
+    <circle cx="110" cy="60" r="5" fill="#fff" />
+    <path d="M56 46c8-6 14-4 20 4-8 6-14 4-20-4Z" opacity=".6" />
+    <path d="M164 46c-8-6-14-4-20 4 8 6 14 4 20-4Z" opacity=".6" />
+    <path d="M56 74c8 6 14 4 20-4-8-6-14-4-20 4Z" opacity=".6" />
+    <path d="M164 74c-8 6-14 4-20-4 8-6 14-4 20 4Z" opacity=".6" />
+  </g>
+</svg>

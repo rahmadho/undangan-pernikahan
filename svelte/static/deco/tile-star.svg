@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="Pola bintang morris">
+  <g fill="#000">
+    <path d="M60 0l20 60-20 60-20-60z" opacity=".22" />
+    <path d="M0 60l60-20 60 20-60 20z" opacity=".22" />
+    <path d="M60 30l13 17-13 17-13-17z" opacity=".75" />
+    <path d="M60 48l5 12-5 12-5-12z" fill="#fff" opacity=".7" />
+    <path d="M30 90l13-17 13 17-13 17z" opacity=".5" />
+    <path d="M90 30l13-17 13 17-13 17z" opacity=".5" />
+    <circle cx="60" cy="60" r="5" />
+    <circle cx="0" cy="0" r="6" opacity=".6" />
+    <circle cx="120" cy="0" r="6" opacity=".6" />
+    <circle cx="0" cy="120" r="6" opacity=".6" />
+    <circle cx="120" cy="120" r="6" opacity=".6" />
+    <circle cx="0" cy="60" r="3.4" opacity=".5" />
+    <circle cx="120" cy="60" r="3.4" opacity=".5" />
+    <circle cx="60" cy="0" r="3.4" opacity=".5" />
+    <circle cx="60" cy="120" r="3.4" opacity=".5" />
+  </g>
+</svg>

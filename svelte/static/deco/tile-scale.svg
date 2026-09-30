@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" role="img" aria-label="Pola sisik ikan">
+  <g stroke="#000" stroke-width="1.6" fill="none" opacity=".55">
+    <path d="M0 40c0-22 18-40 40-40s40 18 40 40" />
+    <path d="M-40 40c0-22 18-40 40-40s40 18 40 40" opacity=".55" />
+    <path d="M40 40c0-22 18-40 40-40s40 18 40 40" opacity=".55" />
+    <path d="M0 80c0-22 18-40 40-40s40 18 40 40" />
+    <path d="M-40 80c0-22 18-40 40-40s40 18 40 40" opacity=".55" />
+    <path d="M40 80c0-22 18-40 40-40s40 18 40 40" opacity=".55" />
+  </g>
+  <g fill="#000">
+    <circle cx="40" cy="22" r="4" opacity=".6" />
+    <circle cx="0" cy="22" r="4" opacity=".6" />
+    <circle cx="80" cy="22" r="4" opacity=".6" />
+    <circle cx="40" cy="62" r="4" opacity=".6" />
+    <circle cx="0" cy="62" r="4" opacity=".6" />
+    <circle cx="80" cy="62" r="4" opacity=".6" />
+  </g>
+</svg>

@@ -116,13 +116,36 @@ export function applyBackground(s: Record<string, string>) {
 	set('--bg-repeat-mobile', s.background_repeat_mobile || s.background_repeat || 'no-repeat');
 }
 
-/** Aktifkan animasi reveal saat scroll untuk semua [data-reveal]. */
-export function initReveal(): () => void {
+/**
+ * Aktifkan animasi reveal saat scroll untuk semua [data-reveal].
+ *
+ * Opsi:
+ *  - `style`     : gaya reveal (menambah kelas `premium-reveal-<style>` di
+ *                  <body>); 'fade-up' = perilaku default (tanpa kelas).
+ *  - `intensity` : 'subtle' | 'medium' | 'bold' — mengatur besar gerak.
+ *  - `enabled`   : bila false, semua elemen langsung ditampilkan (tanpa
+ *                  animasi). Dipakai saat efek dimatikan / reduced-motion.
+ */
+export function initReveal(opts: { style?: string; intensity?: string; enabled?: boolean } = {}): () => void {
+	const { style = 'fade-up', intensity = 'medium', enabled = true } = opts;
 	const els = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
-	if (!('IntersectionObserver' in window)) {
+	const body = document.body;
+
+	// Bersihkan kelas reveal lama agar tak menumpuk saat re-init.
+	body.classList.forEach((c) => {
+		if (c.startsWith('premium-reveal-') || c.startsWith('premium-intensity-')) body.classList.remove(c);
+	});
+
+	// Tidak ada IntersectionObserver / efek dimatikan → tampilkan apa adanya.
+	if (!enabled || !('IntersectionObserver' in window)) {
 		els.forEach((el) => el.classList.add('is-visible'));
 		return () => {};
 	}
+
+	// Pasang kelas gaya & intensitas (hanya bila berbeda dari default).
+	if (style && style !== 'fade-up') body.classList.add('premium-reveal-' + style);
+	if (intensity && intensity !== 'medium') body.classList.add('premium-intensity-' + intensity);
+
 	const io = new IntersectionObserver(
 		(entries) => {
 			entries.forEach((e) => {
@@ -138,4 +161,123 @@ export function initReveal(): () => void {
 	);
 	els.forEach((el) => io.observe(el));
 	return () => io.disconnect();
+}
+
+/** Apakah pengguna meminta animasi dikurangi? (aman untuk SSR). */
+export function prefersReducedMotion(): boolean {
+	if (typeof window === 'undefined' || !window.matchMedia) return false;
+	try {
+		return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	} catch {
+		return false;
+	}
+}
+
+/** Normalisasi saklar setting ('1'/'true' → aktif). */
+function isOn(v: unknown): boolean {
+	return v === '1' || v === true || v === 'true';
+}
+
+/** Nilai default efek premium (semua nonaktif kecuali pilihan enum). */
+const EFFECT_DEFAULTS = {
+	transition: 'none',
+	reveal: 'fade-up',
+	intensity: 'medium',
+	photoFilter: 'none'
+} as const;
+
+const KENBURNS_CLASS = 'premium-kenburns';
+
+/**
+ * Terapkan SEMUA efek premium sesuai settings, dan kembalikan fungsi
+ * pembersih. Semua efek NONAKTIF secara default:
+ *
+ *  - `effects_enabled`      : gerbang utama (bila '0'/kosong → tiada efek).
+ *  - `effects_parallax`     : latar hero bergerak saat scroll.
+ *  - `effects_kenburns`     : zoom sinematik pada latar hero/cover.
+ *  - `effects_transition_enabled` + `effects_transition` : pembatas antar-section.
+ *  - `effects_photo_filter_enabled` + `effects_photo_filter` : filter foto.
+ *  - `effects_reveal` + `effects_intensity` : gaya animasi scroll.
+ *
+ * Bila pengguna memilih `prefers-reduced-motion: reduce`, SEMUA efek gerak
+ * dimatikan (parallax/ken-burns/reveal/transisi) — elemen langsung tampil.
+ * Filter foto tetap diterapkan karena bukan gerak.
+ */
+export function applyPremiumEffects(s: Record<string, string> | null | undefined): () => void {
+	if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
+
+	const body = document.body;
+	const reduce = prefersReducedMotion();
+	const master = isOn(s?.effects_enabled);
+	// Gerbang master: tanpa `effects_enabled`, semua efek gerak mati.
+	const motionOk = master && !reduce;
+
+	const settings = {
+		transition: (s?.effects_transition as string) || EFFECT_DEFAULTS.transition,
+		reveal: (s?.effects_reveal as string) || EFFECT_DEFAULTS.reveal,
+		intensity: (s?.effects_intensity as string) || EFFECT_DEFAULTS.intensity,
+		photoFilter: (s?.effects_photo_filter as string) || EFFECT_DEFAULTS.photoFilter
+	};
+
+	// ---- Bersihkan kelas efek lama (idempoten, aman saat re-init) ----
+	const clear = () => {
+		[...body.classList]
+			.filter((c) => c.startsWith('premium-'))
+			.forEach((c) => body.classList.remove(c));
+		body.style.removeProperty('--parallax-y');
+	};
+	clear();
+
+	// ---- Reveal (selalu diinisialisasi; efek gerak dimatikan bila perlu) ----
+	const stopReveal = initReveal({
+		style: settings.reveal,
+		intensity: settings.intensity,
+		enabled: motionOk
+	});
+
+	let stopParallax: () => void = () => {};
+	let stopKenburns: () => void = () => {};
+
+	// ---- Parallax halus ----
+	if (motionOk && isOn(s?.effects_parallax)) {
+		body.classList.add('premium-parallax');
+		let raf = 0;
+		const onScroll = () => {
+			if (raf) return;
+			raf = requestAnimationFrame(() => {
+				raf = 0;
+				// Faktor pergeseran menyesuaikan intensitas.
+				const factor = settings.intensity === 'bold' ? 0.45 : settings.intensity === 'subtle' ? 0.18 : 0.3;
+				body.style.setProperty('--parallax-y', `${window.scrollY * factor}px`);
+			});
+		};
+		window.addEventListener('scroll', onScroll, { passive: true });
+		onScroll();
+		stopParallax = () => {
+			window.removeEventListener('scroll', onScroll);
+			if (raf) cancelAnimationFrame(raf);
+		};
+	}
+
+	// ---- Ken-Burns ----
+	if (motionOk && isOn(s?.effects_kenburns)) {
+		body.classList.add(KENBURNS_CLASS);
+	}
+
+	// ---- Transisi antar-section ----
+	if (motionOk && isOn(s?.effects_transition_enabled) && settings.transition !== 'none') {
+		body.classList.add('premium-transition-' + settings.transition);
+	}
+
+	// ---- Filter foto (tanpa gerak; tetap aktif walau reduced-motion) ----
+	if (master && isOn(s?.effects_photo_filter_enabled) && settings.photoFilter !== 'none') {
+		body.classList.add('premium-filter', 'premium-filter-' + settings.photoFilter);
+	}
+
+	return () => {
+		stopReveal();
+		stopParallax();
+		stopKenburns();
+		clear();
+	};
 }

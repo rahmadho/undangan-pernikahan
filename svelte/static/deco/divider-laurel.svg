@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 24" fill="none" role="img" aria-label="Pembatas daun laurel">
+  <line x1="0" y1="12" x2="96" y2="12" stroke="#000" stroke-width="1.4" opacity=".5" />
+  <line x1="144" y1="12" x2="240" y2="12" stroke="#000" stroke-width="1.4" opacity=".5" />
+  <g fill="#000">
+    <path d="M120 4c-6-3-9-8-8-14 6 0 10 4 12 10Z" opacity="0" />
+    <path d="M118 10c-7 0-13-3-17-9 7-2 14 0 19 6Z" opacity=".7" />
+    <path d="M122 10c7 0 13-3 17-9-7-2-14 0-19 6Z" opacity=".7" />
+    <path d="M117 15c-7-1-12-5-15-11 7-1 13 2 17 8Z" opacity=".55" />
+    <path d="M123 15c7-1 12-5 15-11-7-1-13 2-17 8Z" opacity=".55" />
+    <circle cx="120" cy="14" r="3.4" />
+    <circle cx="102" cy="12" r="2.2" opacity=".8" />
+    <circle cx="138" cy="12" r="2.2" opacity=".8" />
+    <circle cx="108" cy="17" r="1.6" opacity=".6" />
+    <circle cx="132" cy="17" r="1.6" opacity=".6" />
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 120" fill="none" role="img" aria-label="Untai bunga gantung">
+  <g stroke="#000" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".8">
+    <path d="M110 8c-26 10-42 26-52 48" />
+    <path d="M110 8c26 10 42 26 52 48" />
+    <path d="M58 56c-10 6-16 16-18 30" opacity=".6" />
+    <path d="M162 56c10 6 16 16 18 30" opacity=".6" />
+    <path d="M110 8v54" opacity=".5" />
+  </g>
+  <g fill="#000">
+    <circle cx="110" cy="14" r="8" />
+    <circle cx="110" cy="14" r="3" fill="#fff" />
+    <path d="M110 74c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14Z" opacity=".85" />
+    <path d="M110 82c3 0 6 3 6 6s-3 6-6 6-6-3-6-6 3-6 6-6Z" fill="#fff" opacity=".8" />
+    <circle cx="76" cy="40" r="6" opacity=".7" />
+    <circle cx="144" cy="40" r="6" opacity=".7" />
+    <circle cx="58" cy="66" r="4.6" opacity=".55" />
+    <circle cx="162" cy="66" r="4.6" opacity=".55" />
+    <circle cx="44" cy="96" r="3.4" opacity=".45" />
+    <circle cx="176" cy="96" r="3.4" opacity=".45" />
+  </g>
+</svg>

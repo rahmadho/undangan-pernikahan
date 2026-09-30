@@ -1025,8 +1025,24 @@
 	}
 
 	/* Section umum */
+	/*
+	 * Setiap section memenuhi tinggi viewport (100svh) dan isinya
+	 * tercentang vertikal, sehingga saat scroll tidak pernah tampil dua
+	 * section sekaligus. `box-sizing: border-box` (global) membuat padding
+	 * tidak menambah tinggi. Bagian konten yang lebih tinggi dari viewport
+	 * (mis. galeri banyak foto) tetap boleh memanjang melebihi 100svh —
+	 * jadi TIDAK memakai overflow:hidden agar konten tidak terpotong.
+	 */
 	.section {
+		min-height: 100vh; /* fallback browser lama */
+		min-height: 100svh;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 		padding: 4.5rem 0;
+	}
+	.section > .container {
+		width: 100%;
 	}
 	.eyebrow {
 		text-align: center;
@@ -1047,9 +1063,17 @@
 	}
 
 	.quote-sec {
+		min-height: 100vh; /* fallback browser lama */
+		min-height: 100svh;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 		padding: 3.5rem 0;
 		background: var(--cream-2);
 		text-align: center;
+	}
+	.quote-sec > .container {
+		width: 100%;
 	}
 	.quote-sec p {
 		font-family: var(--serif);
@@ -1432,9 +1456,17 @@
 
 	/* Closing */
 	.closing-sec {
+		min-height: 100vh; /* fallback browser lama */
+		min-height: 100svh;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 		padding: 4.5rem 0;
 		text-align: center;
 		background: var(--cream);
+	}
+	.closing-sec > .container {
+		width: 100%;
 	}
 	.closing-sec p {
 		color: var(--ink-soft);
@@ -1534,5 +1566,34 @@
 	}
 	.ni {
 		font-size: 1rem;
+	}
+
+	/* =================== SCROLL NAVIGASI ANTAR-SECTION =================== */
+	/* Tinggi perkiraan nav bawah (padding + ikon + label + safe-area) agar
+	   target anchor tidak tertutup nav. Dipakai oleh scroll-padding-bottom. */
+	:root {
+		--bottom-nav-h: calc(2.9rem + env(safe-area-inset-bottom));
+	}
+
+	/* Scroll root adalah <html>/<body> (body.overflow di-toggle via JS). */
+	:global(html) {
+		scroll-behavior: smooth;
+		/* Saat melompat ke #section, sisakan ruang di bawah agar konten
+		   bagian bawah section tidak tertutup nav bawah yang fixed. */
+		scroll-padding-bottom: var(--bottom-nav-h);
+		scroll-padding-top: 0.5rem;
+	}
+
+	/* Beri jarak di akhir konten (footer) supaya elemen paling bawah tidak
+	   tersembunyi di balik nav bawah. */
+	main .footer {
+		padding-bottom: var(--bottom-nav-h);
+	}
+
+	/* Hormati preferensi pengguna yang menonaktifkan animasi. */
+	@media (prefers-reduced-motion: reduce) {
+		:global(html) {
+			scroll-behavior: auto;
+		}
 	}
 </style>

@@ -58,7 +58,11 @@ export const ADMIN_SETTING_KEYS = [
 	'effects_enabled', 'effects_parallax', 'effects_kenburns',
 	'effects_transition_enabled', 'effects_photo_filter_enabled',
 	// pilihan efek (enum, divalidasi ketat di `normalizeSettingValue`).
-	'effects_transition', 'effects_reveal', 'effects_intensity', 'effects_photo_filter'
+	'effects_transition', 'effects_reveal', 'effects_intensity', 'effects_photo_filter',
+	// gradasi premium (luluh/vignette/glow/overlay). Saklar '1'/'0'; gaya/target
+	// & basis warna = enum; warna = hex 3/6 digit. Semua NONAKTIF secara default.
+	'gradient_enabled', 'gradient_style', 'gradient_intensity', 'gradient_target',
+	'gradient_palette', 'gradient_color'
 ] as const;
 
 export const ADMIN_SETTING_SET = new Set<string>(ADMIN_SETTING_KEYS);
@@ -79,6 +83,18 @@ const EFFECT_TOGGLES = new Set([
 	'effects_transition_enabled',
 	'effects_photo_filter_enabled'
 ]);
+
+// Gradasi premium — enum & saklar. Harus sinkron dgn tipe di `$lib/types`.
+const GRADIENT_STYLES = new Set(['none', 'luluh', 'vignette', 'glow', 'overlay']);
+const GRADIENT_TARGETS = new Set(['cover', 'hero', 'both']);
+const GRADIENT_PALETTES = new Set(['auto', 'custom']);
+/** Saklar gradasi (on/off). Key-nya di-whitelist di `ADMIN_SETTING_KEYS`. */
+const GRADIENT_TOGGLES = new Set(['gradient_enabled']);
+
+/** Apakah nilai berupa warna hex 3/6 digit (#abc / #aabbcc)? */
+function isHexColor(v: string): boolean {
+	return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v.trim());
+}
 
 /** Bentuk payload tulis konten (subset longgar dari body PUT). */
 export interface ContentPayload {
@@ -134,6 +150,15 @@ export function normalizeSettingValue(key: string, raw: unknown): string | null 
 	if (key === 'effects_reveal' && !EFFECT_REVEALS.has(val)) val = '';
 	if (key === 'effects_intensity' && !EFFECT_INTENSITIES.has(val)) val = '';
 	if (key === 'effects_photo_filter' && !PHOTO_FILTERS.has(val)) val = '';
+	// Gradasi premium — saklar on/off: simpan '1' bila aktif, jika tidak '0'.
+	if (GRADIENT_TOGGLES.has(key)) val = val === '1' || val === 'true' ? '1' : '0';
+	// Gradasi premium — enum: nilai asing → default aman (tak berefek).
+	if (key === 'gradient_style' && !GRADIENT_STYLES.has(val)) val = 'none';
+	if (key === 'gradient_intensity' && !EFFECT_INTENSITIES.has(val)) val = 'medium';
+	if (key === 'gradient_target' && !GRADIENT_TARGETS.has(val)) val = 'both';
+	if (key === 'gradient_palette' && !GRADIENT_PALETTES.has(val)) val = 'auto';
+	// Warna aksen gradasi: HANYA hex 3/6 digit (cegah suntingan CSS liar).
+	if (key === 'gradient_color') val = isHexColor(val) ? val.trim().toLowerCase() : '';
 	return val;
 }
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="Ornamen sudut bunga mawar">
+  <g stroke="#000" stroke-width="2" stroke-linecap="round" fill="none" opacity=".7">
+    <path d="M12 12c34 6 60 22 78 50" />
+    <path d="M12 12c6 34 22 60 50 78" />
+    <path d="M64 40c12 4 19 12 22 25" opacity=".6" />
+    <path d="M40 64c4 12 12 19 25 22" opacity=".6" />
+  </g>
+  <g fill="#000">
+    <!-- Bunga mawar berlapis (spiral kelopak) di titik pusat -->
+    <path d="M88 78c0-14 12-25 27-25s27 11 27 25-12 25-27 25-27-11-27-25Zm27-15c-9 0-16 7-16 15s7 15 16 15 16-7 16-15-7-15-16-15Z" />
+    <path d="M115 74c-4 0-7 3-7 7s3 7 7 7 7-3 7-7-3-7-7-7Z" opacity=".55" />
+    <circle cx="115" cy="81" r="3.4" fill="#fff" />
+    <!-- Daun pengapit -->
+    <path d="M78 70c-12-4-20-13-22-27 13-1 23 5 29 17-2 5-4 8-7 10Z" opacity=".6" />
+    <path d="M152 92c12 4 20 13 22 27-13 1-23-5-29-17 2-5 4-8 7-10Z" opacity=".6" />
+    <path d="M92 152c-4 12-13 20-27 22-1-13 5-23 17-29 5 2 8 4 10 7Z" opacity=".6" />
+    <circle cx="146" cy="50" r="3.6" opacity=".7" />
+    <circle cx="50" cy="146" r="3.6" opacity=".7" />
+    <circle cx="168" cy="34" r="2.4" opacity=".5" />
+    <circle cx="34" cy="168" r="2.4" opacity=".5" />
+  </g>
+</svg>

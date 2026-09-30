@@ -5,7 +5,10 @@
 		EFFECT_INTENSITY_OPTIONS,
 		REVEAL_STYLE_OPTIONS,
 		SECTION_TRANSITION_OPTIONS,
-		PHOTO_FILTER_OPTIONS
+		PHOTO_FILTER_OPTIONS,
+		GRADIENT_STYLE_OPTIONS,
+		GRADIENT_TARGET_OPTIONS,
+		GRADIENT_PALETTE_OPTIONS
 	} from '$lib/types';
 	import { DECO_ASSETS, decoAssetUrl } from '$lib/decoAssets';
 	import { BUNDLE_PRESETS } from '$lib/bundles';
@@ -369,6 +372,31 @@
 	const FX_REVEAL = REVEAL_STYLE_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
 	const FX_TRANSITION = SECTION_TRANSITION_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
 	const FX_FILTERS = PHOTO_FILTER_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint }));
+
+	// ---------- Gradasi Premium ----------
+	// Sumber nilai = `$lib/types` (label/hint/icon), agar panel admin dan halaman
+	// tamu tidak pernah berbeda. Kunci settings mengikuti whitelist server
+	// (`server/content.ts` + `server/invitation.ts`):
+	//   gradient_enabled   → '1'|'0'  (saklar utama)
+	//   gradient_style     → none|luluh|vignette|glow|overlay
+	//   gradient_intensity → subtle|medium|bold
+	//   gradient_target    → cover|hero|both
+	//   gradient_palette   → auto|custom
+	//   gradient_color     → hex #rgb / #rrggbb (saat palette = custom)
+	const GR_STYLES = GRADIENT_STYLE_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint, icon: o.icon }));
+	const GR_TARGETS = GRADIENT_TARGET_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint, icon: o.icon }));
+	const GR_PALETTES = GRADIENT_PALETTE_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint, icon: o.icon }));
+
+	/** Setel ulang seluruh gradasi premium ke nilai default aman (nonaktif). */
+	function resetGradient() {
+		settings.gradient_enabled = '0';
+		settings.gradient_style = 'none';
+		settings.gradient_intensity = 'medium';
+		settings.gradient_target = 'both';
+		settings.gradient_palette = 'auto';
+		settings.gradient_color = '';
+		showToast('Gradasi premium disetel ulang');
+	}
 
 	/** Setel ulang seluruh efek premium ke nilai default aman (nonaktif). */
 	function resetEffects() {
@@ -1384,6 +1412,151 @@
 						</div>
 					</section>
 
+					<!-- ============ GRADASI PREMIUM ============ -->
+					<section class="card fx-card gr-card">
+						<div class="card-head">
+							<h2>Gradasi Premium</h2>
+							<span class="fx-badge">Premium</span>
+						</div>
+						<div class="card-body">
+							<p class="hint">
+								Lapisan warna sinematik pada latar cover &amp; hero — luluh, vignette,
+								glow, atau overlay. Nonaktif secara bawaan; tamu yang memilih
+								"kurangi gerakan" tetap aman.
+							</p>
+
+							<!-- Saklar utama -->
+							<label class="check fx-master">
+								<input
+									type="checkbox"
+									checked={settings.gradient_enabled === '1'}
+									onchange={(e) => (settings.gradient_enabled = e.currentTarget.checked ? '1' : '0')}
+								/>
+								Aktifkan Gradasi Premium
+							</label>
+
+							{#if settings.gradient_enabled === '1'}
+								<!-- Gaya gradasi -->
+								<div class="fx-row">
+									<div class="fx-row-head">
+										<span class="fx-label">Gaya gradasi</span>
+										<span class="fx-pill">
+											{GR_STYLES.find((x) => x.v === (settings.gradient_style || 'none'))?.l || 'Tanpa'}
+										</span>
+									</div>
+									<div class="gr-style-grid" role="radiogroup" aria-label="Gaya gradasi">
+										{#each GR_STYLES as o}
+											<button
+												type="button"
+												class="gr-style"
+												class:on={(settings.gradient_style || 'none') === o.v}
+												role="radio"
+												aria-checked={(settings.gradient_style || 'none') === o.v}
+												title={o.hint}
+												onclick={() => (settings.gradient_style = o.v)}
+											>
+												<span class="gr-style-icon" aria-hidden="true">{o.icon}</span>
+												<span class="gr-style-name">{o.l}</span>
+												<span class="gr-style-hint">{o.hint}</span>
+											</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Kekuatan -->
+								<div class="fx-row">
+									<div class="fx-row-head">
+										<span class="fx-label">Kekuatan</span>
+										<span class="fx-pill">
+											{FX_INTENSITY.find((x) => x.v === (settings.gradient_intensity || 'medium'))?.l || 'Sedang'}
+										</span>
+									</div>
+									<div class="fx-scale" role="radiogroup" aria-label="Kekuatan gradasi">
+										{#each FX_INTENSITY as o}
+											<button
+												type="button"
+												class="fx-seg"
+												class:on={(settings.gradient_intensity || 'medium') === o.v}
+												role="radio"
+												aria-checked={(settings.gradient_intensity || 'medium') === o.v}
+												title={o.hint}
+												onclick={() => (settings.gradient_intensity = o.v)}
+											>{o.l}</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Target -->
+								<div class="fx-row">
+									<div class="fx-row-head">
+										<span class="fx-label">Diterapkan pada</span>
+										<span class="fx-pill">
+											{GR_TARGETS.find((x) => x.v === (settings.gradient_target || 'both'))?.l || 'Keduanya'}
+										</span>
+									</div>
+									<div class="fx-scale" role="radiogroup" aria-label="Target gradasi">
+										{#each GR_TARGETS as o}
+											<button
+												type="button"
+												class="fx-seg"
+												class:on={(settings.gradient_target || 'both') === o.v}
+												role="radio"
+												aria-checked={(settings.gradient_target || 'both') === o.v}
+												title={o.hint}
+												onclick={() => (settings.gradient_target = o.v)}
+											>{o.icon} {o.l}</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Basis warna -->
+								<div class="fx-row">
+									<div class="fx-row-head">
+										<span class="fx-label">Basis warna</span>
+										<span class="fx-pill">
+											{GR_PALETTES.find((x) => x.v === (settings.gradient_palette || 'auto'))?.l || 'Otomatis'}
+										</span>
+									</div>
+									<div class="fx-scale" role="radiogroup" aria-label="Basis warna gradasi">
+										{#each GR_PALETTES as o}
+											<button
+												type="button"
+												class="fx-seg"
+												class:on={(settings.gradient_palette || 'auto') === o.v}
+												role="radio"
+												aria-checked={(settings.gradient_palette || 'auto') === o.v}
+												title={o.hint}
+												onclick={() => (settings.gradient_palette = o.v)}
+											>{o.icon} {o.l}</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Warna kustom (hanya saat basis = kustom) -->
+								{#if (settings.gradient_palette || 'auto') === 'custom'}
+									<div class="fx-sub">
+										<label for="grc">Warna kustom</label>
+										<div class="gr-color-row">
+											<input type="color" id="grc" bind:value={settings.gradient_color} />
+											<input
+												type="text"
+												class="gr-color-text"
+												bind:value={settings.gradient_color}
+												placeholder="#a9762b"
+												aria-label="Kode warna heksadesimal"
+											/>
+										</div>
+										<p class="hint">Format heksadesimal (#rgb atau #rrggbb). Nilai tak valid diabaikan server.</p>
+									</div>
+								{/if}
+
+								<div class="row end fx-reset">
+									<button class="ghost sm" type="button" onclick={resetGradient}>Setel ulang gradasi</button>
+								</div>
+							{/if}
+						</div>
+					</section>
+
 					<div class="sticky-save"><button class="btn" onclick={saveContent} disabled={loading}>{loading ? 'Menyimpan…' : 'Simpan tampilan'}</button></div>
 				{:else if tab === 'tema'}
 					<section class="card">
@@ -2276,6 +2449,35 @@
 	.fx-filter-thumb[data-filter='vivid'] { filter: saturate(1.4) contrast(1.1); }
 	.fx-filter-thumb[data-filter='soft'] { filter: brightness(1.08) contrast(0.92) saturate(0.95) blur(0.4px); }
 	.fx-reset { margin-top: 1rem; }
+
+	/* ---- Gradasi premium ---- */
+	.gr-style-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0.5rem; }
+	.gr-style {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		border: 1px solid var(--rule);
+		background: #fff;
+		border-radius: 10px;
+		padding: 0.55rem 0.4rem;
+		cursor: pointer;
+		text-align: center;
+		transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+	}
+	.gr-style:hover { border-color: var(--brass-lite); }
+	.gr-style.on {
+		border-color: var(--brass);
+		background: #fffdf6;
+		box-shadow: 0 0 0 3px rgba(169, 118, 43, 0.12);
+	}
+	.gr-style-icon { font-size: 1.1rem; line-height: 1; }
+	.gr-style-name { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); }
+	.gr-style.on .gr-style-name { color: var(--bench); }
+	.gr-style-hint { font-size: 0.66rem; color: var(--ink-soft, #8a8175); line-height: 1.3; }
+	.gr-color-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
+	.gr-color-row input[type='color'] { width: 3rem; height: 2.2rem; padding: 0; border: 1px solid var(--rule); border-radius: 8px; background: #fff; cursor: pointer; }
+	.gr-color-text { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 	/* ---- Daftar & tabel ---- */
 	.list-row {

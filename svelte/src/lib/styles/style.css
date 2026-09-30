@@ -726,3 +726,112 @@ body.premium-filter-soft { --premium-photo-filter: blur(0.6px) brightness(1.06) 
 		transition: none !important;
 	}
 }
+
+/* ============================================================
+   GRADASI PREMIUM (OPT-IN)
+   Dinonaktifkan sampai `applyGradient()` (theme.ts) menambahkan kelas
+   `gradient-active` + satu kelas gaya (`gradient-luluh`,
+   `gradient-vignette`, `gradient-glow`, `gradient-overlay`) dan satu
+   atau dua kelas target (`gradient-on-cover` / `gradient-on-hero`) ke
+   <body>. Tanpa kelas itu SEMUA aturan di bawah tidak aktif — jadi
+   default = tanpa gradasi (aman & hemat kinerja).
+
+   Variabel:
+     --grad-strength : 0..1 kekuatan (intensitas; di-set JS)
+     --grad-color    : warna aksen kustom (hanya bila `gradient-custom-color`)
+     --grad-accent   : warna efektif → kustom bila ada, jika tidak emas tema
+     --grad-ink      : warna gelap untuk vignette → sage-dark tema
+
+   Lapisan gradasi dipasang sebagai ::before pada elemen latar
+   (`.cover-bg` & `.hero .bg-layer`) agar TIDAK mengganggu ::after
+   (scrim) yang sudah ada, maupun paralaks/ken-burns pada elemen itu.
+   ============================================================ */
+:root {
+	--grad-strength: 0.6;
+	--grad-accent: var(--gold, #b08d47);
+	--grad-ink: var(--sage-dark, #57684a);
+}
+body.gradient-custom-color {
+	--grad-accent: var(--grad-color);
+}
+
+/* Lapisan ::before hanya ada saat gradasi aktif & target cocok. */
+body.gradient-active.gradient-on-cover .cover-bg::before,
+body.gradient-active.gradient-on-hero .hero .bg-layer::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 1;
+}
+
+/* ---------- Luluh: warna melebur lembut dari sisi bawah ---------- */
+body.gradient-luluh.gradient-on-cover .cover-bg::before {
+	background: linear-gradient(
+		180deg,
+		transparent 30%,
+		color-mix(in srgb, var(--grad-accent) calc(var(--grad-strength) * 100%), transparent) 100%
+	);
+}
+body.gradient-luluh.gradient-on-hero .hero .bg-layer::before {
+	background: linear-gradient(
+		180deg,
+		transparent 22%,
+		color-mix(in srgb, var(--grad-accent) calc(var(--grad-strength) * 100%), transparent) 100%
+	);
+}
+
+/* ---------- Vignette: gelap di tepi, fokus di tengah ---------- */
+body.gradient-vignette.gradient-on-cover .cover-bg::before,
+body.gradient-vignette.gradient-on-hero .hero .bg-layer::before {
+	background: radial-gradient(
+		120% 100% at 50% 45%,
+		transparent 42%,
+		color-mix(in srgb, var(--grad-ink) calc(var(--grad-strength) * 95%), transparent) 100%
+	);
+}
+
+/* ---------- Glow: pendar aksen hangat dari atas-tengah ---------- */
+body.gradient-glow.gradient-on-cover .cover-bg::before,
+body.gradient-glow.gradient-on-hero .hero .bg-layer::before {
+	background: radial-gradient(
+		circle at 50% 28%,
+		color-mix(in srgb, var(--grad-accent) calc(var(--grad-strength) * 85%), transparent) 0%,
+		transparent 62%
+	);
+}
+
+/* ---------- Overlay: selubung warna rata (tint) ---------- */
+body.gradient-overlay.gradient-on-cover .cover-bg::before,
+body.gradient-overlay.gradient-on-hero .hero .bg-layer::before {
+	background: linear-gradient(
+		160deg,
+		color-mix(in srgb, var(--grad-accent) calc(var(--grad-strength) * 80%), transparent),
+		color-mix(in srgb, var(--grad-ink) calc(var(--grad-strength) * 55%), transparent)
+	);
+	mix-blend-mode: soft-light;
+}
+
+/* Cadangan bila `color-mix` tak didukung (browser lama): gradasi tetap
+   tampil memakai gradasi transparansi sederhana agar teks tidak hilang. */
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+	body.gradient-active.gradient-on-cover .cover-bg::before,
+	body.gradient-active.gradient-on-hero .hero .bg-layer::before {
+		background: linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, 0.4) 100%);
+	}
+}
+
+/* Teks cover/hero tetap terbaca: naikkan bayangan saat gradasi aktif. */
+body.gradient-active.gradient-on-cover .cover-inner {
+	text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* Gradasi murni statis (bukan gerak) — tidak ada animasi, jadi tetap
+   aman untuk prefers-reduced-motion. Blok ini hanya sebagai pengaman
+   eksplisit bila kelak ada animasi ditambahkan. */
+@media (prefers-reduced-motion: reduce) {
+	body.gradient-active .cover-bg::before,
+	body.gradient-active .hero .bg-layer::before {
+		animation: none !important;
+	}
+}

@@ -251,6 +251,82 @@ export const DECO_ASSETS: DecoAsset[] = [
 		hint: 'Pola titik & wajik minimalis',
 		kind: 'repeat',
 		slot: 'both'
+	},
+
+	/* ------------------------------------------------------------------ *
+	 * Tambahan (batch 3) — JANGAN mengubah entri lama di atas.
+	 * Tema: BUNGA (mawar, daisy, tulip). Ragam corner / block / repeat.
+	 * Semua SVG original, digambar tangan untuk proyek ini (bukan salinan).
+	 * ------------------------------------------------------------------ */
+
+	/* --- corner (3) --- */
+	{
+		id: 'corner-rose',
+		file: 'corner-rose.svg',
+		label: 'Sudut Mawar',
+		hint: 'Bunga mawar berlapis di tiap sudut',
+		kind: 'corner',
+		slot: 'both'
+	},
+	{
+		id: 'corner-daisy',
+		file: 'corner-daisy.svg',
+		label: 'Sudut Daisy',
+		hint: 'Bunga daisy banyak kelopak di sudut',
+		kind: 'corner',
+		slot: 'both'
+	},
+	{
+		id: 'corner-tulip',
+		file: 'corner-tulip.svg',
+		label: 'Sudut Tulip',
+		hint: 'Tangkai bunga tulip di siku sudut',
+		kind: 'corner',
+		slot: 'both'
+	},
+
+	/* --- block (3) --- */
+	{
+		id: 'divider-rosebud',
+		file: 'divider-rosebud.svg',
+		label: 'Pembatas Kuncup Mawar',
+		hint: 'Garis pembatas dengan kuncup mawar',
+		kind: 'block',
+		slot: 'both'
+	},
+	{
+		id: 'divider-trumpet',
+		file: 'divider-trumpet.svg',
+		label: 'Pembatas Trompet',
+		hint: 'Untai bunga trompet menjuntai',
+		kind: 'block',
+		slot: 'both'
+	},
+	{
+		id: 'flourish-bouquet',
+		file: 'flourish-bouquet.svg',
+		label: 'Flourish Buket',
+		hint: 'Buket bunga simetris di tengah',
+		kind: 'block',
+		slot: 'both'
+	},
+
+	/* --- repeat (2) --- */
+	{
+		id: 'tile-floral-lattice',
+		file: 'tile-floral-lattice.svg',
+		label: 'Ubin Kisi Bunga',
+		hint: 'Kisi bunga empat kelopak berulang',
+		kind: 'repeat',
+		slot: 'both'
+	},
+	{
+		id: 'tile-floral-damask',
+		file: 'tile-floral-damask.svg',
+		label: 'Ubin Damask Bunga',
+		hint: 'Motif damask bunga klasik berulang',
+		kind: 'repeat',
+		slot: 'both'
 	}
 ];
 

@@ -191,6 +191,70 @@ export const REVEAL_STYLES: readonly RevealStyle[] = ['fade-up', 'fade', 'zoom',
 /** Nilai transisi section yang valid. */
 export const SECTION_TRANSITIONS: readonly SectionTransition[] = ['none', 'wave', 'fade', 'curve'];
 
+/* ============================================================
+   GRADASI PREMIUM (BARU)
+   Pencampuran warna luluh/vignette/glow/overlay pada latar hero
+   & cover. Semua NONAKTIF secara default (default aman & hemat
+   kinerja); tanpa `gradient_enabled = '1'` halaman tamu tetap
+   tampil seperti semula.
+   ============================================================ */
+
+/**
+ * Gaya gradasi premium (mengubah cara warna dilebur ke latar).
+ * - none     : tanpa gradasi (default)
+ * - luluh    : warna tema melebur lembut dari satu sisi (soft bleed)
+ * - vignette : gelap di tepi, terang di tengah (fokus sinematik)
+ * - glow     : pendar warna aksen hangat dari tepi/tengah
+ * - overlay  : selubung warna rata (tint) untuk menyatukan nuansa
+ */
+export type GradientStyle = 'none' | 'luluh' | 'vignette' | 'glow' | 'overlay';
+
+/**
+ * Di mana gradasi dipasang.
+ * - cover : hanya pada layar pembuka (cover)
+ * - hero  : hanya pada bagian atas undangan (hero)
+ * - both  : cover & hero (default)
+ */
+export type GradientTarget = 'cover' | 'hero' | 'both';
+
+/** Basis warna gradasi: memakai palet tema atau warna kustom. */
+export type GradientPalette = 'auto' | 'custom';
+
+/** Nilai default gradasi premium (semua NONAKTIF). */
+export const DEFAULT_GRADIENT_STYLE: GradientStyle = 'none';
+export const DEFAULT_GRADIENT_INTENSITY: EffectIntensity = 'medium';
+export const DEFAULT_GRADIENT_TARGET: GradientTarget = 'both';
+export const DEFAULT_GRADIENT_PALETTE: GradientPalette = 'auto';
+
+/** Opsi gaya gradasi (sumber tunggal untuk label UI). */
+export const GRADIENT_STYLE_OPTIONS: EffectOption<GradientStyle>[] = [
+	{ value: 'none', label: 'Tanpa', hint: 'Nonaktif', icon: '⬜' },
+	{ value: 'luluh', label: 'Luluh', hint: 'Warna melebur lembut', icon: '🌫️' },
+	{ value: 'vignette', label: 'Vignette', hint: 'Gelap di tepi', icon: '🌑' },
+	{ value: 'glow', label: 'Glow', hint: 'Pendar aksen hangat', icon: '✨' },
+	{ value: 'overlay', label: 'Overlay', hint: 'Selubung warna rata', icon: '🎨' }
+];
+
+/** Opsi target gradasi. */
+export const GRADIENT_TARGET_OPTIONS: EffectOption<GradientTarget>[] = [
+	{ value: 'cover', label: 'Cover', hint: 'Hanya layar pembuka', icon: '🚪' },
+	{ value: 'hero', label: 'Hero', hint: 'Hanya bagian atas', icon: '🖼️' },
+	{ value: 'both', label: 'Keduanya', hint: 'Cover & hero', icon: '∬' }
+];
+
+/** Opsi basis warna. */
+export const GRADIENT_PALETTE_OPTIONS: EffectOption<GradientPalette>[] = [
+	{ value: 'auto', label: 'Otomatis', hint: 'Ikut palet tema', icon: '🎯' },
+	{ value: 'custom', label: 'Kustom', hint: 'Pilih warna sendiri', icon: '🖌️' }
+];
+
+/** Nilai gaya gradasi yang valid. */
+export const GRADIENT_STYLES: readonly GradientStyle[] = ['none', 'luluh', 'vignette', 'glow', 'overlay'];
+/** Nilai target gradasi yang valid. */
+export const GRADIENT_TARGETS: readonly GradientTarget[] = ['cover', 'hero', 'both'];
+/** Nilai basis warna gradasi yang valid. */
+export const GRADIENT_PALETTES: readonly GradientPalette[] = ['auto', 'custom'];
+
 export interface Settings {
 	music_url: string;
 	quote: string;
@@ -253,6 +317,23 @@ export interface Settings {
 	effects_intensity: EffectIntensity;
 	/** Filter foto: lihat `PhotoFilter`. */
 	effects_photo_filter: PhotoFilter;
+
+	// ---------- GRADASI PREMIUM (nonaktif secara default) ----------
+	// Saklar memakai '1' (aktif) / '0' atau '' (nonaktif). Halaman tamu hanya
+	// mengaktifkan gradasi bila `gradient_enabled` = '1' DAN gayanya bukan
+	// 'none' (lihat theme.ts: applyGradient).
+	/** '1' = aktifkan sistem gradasi premium. */
+	gradient_enabled: string;
+	/** Gaya gradasi: lihat `GradientStyle`. */
+	gradient_style: GradientStyle;
+	/** Intensitas gradasi: lihat `EffectIntensity`. */
+	gradient_intensity: EffectIntensity;
+	/** Di mana gradasi dipasang: lihat `GradientTarget`. */
+	gradient_target: GradientTarget;
+	/** Basis warna: 'auto' (palet tema) atau 'custom' (warna di bawah). */
+	gradient_palette: GradientPalette;
+	/** Warna aksen gradasi (hex) saat `gradient_palette = 'custom'`. */
+	gradient_color: string;
 }
 
 export interface CustomTheme {

@@ -39,7 +39,10 @@ export const SETTING_KEYS = [
 	// efek premium (animasi/parallax/ken-burns/transisi/filter foto)
 	'effects_enabled', 'effects_parallax', 'effects_kenburns',
 	'effects_transition_enabled', 'effects_photo_filter_enabled',
-	'effects_transition', 'effects_reveal', 'effects_intensity', 'effects_photo_filter'
+	'effects_transition', 'effects_reveal', 'effects_intensity', 'effects_photo_filter',
+	// gradasi premium (luluh/vignette/glow/overlay)
+	'gradient_enabled', 'gradient_style', 'gradient_intensity', 'gradient_target',
+	'gradient_palette', 'gradient_color'
 ] as const;
 
 /** Ambil semua settings account sebagai objek key->value. */
@@ -114,10 +117,22 @@ export function publicSettings(account: Account, settings: Record<string, string
 		effects_transition_enabled: settings.effects_transition_enabled === '1' ? '1' : '0',
 		effects_photo_filter_enabled: settings.effects_photo_filter_enabled === '1' ? '1' : '0',
 		// Pilihan enum: nilai asing/kosong → default aman (tak berefek).
-		effects_transition: normalizeEffectEnum(settings.effects_transition, 'none'),
-		effects_reveal: normalizeEffectEnum(settings.effects_reveal, 'fade-up'),
-		effects_intensity: normalizeEffectEnum(settings.effects_intensity, 'medium'),
-		effects_photo_filter: normalizeEffectEnum(settings.effects_photo_filter, 'none')
+		effects_transition: normalizeEffectEnum('effects_transition', settings.effects_transition, 'none'),
+		effects_reveal: normalizeEffectEnum('effects_reveal', settings.effects_reveal, 'fade-up'),
+		effects_intensity: normalizeEffectEnum('effects_intensity', settings.effects_intensity, 'medium'),
+		effects_photo_filter: normalizeEffectEnum('effects_photo_filter', settings.effects_photo_filter, 'none'),
+		// ---------- gradasi premium ----------
+		// Sama seperti efek: '1' hanya bila DB benar-benar berisi '1' — halaman
+		// tamu tak pernah mengaktifkan gradasi tanpa persetujuan pemilik akun.
+		gradient_enabled: settings.gradient_enabled === '1' ? '1' : '0',
+		gradient_style: normalizeEffectEnum('gradient_style', settings.gradient_style, 'none'),
+		gradient_intensity: normalizeEffectEnum('gradient_intensity', settings.gradient_intensity, 'medium'),
+		gradient_target: normalizeEffectEnum('gradient_target', settings.gradient_target, 'both'),
+		gradient_palette: normalizeEffectEnum('gradient_palette', settings.gradient_palette, 'auto'),
+		// Warna aksen: hanya hex 3/6 digit — selain itu kosong (pakai palet tema).
+		gradient_color: /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test((settings.gradient_color || '').trim())
+			? (settings.gradient_color || '').trim().toLowerCase()
+			: ''
 	};
 }
 
@@ -126,16 +141,22 @@ const EFFECT_ENUMS: Record<string, readonly string[]> = {
 	effects_transition: ['none', 'wave', 'fade', 'curve'],
 	effects_reveal: ['fade-up', 'fade', 'zoom', 'flip', 'slide', 'blur'],
 	effects_intensity: ['subtle', 'medium', 'bold'],
-	effects_photo_filter: ['none', 'warm', 'cool', 'mono', 'vintage', 'vivid', 'soft']
+	effects_photo_filter: ['none', 'warm', 'cool', 'mono', 'vintage', 'vivid', 'soft'],
+	// gradasi premium (fallback = kunci grup yang dicari).
+	gradient_style: ['none', 'luluh', 'vignette', 'glow', 'overlay'],
+	gradient_intensity: ['subtle', 'medium', 'bold'],
+	gradient_target: ['cover', 'hero', 'both'],
+	gradient_palette: ['auto', 'custom']
 };
 
 /**
  * Kembalikan nilai enum efek yang sah, atau `fallback` bila kosong/asing.
  * Lapisan pengaman terakhir sebelum data dikirim ke halaman tamu publik.
- * `fallback` sekaligus menjadi kunci grup enum yang dipakai.
+ * `key` = nama key setting (menentukan grup enum di EFFECT_ENUMS);
+ * `fallback` = nilai default aman bila nilai tidak dikenal.
  */
-function normalizeEffectEnum(v: unknown, fallback: string): string {
-	const list = Object.values(EFFECT_ENUMS).find((l) => l.includes(fallback));
+function normalizeEffectEnum(key: string, v: unknown, fallback: string): string {
+	const list = EFFECT_ENUMS[key];
 	const val = typeof v === 'string' ? v.trim() : '';
 	return list && list.includes(val) ? val : fallback;
 }

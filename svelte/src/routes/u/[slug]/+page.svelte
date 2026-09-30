@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { InvitationData } from '$lib/types';
-	import { applyTheme, applyBackground, applyPremiumEffects } from '$lib/theme';
+	import { applyTheme, applyBackground, applyPremiumEffects, applyGradient } from '$lib/theme';
 	import Ornament from '$lib/components/Ornament.svelte';
 	import DecoAsset from '$lib/components/DecoAsset.svelte';
 	import CoverPhoto from '$lib/components/CoverPhoto.svelte';
@@ -271,6 +271,9 @@
 		// Efek premium (reveal/parallax/ken-burns/transisi/filter) — semuanya
 		// nonaktif kecuali diaktifkan via settings; reduced-motion dihormati.
 		const stopEffects = applyPremiumEffects(s as unknown as Record<string, string>);
+		// Gradasi premium (luluh/vignette/glow/overlay) — juga nonaktif kecuali
+		// diaktifkan; murni statis, jadi aman untuk reduced-motion.
+		const stopGradient = applyGradient(s as unknown as Record<string, string>);
 
 		// scroll-spy nav
 		const io = new IntersectionObserver(
@@ -289,6 +292,7 @@
 		return () => {
 			clearInterval(iv);
 			stopEffects();
+			stopGradient();
 			io.disconnect();
 		};
 	});

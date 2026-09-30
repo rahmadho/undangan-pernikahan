@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" role="img" aria-label="Pola kisi bunga berulang">
+  <g fill="#000">
+    <!-- Bunga 4-kelopak di tengah ubin -->
+    <g opacity=".6">
+      <path d="M40 26c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7Z" />
+      <path d="M40 54c-4 0-7-3-7-7s3-7 7-7 7 3 7 7-3 7-7 7Z" />
+      <path d="M26 40c0-4 3-7 7-7s7 3 7 7-3 7-7 7-7-3-7-7Z" />
+      <path d="M54 40c0 4-3 7-7 7s-7-3-7-7 3-7 7-7 7 3 7 7Z" />
+    </g>
+    <circle cx="40" cy="40" r="5.2" />
+    <circle cx="40" cy="40" r="2" fill="#fff" />
+    <!-- Bunga sudut (dibagi 4 agar ubin menyambung rapi) -->
+    <circle cx="0" cy="0" r="4.6" opacity=".7" />
+    <circle cx="80" cy="0" r="4.6" opacity=".7" />
+    <circle cx="0" cy="80" r="4.6" opacity=".7" />
+    <circle cx="80" cy="80" r="4.6" opacity=".7" />
+    <circle cx="0" cy="0" r="1.8" fill="#fff" opacity=".8" />
+    <circle cx="80" cy="0" r="1.8" fill="#fff" opacity=".8" />
+    <circle cx="0" cy="80" r="1.8" fill="#fff" opacity=".8" />
+    <circle cx="80" cy="80" r="1.8" fill="#fff" opacity=".8" />
+    <!-- Kuncup tepi tengah -->
+    <circle cx="40" cy="0" r="3" opacity=".5" />
+    <circle cx="40" cy="80" r="3" opacity=".5" />
+    <circle cx="0" cy="40" r="3" opacity=".5" />
+    <circle cx="80" cy="40" r="3" opacity=".5" />
+  </g>
+  <!-- Sulur diagonal penghubung antar bunga -->
+  <g stroke="#000" stroke-width="1.1" fill="none" opacity=".32">
+    <path d="M12 12c18 4 22 22 28 28" />
+    <path d="M68 68c-18-4-22-22-28-28" />
+    <path d="M68 12c-18 4-22 22-28 28" />
+    <path d="M12 68c18-4 22-22 28-28" />
+  </g>
+</svg>

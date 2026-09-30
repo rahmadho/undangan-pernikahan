@@ -1,7 +1,8 @@
 /**
- * theme.ts (client) — terapkan tema preset/kustom + latar kustom ke <body>.
- * Port dari applyTheme/applyBackground di app.js lama.
+ * theme.ts (client) — terapkan tema preset/kustom + latar kustom + efek &
+ * gradasi premium ke <body>. Port dari applyTheme/applyBackground di app.js lama.
  */
+import { GRADIENT_STYLES } from '$lib/types';
 
 export const THEMES = [
 	// --- Preset lama (JANGAN dihapus/diubah) ---
@@ -114,6 +115,98 @@ export function applyBackground(s: Record<string, string>) {
 	set('--bg-position-mobile', s.background_position_mobile || s.background_position || 'center center');
 	set('--bg-size-mobile', s.background_size_mobile || s.background_size || 'cover');
 	set('--bg-repeat-mobile', s.background_repeat_mobile || s.background_repeat || 'no-repeat');
+}
+
+/* ============================================================
+   GRADASI PREMIUM
+   Sistem gradasi yang dapat dikustomisasi (luluh / vignette /
+   glow / overlay) untuk latar cover & hero. Semua NONAKTIF
+   secara default: tanpa `gradient_enabled = '1'` DAN gaya selain
+   'none', tidak ada kelas/variabel yang dipasang sehingga halaman
+   tamu tetap ringan & tampil seperti semula.
+
+   Cara kerja: `applyGradient` menempelkan satu kelas
+   `gradient-<gaya>` + kelas target (`gradient-on-cover` /
+   `gradient-on-hero`) ke <body>, lalu mengeset beberapa CSS var
+   (`--grad-ink`, `--grad-accent`, `--grad-strength`,
+   `--grad-color`). Semua gaya CSS-nya ada di `style.css` (kelas
+   `body.gradient-*`) sehingga tidak ada style inline berat.
+   ============================================================ */
+
+/** Intensitas → angka kekuatan gradasi (dipakai var `--grad-strength`). */
+const GRADIENT_STRENGTH: Record<string, string> = {
+	subtle: '0.35',
+	medium: '0.6',
+	bold: '0.9'
+};
+
+/** Kelas gradasi yang mungkin dipasang (untuk pembersihan idempoten). */
+const GRADIENT_CLASSES = [
+	'gradient-active',
+	'gradient-luluh',
+	'gradient-vignette',
+	'gradient-glow',
+	'gradient-overlay',
+	'gradient-on-cover',
+	'gradient-on-hero',
+	'gradient-custom-color'
+];
+
+/**
+ * Terapkan gradasi premium sesuai settings.
+ * @returns fungsi pembersih (mengembalikan <body> ke keadaan tanpa gradasi).
+ *
+ * Semua nilai di sini SUDAH dinormalisasi server (`publicSettings`), tetapi
+ * tetap dijaga ketat di sisi klien (defense-in-depth): gaya/target/intensitas
+ * harus cocok daftar, warna harus hex — jika tidak, diabaikan.
+ */
+export function applyGradient(s: Record<string, string> | null | undefined): () => void {
+	if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
+	const body = document.body;
+
+	// Bersihkan dulu (idempoten, aman saat re-init / SSR hydration).
+	const clearGradient = () => {
+		GRADIENT_CLASSES.forEach((c) => body.classList.remove(c));
+		body.style.removeProperty('--grad-strength');
+		body.style.removeProperty('--grad-color');
+	};
+	clearGradient();
+
+	const enabled = isOn(s?.gradient_enabled);
+	const style = typeof s?.gradient_style === 'string' ? s!.gradient_style : 'none';
+	if (!enabled || style === 'none' || !(GRADIENT_STYLES as readonly string[]).includes(style)) {
+		return clearGradient;
+	}
+
+	// Target: 'cover' | 'hero' | 'both' (default aman 'both').
+	const target = ['cover', 'hero', 'both'].includes(s?.gradient_target || '')
+		? (s!.gradient_target as string)
+		: 'both';
+
+	// Intensitas → kekuatan (clamp ke nilai dikenal).
+	const intensity = (s?.gradient_intensity as string) || 'medium';
+	const strength = GRADIENT_STRENGTH[intensity] || GRADIENT_STRENGTH.medium;
+
+	// Pasang kelas gaya & target.
+	body.classList.add('gradient-active', 'gradient-' + style);
+	if (target === 'cover' || target === 'both') body.classList.add('gradient-on-cover');
+	if (target === 'hero' || target === 'both') body.classList.add('gradient-on-hero');
+
+	// Kekuatan dipakai semua gaya (radius/opasitas di CSS).
+	body.style.setProperty('--grad-strength', strength);
+
+	// Warna aksen: pakai hex kustom bila valid & paletnya 'custom', jika tidak
+	// biarkan kosong → CSS memakai palet tema (--gold/--sage-dark).
+	const customHex = (s?.gradient_color || '').trim();
+	if (s?.gradient_palette === 'custom' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(customHex)) {
+		body.classList.add('gradient-custom-color');
+		body.style.setProperty('--grad-color', customHex);
+	} else {
+		body.classList.remove('gradient-custom-color');
+		body.style.removeProperty('--grad-color');
+	}
+
+	return clearGradient;
 }
 
 /**

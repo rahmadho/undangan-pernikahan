@@ -93,6 +93,9 @@
 	// Galeri lightbox
 	let lbSrc = $state<string | null>(null);
 
+	// Kontainer "bingkai ponsel" (desktop) — dipakai untuk mengembalikan scroll.
+	let phoneEl: HTMLDivElement | undefined = $state();
+
 	// Nav aktif
 	let active = $state('home');
 
@@ -194,9 +197,25 @@
 		}
 	}
 
+	// ---------- Scroll root & lock ----------
+	// Di MOBILE scroll root = <body>; di DESKTOP scroll root = `.phone`
+	// (bingkai 430px). Kunci/lepas kunci harus menarget elemen yang benar,
+	// kalau tidak cover desktop bisa tetap bisa di-scroll di belakang.
+	function activeScroller(): HTMLElement {
+		if (phoneEl && getComputedStyle(phoneEl).position === 'fixed') return phoneEl;
+		return document.body;
+	}
+	function lockScroll(lock: boolean) {
+		const el = activeScroller();
+		el.style.overflow = lock ? 'hidden' : '';
+		// Pastikan hanya satu yang terkunci saat berganti mode.
+		if (el !== document.body) document.body.style.overflow = '';
+		else if (phoneEl) phoneEl.style.overflow = '';
+	}
+
 	function openCover() {
 		opened = true;
-		document.body.style.overflow = '';
+		lockScroll(false);
 		setTimeout(() => {
 			if (s.music_url && audioEl) {
 				audioEl.volume = 0.5;
@@ -261,7 +280,7 @@
 			rsvpName = guestName;
 			wishName = guestName;
 		}
-		document.body.style.overflow = 'hidden';
+		lockScroll(true);
 
 		applyTheme(data.account.theme, tokensOf(data.account.theme), baseOf(data.account.theme));
 		applyBackground(s as unknown as Record<string, string>);
@@ -318,6 +337,17 @@
 	/>
 </svelte:head>
 
+<!--
+	`phone` adalah kontainer halaman. Di MOBILE ia transparan (100% lebar,
+	tanpa bingkai). Di DESKTOP ia menjadi "bingkai ponsel" 430px di tengah
+	layar: fixed, setinggi viewport, dan menjadi SCROLL ROOT.
+
+	Penting: karena `.phone` memakai `position: fixed` (desktop), ia menjadi
+	containing block bagi seluruh descendant `position: fixed` — sehingga
+	`.cover`, `.music-btn`, `.bottom-nav`, dan `.lightbox` otomatis terjepit
+	ke lebar 430px tanpa mengubah aturan masing-masing.
+-->
+<div class="phone" bind:this={phoneEl}>
 <audio bind:this={audioEl} src={s.music_url} loop preload="none"></audio>
 
 {#if s.music_url}
@@ -694,8 +724,82 @@
 		{/each}
 	</nav>
 {/if}
+</div>
+<!-- /phone -->
 
 <style>
+	/* =================== KONTAINER HALAMAN ("bingkai ponsel") ===================
+	 * MOBILE: transparan — 100% lebar viewport, tanpa bingkai, tanpa shadow.
+	 *         Scroll tetap pada <html>/<body> seperti sebelumnya.
+	 * DESKTOP (>=721px): dikunci 430px di tengah layar, setinggi viewport,
+	 *         dan menjadi SCROLL ROOT (overflow-y:auto).
+	 *
+	 * Karena `.phone` memakai `position: fixed` di desktop, ia menjadi
+	 * containing block bagi descendant `position: fixed` (cover, music-btn,
+	 * bottom-nav, lightbox) — jadi semua elemen fixed otomatis terjepit ke
+	 * lebar 430px tanpa perlu diubah satu per satu.
+	 */
+	.phone {
+		/* Mobile: tidak mengubah apa pun. */
+		position: static;
+		width: 100%;
+		/*
+		 * Jadikan `.phone` sebagai query container. Lebar kolom undangan
+		 * (430px di desktop, 100% di mobile) dipakai untuk memicu varian
+		 * "desktop" lewat @container phone (min-width: 721px) — bukan lebar
+		 * viewport. Di desktop viewport lebar (mis. 1440px) tapi kolom
+		 * hanya 430px, sehingga varian desktop TIDAK ikut terpicu; grid
+		 * tetap 1 kolom & background tetap varian mobile.
+		 */
+		container-type: inline-size;
+		container-name: phone;
+	}
+
+	@media (min-width: 721px) {
+		.phone {
+			position: fixed;
+			top: 0;
+			bottom: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 430px;
+			height: 100vh; /* fallback */
+			height: 100dvh;
+			overflow-x: hidden;
+			overflow-y: auto;
+			/* Bingkai: sisi kiri/kanan terlihat jelas sebagai tepi "ponsel". */
+			border-left: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+			border-right: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+			box-shadow: 0 0 60px -12px rgba(0, 0, 0, 0.35);
+			background: var(--cream, #f6f4ee);
+			/* Scroll anchor (#section) tidak tertutup nav bawah yang fixed. */
+			scroll-padding-bottom: var(--bottom-nav-h);
+			scroll-padding-top: 0.5rem;
+			scroll-behavior: smooth;
+			z-index: 1;
+		}
+		/* Sembunyikan scrollbar agar terlihat seperti perangkat ponsel nyata. */
+		.phone {
+			scrollbar-width: thin;
+			scrollbar-color: color-mix(in srgb, var(--gold, #b08d47) 55%, transparent) transparent;
+		}
+		.phone::-webkit-scrollbar {
+			width: 6px;
+		}
+		.phone::-webkit-scrollbar-thumb {
+			background: color-mix(in srgb, var(--gold, #b08d47) 45%, transparent);
+			border-radius: 999px;
+		}
+		.phone::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.phone {
+				scroll-behavior: auto;
+			}
+		}
+	}
+
 	/* =================== COVER =================== */
 	.cover {
 		position: fixed;
@@ -722,7 +826,7 @@
 		background-size: var(--bg-size-mobile), cover;
 		background-repeat: var(--bg-repeat-mobile), no-repeat;
 	}
-	@media (min-width: 721px) {
+	@container phone (min-width: 721px) {
 		.cover-bg {
 			background-image: var(--bg-cover), linear-gradient(160deg, var(--sage) 0%, var(--sage-dark) 100%);
 			background-position: var(--bg-position), center;
@@ -893,7 +997,7 @@
 		background-size: var(--bg-size-mobile);
 		background-repeat: var(--bg-repeat-mobile);
 	}
-	@media (min-width: 721px) {
+	@container phone (min-width: 721px) {
 		.bg-layer {
 			background-image: var(--bg-hero);
 			background-position: var(--bg-position);
@@ -1134,7 +1238,7 @@
 		gap: 2.6rem;
 		margin-top: 1rem;
 	}
-	@media (min-width: 721px) {
+	@container phone (min-width: 721px) {
 		.couple-grid {
 			grid-template-columns: 1fr 1fr;
 			gap: 2rem;
@@ -1194,7 +1298,7 @@
 		grid-template-columns: 1fr;
 		gap: 1.6rem;
 	}
-	@media (min-width: 721px) {
+	@container phone (min-width: 721px) {
 		.event-grid {
 			grid-template-columns: 1fr 1fr;
 			gap: 2rem;
@@ -1246,7 +1350,7 @@
 		grid-template-columns: repeat(2, 1fr);
 		gap: 0.7rem;
 	}
-	@media (min-width: 721px) {
+	@container phone (min-width: 721px) {
 		.gallery-grid {
 			grid-template-columns: repeat(3, 1fr);
 		}
@@ -1444,7 +1548,7 @@
 		max-width: 720px;
 		margin: 0 auto;
 	}
-	@media (min-width: 721px) {
+	@container phone (min-width: 721px) {
 		.gift-grid {
 			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		}

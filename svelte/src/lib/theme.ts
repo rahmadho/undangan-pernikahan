@@ -522,19 +522,37 @@ export function applyPremiumEffects(s: Record<string, string> | null | undefined
 	if (motionOk && isOn(s?.effects_parallax)) {
 		body.classList.add('premium-parallax');
 		let raf = 0;
+		// Scroll root bisa berupa <body>/<html> (mobile) ATAU sebuah kontainer
+		// inner (mis. ".phone" 430px di desktop undangan). `window.scrollY`
+		// hanya mencerminkan scroller window, jadi kita baca dari elemen yang
+		// benar-benar men-scroll bila ada. Event `scroll` tidak meng-bubble,
+		// jadi didengar dengan `capture: true` di document agar menangkap
+		// scroll dari kontainer mana pun.
+		const readScrollY = (): number => {
+			const inner = document.querySelector('.phone');
+			if (inner instanceof HTMLElement) {
+				const cs = getComputedStyle(inner);
+				if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && inner.scrollTop > 0) {
+					return inner.scrollTop;
+				}
+			}
+			return window.scrollY || document.documentElement.scrollTop || 0;
+		};
 		const onScroll = () => {
 			if (raf) return;
 			raf = requestAnimationFrame(() => {
 				raf = 0;
 				// Faktor pergeseran menyesuaikan intensitas.
 				const factor = settings.intensity === 'bold' ? 0.45 : settings.intensity === 'subtle' ? 0.18 : 0.3;
-				body.style.setProperty('--parallax-y', `${window.scrollY * factor}px`);
+				body.style.setProperty('--parallax-y', `${readScrollY() * factor}px`);
 			});
 		};
 		window.addEventListener('scroll', onScroll, { passive: true });
+		document.addEventListener('scroll', onScroll, { passive: true, capture: true });
 		onScroll();
 		stopParallax = () => {
 			window.removeEventListener('scroll', onScroll);
+			document.removeEventListener('scroll', onScroll, { capture: true } as EventListenerOptions);
 			if (raf) cancelAnimationFrame(raf);
 		};
 	}

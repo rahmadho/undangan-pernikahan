@@ -105,7 +105,7 @@
 		{ id: 'acara', label: 'Acara', icon: '▤' },
 		{ id: 'galeri', label: 'Galeri', icon: '▣' },
 		{ id: 'rsvp', label: 'RSVP', icon: '✎' },
-		{ id: 'hadiah', label: 'Hadiah', icon: '🎁' }
+		{ id: 'hadiah', label: 'Hadiah', icon: '❖' }
 	];
 
 	// ---------- Helpers ----------
@@ -440,14 +440,22 @@
 			</div>
 			<p class="date" data-reveal="up" data-reveal-delay="320">{fmtDate(events[0]?.date_iso || '')}</p>
 
-			<!-- Countdown -->
+			<!-- Countdown — disusun sebagai "save the date" editorial:
+			     angka serif besar tanpa kotak/shadow, dipisah garis rambut
+			     vertikal. Bukan kartu statistik dashboard. -->
 			<div class="countdown" data-reveal="up" data-reveal-delay="420">
 				{#if cd.done}
-					<p class="cd-done">Acara telah berlangsung 💛</p>
+					<p class="cd-done">Acara telah berlangsung</p>
 				{:else}
-					{#each [{ v: cd.d, l: 'Hari' }, { v: cd.h, l: 'Jam' }, { v: cd.m, l: 'Menit' }, { v: cd.s, l: 'Detik' }] as it}
-						<div class="cd-box"><strong>{String(it.v).padStart(2, '0')}</strong><span>{it.l}</span></div>
-					{/each}
+					<div class="cd-row">
+						{#each [{ v: cd.d, l: 'Hari' }, { v: cd.h, l: 'Jam' }, { v: cd.m, l: 'Menit' }, { v: cd.s, l: 'Detik' }] as it, i}
+							{#if i > 0}<span class="cd-sep" aria-hidden="true"></span>{/if}
+							<div class="cd-box">
+								<strong>{String(it.v).padStart(2, '0')}</strong>
+								<span>{it.l}</span>
+							</div>
+						{/each}
+					</div>
 				{/if}
 			</div>
 
@@ -1006,10 +1014,49 @@
 			background-attachment: var(--bg-attachment);
 		}
 	}
+	/*
+	 * Kontras latar hero.
+	 * Lencana kontras yang ADAPTIF terhadap tema, dipasang DI BELAKANG overlay
+	 * kustom (`var(--bg-overlay)`) sehingga tetap bekerja walau pengguna tidak
+	 * mengatur overlay sama sekali (default `transparent`).
+	 *
+	 * Masalah: latar berpola gelap + teks tema terang/gelap → teks "tenggelam".
+	 * Solusi: (1) lereng kontras radial memakai warna latar solid tema
+	 * (`--cream-2`) di tengah lalu memudar ke tepi — pola di belakang teks jadi
+	 * lebih tipis sehingga warna teks asli kembali terbaca; (2) vignette halus
+	 * memakai `--ink` untuk memisahkan hero dari tepi. Semua memakai var tema,
+	 * jadi tetap benar di tema terang maupun gelap.
+	 */
 	.bg-overlay {
 		position: absolute;
 		inset: 0;
 		background: var(--bg-overlay, transparent);
+	}
+	.bg-overlay::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		/* Pita tengah pekat (kurangi kepadatan pola di belakang teks),
+		   memudar ke atas/bawah. */
+		background: radial-gradient(
+			115% 62% at 50% 46%,
+			color-mix(in srgb, var(--cream-2) 82%, transparent) 0%,
+			color-mix(in srgb, var(--cream-2) 55%, transparent) 42%,
+			transparent 78%
+		);
+	}
+	.bg-overlay::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		/* Vignette tepi tipis untuk memisahkan hero dari lingkungan sekitar. */
+		background: radial-gradient(
+			130% 100% at 50% 50%,
+			transparent 58%,
+			color-mix(in srgb, var(--ink) 22%, transparent) 100%
+		);
 	}
 	.orn-layer {
 		position: absolute;
@@ -1068,6 +1115,16 @@
 	.hero-content {
 		position: relative;
 		z-index: 2;
+		/*
+		 * Halo baca: teks hero diberi bayangan lembut berwarna LATAR (`--cream-2`)
+		 * agar terlepas dari sisa pola yang lolos di belakangnya. Memakai warna
+		 * latar tema → benar untuk teks gelap (tema terang) maupun teks terang
+		 * (tema gelap). Ditambah bayangan tipis gelap untuk "mengangkat" huruf.
+		 */
+		text-shadow:
+			0 1px 2px color-mix(in srgb, var(--cream-2) 70%, transparent),
+			0 0 18px color-mix(in srgb, var(--cream-2) 55%, transparent),
+			0 2px 10px color-mix(in srgb, var(--ink) 18%, transparent);
 	}
 	.hero-content > p {
 		letter-spacing: 0.3em;
@@ -1079,6 +1136,11 @@
 		font-size: clamp(3rem, 14vw, 6rem);
 		color: var(--ink);
 		margin: 0.3rem 0;
+		/* Huruf script besar lebih rapat → perkuat halo agar tidak rontok di pola. */
+		text-shadow:
+			0 2px 4px color-mix(in srgb, var(--cream-2) 85%, transparent),
+			0 0 26px color-mix(in srgb, var(--cream-2) 65%, transparent),
+			0 3px 14px color-mix(in srgb, var(--ink) 22%, transparent);
 	}
 	.divider-wrap {
 		color: var(--gold);
@@ -1088,39 +1150,90 @@
 		font-family: var(--serif);
 		font-size: 1.2rem;
 		color: var(--ink-soft);
+		/* Halo baca ringkas agar tanggal tetap jelas di atas pola gelap. */
+		text-shadow:
+			0 1px 2px color-mix(in srgb, var(--cream-2) 75%, transparent),
+			0 0 16px color-mix(in srgb, var(--cream-2) 55%, transparent);
 	}
 
+	/* ---------- Countdown (editorial / "save the date") ----------
+	 * Sengaja TANPA kartu, border kotak, atau drop-shadow: itu bikin
+	 * terasa seperti widget dashboard. Gantinya baris tipografis dengan
+	 * angka serif besar, label huruf-kecil berjarak lebar, dan pemisah
+	 * berupa garis rambut vertikal yang memudar di ujung.
+	 */
 	.countdown {
+		margin: 1.9rem 0 1.7rem;
 		display: flex;
-		gap: 0.6rem;
 		justify-content: center;
-		margin: 1.6rem 0;
-		flex-wrap: wrap;
+	}
+	.cd-row {
+		display: flex;
+		align-items: stretch;
+		justify-content: center;
+	}
+	.cd-sep {
+		width: 1px;
+		align-self: stretch;
+		margin: 0.15rem 0;
+		background: linear-gradient(
+			to bottom,
+			transparent,
+			color-mix(in srgb, var(--gold) 55%, transparent) 22%,
+			color-mix(in srgb, var(--gold) 55%, transparent) 78%,
+			transparent
+		);
 	}
 	.cd-box {
-		background: var(--surface);
-		border: 1px solid var(--line);
-		border-radius: 14px;
-		padding: 0.7rem 0.9rem;
-		min-width: 66px;
-		box-shadow: var(--shadow);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		min-width: 4.6rem;
+		padding: 0 1.1rem;
+		background: none;
+		border: 0;
+		box-shadow: none;
 	}
 	.cd-box strong {
 		display: block;
 		font-family: var(--serif);
-		font-size: 1.7rem;
+		font-weight: 500;
+		font-size: clamp(2rem, 9vw, 2.6rem);
+		line-height: 1;
+		letter-spacing: 0.01em;
 		color: var(--sage-dark);
+		font-variant-numeric: lining-nums tabular-nums;
 	}
 	.cd-box span {
-		font-size: 0.62rem;
-		letter-spacing: 0.14em;
+		font-family: var(--sans);
+		font-size: 0.56rem;
+		font-weight: 500;
+		letter-spacing: 0.32em;
+		text-indent: 0.32em;
 		text-transform: uppercase;
 		color: var(--ink-soft);
+		opacity: 0.8;
 	}
 	.cd-done {
 		font-family: var(--serif);
-		font-size: 1.4rem;
+		font-style: italic;
+		font-size: 1.35rem;
+		letter-spacing: 0.01em;
 		color: var(--gold);
+	}
+
+	/* Di kolom sempit (mobile), rapatkan sedikit agar tetap satu baris
+	   anggun tanpa membuat angka terbaca sesak. */
+	@media (max-width: 380px) {
+		.cd-box {
+			min-width: 0;
+			padding: 0 0.7rem;
+		}
+		.cd-box span {
+			letter-spacing: 0.2em;
+			text-indent: 0.2em;
+		}
 	}
 
 	/* Tombol */
@@ -1700,16 +1813,31 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 2px;
-		font-size: 0.6rem;
+		font-size: 0.66rem;
+		font-weight: 500;
 		color: var(--ink-soft);
 		padding: 0.2rem 0.5rem;
 		letter-spacing: 0.04em;
+		transition: color 0.2s ease;
+	}
+	/* Keterbacaan label di nav bawah: sedikit lebih gelap dari ink-soft agar
+	   tetap jelas di tema gelap maupun terang (latar nav semi-transparan). */
+	.bottom-nav a .nl {
+		color: inherit;
 	}
 	.bottom-nav a.on {
 		color: var(--gold);
 	}
 	.ni {
 		font-size: 1rem;
+		/* Glyph monokrom senada: pakai warna nav (--ink-soft / --gold saat aktif),
+		   bukan palet emoji berwarna milik font sistem. */
+		color: inherit;
+		font-family: var(--serif);
+		line-height: 1;
+		font-variant-emoji: text;
+		text-rendering: geometricPrecision;
+		transition: color 0.25s ease;
 	}
 
 	/* =================== SCROLL NAVIGASI ANTAR-SECTION =================== */

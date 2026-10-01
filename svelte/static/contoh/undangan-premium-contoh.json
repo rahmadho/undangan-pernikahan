@@ -1,0 +1,532 @@
+{
+  "title": "HW-PREMIUM",
+  "type": "page",
+  "version": "0.4",
+  "page_settings": [],
+  "content": [
+    {
+      "id": "pm00005",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm00006",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm00001",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "The Wedding Of",
+                "header_size": "h6",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00002",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Bagas & Laras",
+                "header_size": "h1",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00003",
+              "elType": "widget",
+              "widgetType": "divider",
+              "settings": {
+                "text": ""
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00004",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Sabtu, 21 November 2026",
+                "header_size": "p",
+                "align": "center"
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm00008",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm00009",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm00007",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "\"Dan di antara tanda-tanda kebesaran-Nya, Dia menciptakan pasangan untukmu dari jenismu sendiri, agar kamu merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang.\" — QS. Ar-Rum: 21",
+                "header_size": "p",
+                "align": "center"
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm0000d",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm0000e",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm0000a",
+              "elType": "widget",
+              "widgetType": "divider",
+              "settings": {
+                "text": "tentang mempelai"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000b",
+              "elType": "widget",
+              "widgetType": "image-box",
+              "settings": {
+                "image": {
+                  "url": "https://images.unsplash.com/photo-1583864697784-a0efc8379f70?w=800&q=80",
+                  "id": "",
+                  "alt": "",
+                  "source": "library"
+                },
+                "title_text": "Bagas Adi Nugroho, S.T.",
+                "description_text": "Putra kedua dari Bapak H. Suryanto & Ibu Hj. Ratna Wulandari"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000c",
+              "elType": "widget",
+              "widgetType": "image-box",
+              "settings": {
+                "image": {
+                  "url": "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=800&q=80",
+                  "id": "",
+                  "alt": "",
+                  "source": "library"
+                },
+                "title_text": "Laras Ayu Pramesti, S.Psi.",
+                "description_text": "Putri pertama dari Bapak Ir. Bambang Prasetyo & Ibu Sri Handayani"
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm0000j",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm0000k",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm0000f",
+              "elType": "widget",
+              "widgetType": "divider",
+              "settings": {
+                "text": "perjalanan cerita kami"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000g",
+              "elType": "widget",
+              "widgetType": "text-editor",
+              "settings": {
+                "editor": "<p>Pertemuan Pertama (2019) — Kami dipertemukan di sebuah acara kegiatan sosial kampus. Sebuah percakapan ringan tentang kopi ternyata menjadi awal dari segalanya.</p>"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000h",
+              "elType": "widget",
+              "widgetType": "text-editor",
+              "settings": {
+                "editor": "<p>Tumbuh Bersama (2021) — Tahun demi tahun kami lalui dengan saling menguatkan. Dari setiap perbedaan kami belajar bahwa rumah bukanlah sebuah tempat, melainkan seseorang yang membuat kita merasa pulang.</p>"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000i",
+              "elType": "widget",
+              "widgetType": "text-editor",
+              "settings": {
+                "editor": "<p>Lamaran (2025) — Di bawah langit senja dan doa yang tak pernah putus, kami memantapkan hati untuk melangkah lebih jauh. Dengan restu kedua keluarga, kami memutuskan untuk menyatukan dua nama.</p>"
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm0000q",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm0000r",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm0000l",
+              "elType": "widget",
+              "widgetType": "divider",
+              "settings": {
+                "text": "Detail Pernikahan"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000m",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Akad Nikah",
+                "header_size": "h3",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000n",
+              "elType": "widget",
+              "widgetType": "icon-box",
+              "settings": {
+                "selected_icon": {
+                  "value": "far fa-calendar-alt",
+                  "library": "fa-solid"
+                },
+                "title_text": "Sabtu, 21 November 2026",
+                "description_text": ""
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000o",
+              "elType": "widget",
+              "widgetType": "icon-box",
+              "settings": {
+                "selected_icon": {
+                  "value": "far fa-clock",
+                  "library": "fa-solid"
+                },
+                "title_text": "07.00 - 09.00 WIB",
+                "description_text": ""
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000p",
+              "elType": "widget",
+              "widgetType": "icon-box",
+              "settings": {
+                "selected_icon": {
+                  "value": "fas fa-map-marker-alt",
+                  "library": "fa-solid"
+                },
+                "title_text": "Masjid Agung Al-Falah, Semarang",
+                "description_text": ""
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm0000s",
+      "elType": "widget",
+      "widgetType": "google_maps",
+      "settings": {
+        "address": "Jl. Ahmad Yani No. 12, Kota Semarang, Jawa Tengah"
+      },
+      "elements": []
+    },
+    {
+      "id": "pm0000x",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm0000y",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm0000t",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Resepsi",
+                "header_size": "h3",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000u",
+              "elType": "widget",
+              "widgetType": "icon-box",
+              "settings": {
+                "selected_icon": {
+                  "value": "far fa-calendar-alt",
+                  "library": "fa-solid"
+                },
+                "title_text": "Sabtu, 21 November 2026",
+                "description_text": ""
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000v",
+              "elType": "widget",
+              "widgetType": "icon-box",
+              "settings": {
+                "selected_icon": {
+                  "value": "far fa-clock",
+                  "library": "fa-solid"
+                },
+                "title_text": "11.00 - 14.00 WIB",
+                "description_text": ""
+              },
+              "elements": []
+            },
+            {
+              "id": "pm0000w",
+              "elType": "widget",
+              "widgetType": "icon-box",
+              "settings": {
+                "selected_icon": {
+                  "value": "fas fa-map-marker-alt",
+                  "library": "fa-solid"
+                },
+                "title_text": "Gedung Wanita Purwa Kencana, Semarang",
+                "description_text": ""
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm00011",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm00012",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm0000z",
+              "elType": "widget",
+              "widgetType": "divider",
+              "settings": {
+                "text": "Gallery"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00010",
+              "elType": "widget",
+              "widgetType": "image-carousel",
+              "settings": {
+                "carousel": [
+                  {
+                    "url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=900&q=80",
+                    "id": "",
+                    "alt": "",
+                    "source": "library"
+                  },
+                  {
+                    "url": "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=900&q=80",
+                    "id": "",
+                    "alt": "",
+                    "source": "library"
+                  },
+                  {
+                    "url": "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&q=80",
+                    "id": "",
+                    "alt": "",
+                    "source": "library"
+                  },
+                  {
+                    "url": "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=900&q=80",
+                    "id": "",
+                    "alt": "",
+                    "source": "library"
+                  },
+                  {
+                    "url": "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=900&q=80",
+                    "id": "",
+                    "alt": "",
+                    "source": "library"
+                  },
+                  {
+                    "url": "https://images.unsplash.com/photo-1519741497674-611481863552?w=900&q=80",
+                    "id": "",
+                    "alt": "",
+                    "source": "library"
+                  }
+                ]
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm00015",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm00016",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm00013",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Konfirmasi Kehadiran Anda",
+                "header_size": "h3",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00014",
+              "elType": "widget",
+              "widgetType": "button",
+              "settings": {
+                "text": "Konfirmasi Via Whatsapp"
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pm0001a",
+      "elType": "section",
+      "isInner": false,
+      "settings": {},
+      "elements": [
+        {
+          "id": "pm0001b",
+          "elType": "column",
+          "isInner": false,
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "pm00017",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Kami Menanti Kedatangan Anda",
+                "header_size": "h3",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00018",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Bagas & Laras",
+                "header_size": "h1",
+                "align": "center"
+              },
+              "elements": []
+            },
+            {
+              "id": "pm00019",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "© 2026 Wedding Of Bagas & Laras",
+                "header_size": "p",
+                "align": "center"
+              },
+              "elements": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

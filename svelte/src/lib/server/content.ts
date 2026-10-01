@@ -51,6 +51,9 @@ export const ADMIN_SETTING_KEYS = [
 	// foto & dekorasi cover (fitur baru)
 	'cover_mode', 'cover_photo',
 	'decoration', 'decoration_animated',
+	// animasi reveal ornamen (transisi saat section aktif + gerakan lanjutan).
+	// `_reveal` & `_motion` = enum (divalidasi ketat di `normalizeSettingValue`).
+	'ornament_reveal', 'ornament_motion',
 	// dekorasi aset file lokal (opsional). Nilai divalidasi ke katalog `decoAssets`.
 	'decoration_asset', 'decoration_asset_slot',
 	// efek premium (animasi/parallax/ken-burns/transisi/filter foto).
@@ -70,6 +73,10 @@ export const ADMIN_SETTING_SET = new Set<string>(ADMIN_SETTING_KEYS);
 /** Nilai enum yang divalidasi ketat (cegah nilai sampah ke DB/CSS). */
 const COVER_MODES = new Set(['plain', 'frame', 'shadow', 'polaroid', 'arch', 'circle', 'none']);
 const DECORATIONS = new Set(['floral', 'leaves-sway', 'ethnic-jawa', 'ethnic-minang', 'none']);
+// Animasi reveal ornamen — harus sinkron dgn tipe di `$lib/types`
+// (ORNAMENT_REVEALS / ORNAMENT_MOTIONS). Nilai asing → default aman.
+const ORNAMENT_REVEALS = new Set(['none', 'fade', 'rise', 'drop', 'grow', 'slide', 'bloom']);
+const ORNAMENT_MOTIONS = new Set(['none', 'sway', 'float', 'pulse', 'flutter', 'inherit']);
 // Efek premium — harus sinkron dgn tipe di `$lib/types` (PHOTO_FILTERS dll).
 const EFFECT_TRANSITIONS = new Set(['none', 'wave', 'fade', 'curve']);
 const EFFECT_REVEALS = new Set(['fade-up', 'fade', 'zoom', 'flip', 'slide', 'blur']);
@@ -139,6 +146,10 @@ export function normalizeSettingValue(key: string, raw: unknown): string | null 
 	if (key === 'cover_mode' && !COVER_MODES.has(val)) val = 'plain';
 	if (key === 'decoration' && !DECORATIONS.has(val)) val = 'floral';
 	if (key === 'decoration_animated') val = val === '1' || val === 'true' ? '1' : '0';
+	// Animasi reveal ornamen — enum: nilai asing → kosong (halaman tamu memakai
+	// default aman via `publicSettings`).
+	if (key === 'ornament_reveal' && !ORNAMENT_REVEALS.has(val)) val = '';
+	if (key === 'ornament_motion' && !ORNAMENT_MOTIONS.has(val)) val = '';
 	// Dekorasi aset lokal: HANYA id dari katalog (path tetap, aman).
 	if (key === 'decoration_asset') val = normalizeDecoAsset(val);
 	if (key === 'decoration_asset_slot') val = normalizeDecoSlot(val);

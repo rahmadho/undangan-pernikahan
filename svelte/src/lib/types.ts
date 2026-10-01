@@ -128,6 +128,66 @@ export type RevealStyle = 'fade-up' | 'fade' | 'zoom' | 'flip' | 'slide' | 'blur
  */
 export type SectionTransition = 'none' | 'wave' | 'fade' | 'curve';
 
+/**
+ * Gaya transisi MASUK ornamen saat section-nya menjadi aktif (di-scroll).
+ * Setelah transisi selesai, ornamen lanjut bergoyang (lihat
+ * `ornament_motion`). Default `none` = NONAKTIF (ornamen tampil apa adanya).
+ * - none   : tanpa reveal (default)
+ * - fade   : memudar
+ * - rise   : naik dari bawah
+ * - drop   : turun dari atas
+ * - grow   : tumbuh (membesar) dari kecil
+ * - slide  : masuk dari samping
+ * - bloom  : mulai mengecil & kabur, mekar jadi tajam
+ */
+export type OrnamentReveal = 'none' | 'fade' | 'rise' | 'drop' | 'grow' | 'slide' | 'bloom';
+
+/**
+ * Gerakan ornamen SETELAH reveal (loop lembut tak berujung).
+ * - none      : diam (tetap tampil, tanpa goyangan)
+ * - sway      : bergoyang kiri-kanan (ayun)
+ * - float     : mengambang naik-turun
+ * - pulse     : mengecil-membesar halus
+ * - flutter   : melayang seperti kelopak (lebih hidup)
+ * - inherit   : ikut `decoration_animated` (bunga/daun berayun seperti setelan
+ *               dekorasi yang sudah ada — pilihan aman/praktis).
+ */
+export type OrnamentMotion = 'none' | 'sway' | 'float' | 'pulse' | 'flutter' | 'inherit';
+
+/** Nilai default sistem animasi reveal ornamen (semua NONAKTIF). */
+export const DEFAULT_ORNAMENT_REVEAL: OrnamentReveal = 'none';
+export const DEFAULT_ORNAMENT_MOTION: OrnamentMotion = 'inherit';
+
+/** Nilai gaya reveal ornamen yang valid. */
+export const ORNAMENT_REVEALS: readonly OrnamentReveal[] = [
+	'none', 'fade', 'rise', 'drop', 'grow', 'slide', 'bloom'
+];
+/** Nilai gerakan ornamen yang valid. */
+export const ORNAMENT_MOTIONS: readonly OrnamentMotion[] = [
+	'none', 'sway', 'float', 'pulse', 'flutter', 'inherit'
+];
+
+/** Opsi gaya reveal ornamen (sumber tunggal label UI). */
+export const ORNAMENT_REVEAL_OPTIONS: EffectOption<OrnamentReveal>[] = [
+	{ value: 'none', label: 'Tanpa', hint: 'Muncul langsung', icon: '⬜' },
+	{ value: 'fade', label: 'Pudar', hint: 'Hanya memudar', icon: '🌫️' },
+	{ value: 'rise', label: 'Naik', hint: 'Muncul dari bawah', icon: '⬆️' },
+	{ value: 'drop', label: 'Turun', hint: 'Muncul dari atas', icon: '⬇️' },
+	{ value: 'grow', label: 'Tumbuh', hint: 'Membesar dari kecil', icon: '🌱' },
+	{ value: 'slide', label: 'Geser', hint: 'Masuk dari samping', icon: '➡️' },
+	{ value: 'bloom', label: 'Mekar', hint: 'Mekar dari kuncup', icon: '🌸' }
+];
+
+/** Opsi gerakan ornamen (loop setelah reveal). */
+export const ORNAMENT_MOTION_OPTIONS: EffectOption<OrnamentMotion>[] = [
+	{ value: 'none', label: 'Diam', hint: 'Tanpa gerakan', icon: '⏹️' },
+	{ value: 'sway', label: 'Goyang', hint: 'Berayun kiri-kanan', icon: '🍃' },
+	{ value: 'float', label: 'Mengambang', hint: 'Naik-turun lembut', icon: '🎈' },
+	{ value: 'pulse', label: 'Denyut', hint: 'Membesar-mengecil', icon: '💗' },
+	{ value: 'flutter', label: 'Berkelip', hint: 'Melayang seperti kelopak', icon: '🦋' },
+	{ value: 'inherit', label: 'Ikut Dekorasi', hint: 'Sesuai animasi dekorasi', icon: '🔗' }
+];
+
 /** Nilai default efek premium (semua NONAKTIF kecuali transisi minimal). */
 export const DEFAULT_PHOTO_FILTER: PhotoFilter = 'none';
 export const DEFAULT_EFFECT_INTENSITY: EffectIntensity = 'medium';
@@ -287,6 +347,17 @@ export interface Settings {
 	decoration: Decoration;
 	/** '1' = dekorasi bergerak, '0' = diam. */
 	decoration_animated: string;
+	/**
+	 * Gaya transisi MASUK ornamen saat section-nya aktif (di-scroll):
+	 * lihat `OrnamentReveal`. Default 'none' (nonaktif). Butuh `effects_enabled`
+	 * = '1' (gerbang master efek) agar aktif.
+	 */
+	ornament_reveal: OrnamentReveal;
+	/**
+	 * Gerakan ornamen SETELAH reveal (loop lembut): lihat `OrnamentMotion`.
+	 * Default 'inherit' (ikut `decoration_animated`).
+	 */
+	ornament_motion: OrnamentMotion;
 	/**
 	 * Dekorasi tambahan dari ASET FILE LOKAL (opsional, di atas Ornament inline).
 	 * Nilai = id dari katalog `decoAssets.ts`, atau 'none' (default).

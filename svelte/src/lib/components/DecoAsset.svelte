@@ -45,13 +45,19 @@
 	const asset = $derived<DecoAsset | undefined>(getDecoAsset(normalizeDecoAsset(id)));
 	const url = $derived(asset ? decoAssetUrl(asset) : '');
 	const animClass = $derived(animated ? 'deco-asset-anim' : '');
+	// Ikat ke sistem reveal ornamen (BARU) — sama seperti Ornament.svelte:
+	// mewarisi status reveal dari induk ber-`data-orn` (section aktif) bila
+	// animasi aktif. Inert saat sistem reveal nonaktif.
+	const revealClass = $derived(animated ? 'orn-reveal-glyph' : '');
+	const ornAttr = $derived(animated ? 'inherit' : undefined);
 </script>
 
 {#if asset}
 	<!-- Sudut: 4 elemen diputar per sudut via CSS modifier. -->
 	{#if asset.kind === 'corner'}
 		<span
-			class="deco-asset deco-asset-corner {cls} {animClass}"
+			class="deco-asset deco-asset-corner {cls} {animClass} {revealClass}"
+			data-orn={ornAttr}
 			style="--deco-mask:url('{url}')"
 			aria-hidden="true"
 			role="presentation"
@@ -64,7 +70,8 @@
 	{:else if asset.kind === 'repeat'}
 		<!-- Pola berulang: satu lapisan mask dengan repeat. -->
 		<span
-			class="deco-asset deco-asset-repeat {cls} {animClass}"
+			class="deco-asset deco-asset-repeat {cls} {animClass} {revealClass}"
+			data-orn={ornAttr}
 			style="--deco-mask:url('{url}')"
 			aria-hidden="true"
 			role="presentation"
@@ -72,7 +79,8 @@
 	{:else}
 		<!-- Blok tunggal (flourish / divider / vine). -->
 		<span
-			class="deco-asset deco-asset-block {cls} {animClass}"
+			class="deco-asset deco-asset-block {cls} {animClass} {revealClass}"
+			data-orn={ornAttr}
 			style="--deco-mask:url('{url}')"
 			aria-hidden="true"
 			role="presentation"

@@ -835,3 +835,145 @@ body.gradient-active.gradient-on-cover .cover-inner {
 		animation: none !important;
 	}
 }
+
+/* ============================================================
+   ANIMASI REVEAL ORNAMEN (BARU, OPT-IN)
+   Ornamen (bunga/daun/aset) muncul dengan transisi saat section-nya
+   aktif/di-scroll, lalu lanjut bergoyang.
+
+   Kontrak dengan JS (`initOrnamentReveal`, theme.ts):
+     body.orn-reveal-active           → sistem menyala
+     body.orn-reveal-<gaya>           → gaya transisi masuk
+     body.orn-intensity-<x>           → besar/kecepatan gerak
+     body.orn-motion-<gerak>          → goyangan setelah reveal
+     [data-orn='pending']             → ornamen "menunggu" (keadaan awal)
+     [data-orn='visible']             → sedang/sudah masuk (motion jalan)
+     [data-orn='settled']             → transisi selesai (motion jalan)
+     [data-orn-scope]                 → induk penanda; anak mewarisi status
+
+   Tanpa kelas `orn-reveal-active` di <body> SEMUA aturan di sini tidak
+   aktif — jadi default = ornamen tampil apa adanya (aman & hemat).
+   ============================================================ */
+
+/* ---------- Keadaan awal ornamen (transisi masuk) ---------- */
+body.orn-reveal-active .orn-reveal-glyph[data-orn='pending'] {
+	opacity: 0;
+	will-change: opacity, transform, filter;
+}
+
+/* ---------- Varian gaya reveal (transform awal per gaya) ---------- */
+body.orn-reveal-active.orn-reveal-fade .orn-reveal-glyph[data-orn='pending'] {
+	transform: none;
+}
+body.orn-reveal-active.orn-reveal-rise .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateY(34px);
+}
+body.orn-reveal-active.orn-reveal-drop .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateY(-34px);
+}
+body.orn-reveal-active.orn-reveal-grow .orn-reveal-glyph[data-orn='pending'] {
+	transform: scale(0.35);
+}
+body.orn-reveal-active.orn-reveal-slide .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateX(-40px);
+}
+body.orn-reveal-active.orn-reveal-bloom .orn-reveal-glyph[data-orn='pending'] {
+	transform: scale(0.6);
+	filter: blur(6px);
+}
+
+/* Intensitas memperbesar/merapatkan jarak gerak reveal. */
+body.orn-reveal-active.orn-intensity-subtle.orn-reveal-rise .orn-reveal-glyph[data-orn='pending'],
+body.orn-reveal-active.orn-intensity-subtle.orn-reveal-drop .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateY(var(--orn-reveal-dir, -1) * 18px);
+}
+body.orn-reveal-active.orn-intensity-bold.orn-reveal-rise .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateY(54px);
+}
+body.orn-reveal-active.orn-intensity-bold.orn-reveal-drop .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateY(-54px);
+}
+body.orn-reveal-active.orn-intensity-bold.orn-reveal-slide .orn-reveal-glyph[data-orn='pending'] {
+	transform: translateX(-64px);
+}
+body.orn-reveal-active.orn-intensity-bold.orn-reveal-grow .orn-reveal-glyph[data-orn='pending'] {
+	transform: scale(0.22);
+}
+
+/* ---------- Keadaan masuk (transisi selesai) ---------- */
+body.orn-reveal-active .orn-reveal-glyph[data-orn='visible'],
+body.orn-reveal-active .orn-reveal-glyph[data-orn='settled'] {
+	opacity: 1;
+	transform: none;
+	filter: none;
+}
+body.orn-reveal-active .orn-reveal-glyph {
+	transition:
+		opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+		transform 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+		filter 0.72s ease;
+}
+/* Durasi per gaya (halus, tidak berlebihan). */
+body.orn-reveal-fade .orn-reveal-glyph { transition-duration: 0.62s, 0.62s, 0.62s; }
+body.orn-reveal-grow .orn-reveal-glyph { transition-duration: 0.78s, 0.78s, 0.78s; }
+body.orn-reveal-bloom .orn-reveal-glyph { transition-duration: 0.82s, 0.82s, 0.82s; }
+body.orn-intensity-bold .orn-reveal-glyph { transition-duration: 1.05s, 1.05s, 1.05s; }
+
+/* ---------- Ketika ornamen "settled": gunakan transform animasi ----------
+   Aman dari konflik dengan transisi reveal karena ada dua kondisi:
+   (a) reveal kini NONE (transisi telah usai → transform diambil animasi)
+   (b) kita tidak akan kembali ke 'pending' tanpa melewati 'visible' dulu,
+       dan saat itu animasi sudah dimatikan (lihat blok [data-orn='pending']). */
+@keyframes orn-motion-sway {
+	0%, 100% { transform: rotate(-3.2deg); }
+	50% { transform: rotate(3.2deg); }
+}
+@keyframes orn-motion-float {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-9px); }
+}
+@keyframes orn-motion-pulse {
+	0%, 100% { transform: scale(1); }
+	50% { transform: scale(1.06); }
+}
+@keyframes orn-motion-flutter {
+	0% { transform: translate(0, 0) rotate(-5deg); }
+	25% { transform: translate(9px, -7px) rotate(-2deg); }
+	50% { transform: translate(0, -12px) rotate(3deg); }
+	75% { transform: translate(-9px, -7px) rotate(5deg); }
+	100% { transform: translate(0, 0) rotate(-5deg); }
+}
+
+body.orn-motion-sway .orn-reveal-glyph[data-orn='settled'] {
+	animation: orn-motion-sway 5s ease-in-out infinite;
+	transform-origin: bottom center;
+}
+body.orn-motion-float .orn-reveal-glyph[data-orn='settled'] {
+	animation: orn-motion-float 4.6s ease-in-out infinite;
+}
+body.orn-motion-pulse .orn-reveal-glyph[data-orn='settled'] {
+	animation: orn-motion-pulse 4s ease-in-out infinite;
+	transform-origin: center;
+}
+body.orn-motion-flutter .orn-reveal-glyph[data-orn='settled'] {
+	animation: orn-motion-flutter 6s ease-in-out infinite;
+}
+body.orn-intensity-bold.orn-motion-sway .orn-reveal-glyph[data-orn='settled'] {
+	animation-duration: 4.2s;
+}
+body.orn-intensity-subtle.orn-motion-sway .orn-reveal-glyph[data-orn='settled'] {
+	animation-duration: 6s;
+}
+
+/* ---------- Hormati prefers-reduced-motion ----------
+   Semua ornamen langsung tampil tanpa transisi & tanpa goyangan. */
+@media (prefers-reduced-motion: reduce) {
+	body.orn-reveal-active .orn-reveal-glyph[data-orn],
+	body.orn-reveal-active .orn-reveal-glyph {
+		opacity: 1 !important;
+		transform: none !important;
+		filter: none !important;
+		transition: none !important;
+		animation: none !important;
+	}
+}

@@ -256,6 +256,139 @@ export function initReveal(opts: { style?: string; intensity?: string; enabled?:
 	return () => io.disconnect();
 }
 
+/**
+ * Aktifkan REVEAL ornamen saat section-nya masuk viewport, lalu lanjutkan
+ * dengan gerakan lembut ("bergoyang").
+ *
+ * Berbeda dari `initReveal` (yang menggerakkan teks/konten via kelas
+ * `is-visible` pada elemen ber-`[data-reveal]`), sistem ini TUJUH:
+ *
+ *   1. Menemukan setiap SECTION-scroll (`.hero`, `.section`, `.quote-sec`,
+ *      `.closing-sec`; lihat `SECTION_SELECTOR`).
+ *   2. Menandai semua ornamen di dalamnya (`[data-reveal]`, `.ornament`,
+ *      `.deco-asset`, `.cover-deco`, `.deco-item`) sebagai "menunggu reveal"
+ *      (`data-orn="pending"`).
+ *   3. Saat section masuk viewport, ornamen diberi `data-orn="visible"`
+ *      sehingga CSS memainkan transisi masuk (fade/rise/grow/…). Setelah
+ *      transisi selesai, `data-orn="settled"` → animasi goyangan (motion)
+ *      dimulai (tanpa konflik dengan transform reveal).
+ *
+ * Ornamen tersebar di banyak komponen (Ornament.svelte, DecoAsset.svelte,
+ * markup halaman). Karena komponen tidak tahu kapan section-nya aktif,
+ * `Ornament.svelte` MEWARISI status dari induk terdekat yang ber-`data-orn`
+ * (`data-orn=inherit`), jadi satu penanda section cukup untuk semua ornamen
+ * di dalamnya — tanpa mengubah komponen/halaman.
+ *
+ * Opsi:
+ *  - `style`     : 'none' | 'fade' | 'rise' | 'drop' | 'grow' | 'slide' |
+ *                  'bloom' (lihat `OrnamentReveal`). 'none' = nonaktif.
+ *  - `intensity` : 'subtle' | 'medium' | 'bold' — besar/kecepatan gerak.
+ *  - `motion`    : 'none' | 'sway' | 'float' | 'pulse' | 'flutter' |
+ *                  'inherit' — goyangan setelah reveal. 'inherit' membiarkan
+ *                  animasi dekorasi bawaan (`decoration_animated`) bekerja.
+ *  - `enabled`   : bila false, semua ornamen langsung tampil (tanpa animasi).
+ *
+ * @returns fungsi pembersih (mengembalikan keadaan semula).
+ */
+export function initOrnamentReveal(opts: {
+	style?: string;
+	intensity?: string;
+	motion?: string;
+	enabled?: boolean;
+} = {}): () => void {
+	if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
+	const { style = 'none', intensity = 'medium', motion = 'inherit', enabled = true } = opts;
+	const body = document.body;
+
+	// Selalu bersihkan kelas utilitas lama (idempoten, aman saat re-init).
+	ORNAMENT_BODY_CLASSES.forEach((c) => body.classList.remove(c));
+
+	// Elemen ornamen yang ikut sistem ini (di dalam section-scroll).
+	const ornSel = '[data-reveal], .ornament, .deco-asset, .cover-deco, .deco-item';
+
+	// Bersihkan penanda reveal lama dari <body> + semua elemen ornamen.
+	const cleanAttrs = () => {
+		body.removeAttribute('data-orn');
+		body.removeAttribute('data-orn-busy');
+		document.querySelectorAll<HTMLElement>(`${ornSel}, [data-orn-scope]`).forEach((el) => {
+			el.removeAttribute('data-orn');
+			el.removeAttribute('data-orn-scope');
+		});
+	};
+	cleanAttrs();
+
+	// Nonaktif / tanpa observer / reduced-motion → tampilkan langsung, tanpa
+	// kelas gaya apa pun (halaman kembali persis seperti default).
+	if (!enabled || style === 'none' || !('IntersectionObserver' in window)) {
+		return () => {};
+	}
+
+	// Pasang kelas: aktif + gaya + intensitas + gerakan (hanya yang non-default).
+	body.classList.add('orn-reveal-active', 'orn-reveal-' + style);
+	if (intensity === 'subtle' || intensity === 'bold') body.classList.add('orn-intensity-' + intensity);
+	if (motion && motion !== 'none' && motion !== 'inherit') body.classList.add('orn-motion-' + motion);
+
+	const styleDur = ORNAMENT_STYLE_DURATION[style] || 700;
+	const thresh = style === 'grow' || style === 'bloom' ? 0.05 : 0.12;
+	const settleDur = styleDur + 60;
+
+	const io = new IntersectionObserver(
+		(entries) => {
+			entries.forEach((e) => {
+				if (!e.isIntersecting) return;
+				const section = e.target as HTMLElement;
+				const orns = Array.from(section.querySelectorAll<HTMLElement>(ornSel));
+				orns.forEach((el) => {
+					el.setAttribute('data-orn', 'pending');
+					el.setAttribute('data-orn-scope', ''); // penanda induk untuk `inherit`
+				});
+				// Saat "berhenti" (keluar viewport) → sembunyikan lagi agar
+				// transisi masuk TERPUTAR ULANG tiap section kembali terlihat.
+				const hideOrm = () => orns.forEach((el) => el.setAttribute('data-orn', 'pending'));
+				if (orns.length) io.observe(section); // sudah, aman (idempoten)
+				// Reveal: pindah ke 'visible' setelah satu frame (agar transisi
+				// dari keadaan awal benar-benar main).
+				requestAnimationFrame(() => {
+					orns.forEach((el) => {
+						if (el.getAttribute('data-orn') === 'pending') el.setAttribute('data-orn', 'visible');
+					});
+				});
+				// Setelah transisi selesai → 'settled' (mulai goyangan).
+				window.setTimeout(() => {
+					orns.forEach((el) => {
+						if (el.getAttribute('data-orn') === 'visible') el.setAttribute('data-orn', 'settled');
+					});
+				}, settleDur);
+				io.unobserve(section);
+				// Observer kedua: pantau keluar-viewport untuk reset (replay).
+				const ioOut = new IntersectionObserver(
+					(es) => {
+						es.forEach((ev) => {
+							if (!ev.isIntersecting) {
+								hideOrm();
+								ioOut.disconnect();
+								io.observe(section); // pasang lagi agar reveal berikutnya jalan
+							}
+						});
+					},
+					{ threshold: 0 }
+				);
+				ioOut.observe(section);
+			});
+		},
+		{ threshold: thresh, rootMargin: '0px 0px -6% 0px' }
+	);
+
+	const sections = Array.from(document.querySelectorAll<HTMLElement>(SECTION_SELECTOR));
+	sections.forEach((sec) => io.observe(sec));
+
+	return () => {
+		io.disconnect();
+		ORNAMENT_BODY_CLASSES.forEach((c) => body.classList.remove(c));
+		cleanAttrs();
+	};
+}
+
 /** Apakah pengguna meminta animasi dikurangi? (aman untuk SSR). */
 export function prefersReducedMotion(): boolean {
 	if (typeof window === 'undefined' || !window.matchMedia) return false;
@@ -278,6 +411,49 @@ const EFFECT_DEFAULTS = {
 	intensity: 'medium',
 	photoFilter: 'none'
 } as const;
+
+/* ============================================================
+   ANIMASI REVEAL ORNAMEN (BARU)
+   Ornamen (bunga/daun/aset) muncul dengan transisi saat section-nya
+   aktif/di-scroll, lalu lanjut bergoyang. Semua NONAKTIF secara
+   default: tanpa `ornament_reveal` selain 'none' (atau tanpa
+   `effects_enabled`), tidak ada kelas/penanda yang dipasang sehingga
+   halaman tamu tetap tampil seperti semula.
+
+   Kelas gaya (di <body>) + penanda per-elemen (`data-orn`) diatur di
+   `initOrnamentReveal`; aturan CSS-nya ada di `style.css` sehingga tak
+   ada style inline berat.
+   ============================================================ */
+
+/** Section-scroll yang ornamennya ikut sistem reveal (lihat halaman tamu). */
+const SECTION_SELECTOR = '.hero, .section, .quote-sec, .closing-sec';
+
+/** Durasi transisi masuk per gaya (ms) — dipakai untuk jeda `settled`. */
+const ORNAMENT_STYLE_DURATION: Record<string, number> = {
+	fade: 620,
+	rise: 720,
+	drop: 720,
+	grow: 760,
+	slide: 720,
+	bloom: 820
+};
+
+/** Kelas <body> yang mungkin dipasang sistem reveal ornamen (untuk bersih-bersih). */
+const ORNAMENT_BODY_CLASSES = [
+	'orn-reveal-active',
+	'orn-reveal-fade',
+	'orn-reveal-rise',
+	'orn-reveal-drop',
+	'orn-reveal-grow',
+	'orn-reveal-slide',
+	'orn-reveal-bloom',
+	'orn-intensity-subtle',
+	'orn-intensity-bold',
+	'orn-motion-sway',
+	'orn-motion-float',
+	'orn-motion-pulse',
+	'orn-motion-flutter'
+];
 
 const KENBURNS_CLASS = 'premium-kenburns';
 
@@ -328,6 +504,17 @@ export function applyPremiumEffects(s: Record<string, string> | null | undefined
 		enabled: motionOk
 	});
 
+	// ---- Reveal + goyangan ORNAMEN (BARU) ----
+	// Ornamen muncul dengan transisi saat section aktif, lalu bergoyang.
+	// Nonaktif bila `ornament_reveal` = 'none' (default) atau efek gerak mati.
+	const ornamentReveal = (s?.ornament_reveal as string) || 'none';
+	const stopOrnamentReveal = initOrnamentReveal({
+		style: ornamentReveal,
+		intensity: settings.intensity,
+		motion: (s?.ornament_motion as string) || 'inherit',
+		enabled: motionOk && ornamentReveal !== 'none'
+	});
+
 	let stopParallax: () => void = () => {};
 	let stopKenburns: () => void = () => {};
 
@@ -369,6 +556,7 @@ export function applyPremiumEffects(s: Record<string, string> | null | undefined
 
 	return () => {
 		stopReveal();
+		stopOrnamentReveal();
 		stopParallax();
 		stopKenburns();
 		clear();

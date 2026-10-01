@@ -11,6 +11,14 @@
 	 *
 	 * Prop `animated`: bila true, tambahkan class animasi (deco-*) sehingga
 	 * elemen ikut beranimasi halus (lihat style.css). Default false.
+	 *
+	 * Animasi REVEAL ORNAMEN (BARU): bila sistem reveal ornamen aktif
+	 * (kelas `orn-reveal-active` di <body>), SVG ini MEWARISI status reveal
+	 * dari induk terdekat yang ber-`data-orn` (mis. section aktif) via
+	 * `data-orn="inherit"`. Jadi satu penanda section cukup untuk semua
+	 * ornamen di dalamnya — tanpa perlu mengubah komponen/halaman. Bila
+	 * sistem nonaktif, `data-orn="inherit"` tidak berefek (CSS ter-scope ke
+	 * `body.orn-reveal-active`).
 	 */
 	let {
 		variant = 'corner',
@@ -32,10 +40,17 @@
 							: 'deco-sway'
 			: ''
 	);
+
+	// Kelas khusus sistem reveal ornamen — hanya bila `animated` aktif agar
+	// ornamen statis juga ikut punya transisi masuk + goyangan. (Tanpa
+	// `animated`, ornamen tetap tampil normal; kelas ini inert saat sistem
+	// reveal nonaktif.)
+	const revealClass = $derived(animated ? 'orn-reveal-glyph' : '');
+	const ornAttr = $derived(animated ? 'inherit' : undefined);
 </script>
 
 {#if variant === 'corner'}
-	<svg class="orn {cls} {animClass}" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+	<svg class="orn {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 200 200" fill="none" aria-hidden="true">
 		<g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.9">
 			<path d="M8 8c40 6 62 22 74 52" />
 			<path d="M8 8c6 40 22 62 52 74" />
@@ -51,7 +66,7 @@
 		</g>
 	</svg>
 {:else if variant === 'divider'}
-	<svg class="divider {cls} {animClass}" viewBox="0 0 240 24" fill="none" aria-hidden="true">
+	<svg class="divider {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 240 24" fill="none" aria-hidden="true">
 		<line x1="0" y1="12" x2="86" y2="12" stroke="currentColor" stroke-width="1" opacity="0.5" />
 		<line x1="154" y1="12" x2="240" y2="12" stroke="currentColor" stroke-width="1" opacity="0.5" />
 		<path d="M120 4c6 0 10 3.6 10 8s-4 8-10 8-10-3.6-10-8 4-8 10-8Z" fill="currentColor" opacity="0.85" />
@@ -59,7 +74,7 @@
 		<path d="M136 12c-5-4-9-4-14 0 5 4 9 4 14 0Z" fill="currentColor" opacity="0.5" />
 	</svg>
 {:else if variant === 'sparkle'}
-	<svg class="sparkle {cls} {animClass}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+	<svg class="sparkle {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 24 24" fill="none" aria-hidden="true">
 		<path
 			d="M12 2c1.5 5 3.5 7 8.5 8.5-5 1.5-7 3.5-8.5 8.5-1.5-5-3.5-7-8.5-8.5C8.5 9 10.5 7 12 2Z"
 			fill="currentColor"
@@ -67,7 +82,7 @@
 	</svg>
 {:else if variant === 'leaf-vine'}
 	<!-- Sulur daun melengkung (bisa berayun) -->
-	<svg class="vine {cls} {animClass}" viewBox="0 0 120 220" fill="none" aria-hidden="true">
+	<svg class="vine {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 120 220" fill="none" aria-hidden="true">
 		<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9">
 			<path d="M60 216C60 176 46 158 46 128S60 78 60 44 60 12 60 4" />
 			<path d="M52 190c-14-2-24-10-28-24 14 0 24 6 28 24Z" fill="currentColor" stroke="none" opacity="0.55" />
@@ -84,7 +99,7 @@
 	</svg>
 {:else if variant === 'flower-cluster'}
 	<!-- Gerombolan bunga watercolor -->
-	<svg class="cluster {cls} {animClass}" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+	<svg class="cluster {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 200 200" fill="none" aria-hidden="true">
 		<g fill="currentColor">
 			<!-- bunga besar -->
 			<g opacity="0.9">
@@ -116,7 +131,7 @@
 	</svg>
 {:else if variant === 'peacock'}
 	<!-- Burung merak sederhana bergaya (tema adat/premium) -->
-	<svg class="peacock {cls} {animClass}" viewBox="0 0 200 220" fill="none" aria-hidden="true">
+	<svg class="peacock {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 200 220" fill="none" aria-hidden="true">
 		<!-- kipas ekor -->
 		<g fill="currentColor" opacity="0.35">
 			<path d="M100 150C56 150 26 122 26 86S56 22 100 22s74 28 74 64-30 64-74 64Z" />
@@ -150,7 +165,7 @@
 	</svg>
 {:else if variant === 'batik-kawung'}
 	<!-- Motif kawung (Jawa) — empat bulatan/pilin di sekitar pusat -->
-	<svg class="kawung {cls} {animClass}" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+	<svg class="kawung {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 200 200" fill="none" aria-hidden="true">
 		<g fill="currentColor" opacity="0.85">
 			<!-- kawung 2x2 -->
 			<path d="M100 12c22 0 40 18 40 40s-18 40-40 40-40-18-40-40 18-40 40-40Z" opacity="0.5" />
@@ -174,7 +189,7 @@
 	</svg>
 {:else if variant === 'songket'}
 	<!-- Motif songket Minang — zig-zag/anyaman emas -->
-	<svg class="songket {cls} {animClass}" viewBox="0 0 240 60" fill="none" aria-hidden="true">
+	<svg class="songket {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 240 60" fill="none" aria-hidden="true">
 		<g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linejoin="round" opacity="0.9">
 			<path d="M0 30 20 10 40 30 60 10 80 30 100 10 120 30 140 10 160 30 180 10 200 30 220 10 240 30" />
 			<path d="M0 46 20 26 40 46 60 26 80 46 100 26 120 46 140 26 160 46 180 26 200 46 220 26 240 46" opacity="0.5" />
@@ -191,7 +206,7 @@
 	</svg>
 {:else if variant === 'corner-adat'}
 	<!-- Sudut bermotif batik/songket untuk tema adat -->
-	<svg class="orn-adat {cls} {animClass}" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+	<svg class="orn-adat {cls} {animClass} {revealClass}" data-orn={ornAttr} viewBox="0 0 200 200" fill="none" aria-hidden="true">
 		<g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.9">
 			<path d="M6 6h60M6 6v60" stroke-width="2" />
 			<path d="M14 14c30 0 48 18 48 48" />

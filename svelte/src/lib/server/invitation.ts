@@ -34,6 +34,8 @@ export const SETTING_KEYS = [
 	'background_position_mobile', 'background_size_mobile', 'background_repeat_mobile',
 	// foto & dekorasi cover
 	'cover_mode', 'cover_photo', 'decoration', 'decoration_animated',
+	// animasi reveal ornamen (transisi saat section aktif + gerakan lanjutan)
+	'ornament_reveal', 'ornament_motion',
 	// dekorasi dari aset file lokal (opsional; lihat decoAssets.ts)
 	'decoration_asset', 'decoration_asset_slot',
 	// efek premium (animasi/parallax/ken-burns/transisi/filter foto)
@@ -104,6 +106,11 @@ export function publicSettings(account: Account, settings: Record<string, string
 		cover_photo: settings.cover_photo || '',
 		decoration: settings.decoration || 'floral',
 		decoration_animated: settings.decoration_animated || '1',
+		// Animasi reveal ornamen — enum dengan default aman (NONAKTIF:
+		// `reveal` = 'none'). Halaman tamu hanya mengaktifkannya bila
+		// `effects_enabled` = '1' (ditangani di theme.ts).
+		ornament_reveal: normalizeEffectEnum('ornament_reveal', settings.ornament_reveal, 'none'),
+		ornament_motion: normalizeEffectEnum('ornament_motion', settings.ornament_motion, 'inherit'),
 		// dekorasi aset lokal (opsional). Dinormalisasi ke katalog agar halaman
 		// tamu tak pernah menerima id asing.
 		decoration_asset: normalizeDecoAsset(settings.decoration_asset),
@@ -142,6 +149,9 @@ const EFFECT_ENUMS: Record<string, readonly string[]> = {
 	effects_reveal: ['fade-up', 'fade', 'zoom', 'flip', 'slide', 'blur'],
 	effects_intensity: ['subtle', 'medium', 'bold'],
 	effects_photo_filter: ['none', 'warm', 'cool', 'mono', 'vintage', 'vivid', 'soft'],
+	// animasi reveal ornamen (fallback = kunci grup yang dicari).
+	ornament_reveal: ['none', 'fade', 'rise', 'drop', 'grow', 'slide', 'bloom'],
+	ornament_motion: ['none', 'sway', 'float', 'pulse', 'flutter', 'inherit'],
 	// gradasi premium (fallback = kunci grup yang dicari).
 	gradient_style: ['none', 'luluh', 'vignette', 'glow', 'overlay'],
 	gradient_intensity: ['subtle', 'medium', 'bold'],

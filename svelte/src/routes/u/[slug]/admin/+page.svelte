@@ -8,7 +8,9 @@
 		PHOTO_FILTER_OPTIONS,
 		GRADIENT_STYLE_OPTIONS,
 		GRADIENT_TARGET_OPTIONS,
-		GRADIENT_PALETTE_OPTIONS
+		GRADIENT_PALETTE_OPTIONS,
+		ORNAMENT_REVEAL_OPTIONS,
+		ORNAMENT_MOTION_OPTIONS
 	} from '$lib/types';
 	import { DECO_ASSETS, decoAssetUrl } from '$lib/decoAssets';
 	import { BUNDLE_PRESETS } from '$lib/bundles';
@@ -396,6 +398,22 @@
 		settings.gradient_palette = 'auto';
 		settings.gradient_color = '';
 		showToast('Gradasi premium disetel ulang');
+	}
+
+	// ---------- Animasi Ornamen ----------
+	// Sumber nilai = `$lib/types` (label/hint/icon), agar panel admin dan
+	// halaman tamu tidak pernah berbeda. Kunci settings mengikuti whitelist
+	// server (`server/content.ts` + `server/invitation.ts`):
+	//   ornament_reveal → none|fade|rise|drop|grow|slide|bloom  (gaya MASUK)
+	//   ornament_motion → none|sway|float|pulse|flutter|inherit (gerak setelah masuk)
+	const ORN_REVEAL = ORNAMENT_REVEAL_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint, icon: o.icon }));
+	const ORN_MOTION = ORNAMENT_MOTION_OPTIONS.map((o) => ({ v: o.value, l: o.label, hint: o.hint, icon: o.icon }));
+
+	/** Setel ulang animasi ornamen ke nilai default aman (nonaktif). */
+	function resetOrnamentAnimation() {
+		settings.ornament_reveal = 'none';
+		settings.ornament_motion = 'inherit';
+		showToast('Animasi ornamen disetel ulang');
 	}
 
 	/** Setel ulang seluruh efek premium ke nilai default aman (nonaktif). */
@@ -1239,6 +1257,73 @@
 										{#each DECO_SLOT_OPTIONS as o}<option value={o.v}>{o.l}</option>{/each}
 									</select>
 								{/if}
+							</div>
+						</div>
+					</section>
+
+					<!-- ============ ANIMASI ORNAMEN ============ -->
+					<section class="card orn-card">
+						<div class="card-head"><h2>Animasi Ornamen</h2></div>
+						<div class="card-body">
+							<p class="hint">
+								Atur bagaimana ornamen (bunga/daun) muncul saat bagian undangan mulai
+								tampil, lalu gerakan lembut setelahnya. Nonaktif secara bawaan; tamu
+								yang mengaktifkan "kurangi gerakan" di perangkatnya tetap aman.
+							</p>
+
+							<!-- Gaya MASUK (reveal) -->
+							<div class="fx-row">
+								<div class="fx-row-head">
+									<span class="fx-label">Gaya masuk (reveal)</span>
+									<span class="fx-pill">
+										{ORN_REVEAL.find((x) => x.v === (settings.ornament_reveal || 'none'))?.l || 'Tanpa'}
+									</span>
+								</div>
+								<div class="fx-scale" role="radiogroup" aria-label="Gaya masuk ornamen">
+									{#each ORN_REVEAL as o}
+										<button
+											type="button"
+											class="fx-seg"
+											class:on={(settings.ornament_reveal || 'none') === o.v}
+											role="radio"
+											aria-checked={(settings.ornament_reveal || 'none') === o.v}
+											title={o.hint}
+											onclick={() => (settings.ornament_reveal = o.v)}
+										>{o.icon} {o.l}</button>
+									{/each}
+								</div>
+							</div>
+
+							<!-- Gerak SETELAH masuk (motion) -->
+							<div class="fx-row">
+								<div class="fx-row-head">
+									<span class="fx-label">Gerak setelah masuk (motion)</span>
+									<span class="fx-pill">
+										{ORN_MOTION.find((x) => x.v === (settings.ornament_motion || 'inherit'))?.l || 'Ikut Dekorasi'}
+									</span>
+								</div>
+								<div class="fx-scale" role="radiogroup" aria-label="Gerak ornamen setelah masuk">
+									{#each ORN_MOTION as o}
+										<button
+											type="button"
+											class="fx-seg"
+											class:on={(settings.ornament_motion || 'inherit') === o.v}
+											role="radio"
+											aria-checked={(settings.ornament_motion || 'inherit') === o.v}
+											title={o.hint}
+											onclick={() => (settings.ornament_motion = o.v)}
+										>{o.icon} {o.l}</button>
+									{/each}
+								</div>
+							</div>
+
+							<p class="hint">
+								Reveal &amp; motion ikut saklar utama <strong>Efek Premium</strong>: jika
+								efek premium nonaktif, ornamen tampil apa adanya.
+							</p>
+
+							<div class="row end fx-reset">
+								<button class="ghost sm" type="button" onclick={resetOrnamentAnimation}>Setel ulang animasi ornamen</button>
 							</div>
 						</div>
 					</section>
